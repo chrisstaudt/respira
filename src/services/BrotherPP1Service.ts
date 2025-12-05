@@ -518,6 +518,7 @@ export class BrotherPP1Service {
     data: Uint8Array,
     onProgress?: (progress: number) => void,
     bounds?: { minX: number; maxX: number; minY: number; maxY: number },
+    patternOffset?: { x: number; y: number },
   ): Promise<Uint8Array> {
     // Calculate checksum
     const checksum = data.reduce((sum, byte) => sum + byte, 0) & 0xffff;
@@ -560,21 +561,43 @@ export class BrotherPP1Service {
     const patternWidth = boundRight - boundLeft;
     const patternHeight = boundBottom - boundTop;
 
-    // Calculate center offset to position pattern at machine center
-    // Machine embroidery area center is at (0, 0)
-    // Pattern center should align with machine center
-    const patternCenterX = (boundLeft + boundRight) / 2;
-    const patternCenterY = (boundTop + boundBottom) / 2;
+    // Calculate move offset based on user-defined pattern offset or auto-center
+    let moveX: number;
+    let moveY: number;
 
-    // moveX/moveY shift the pattern so its center aligns with origin
-    const moveX = -patternCenterX;
-    const moveY = -patternCenterY;
+    if (patternOffset) {
+      // Use user-defined offset from canvas dragging
+      // Pattern offset is in canvas coordinates (0,0 at hoop center)
+      // We need to calculate the move that positions pattern's center at the offset position
+      const patternCenterX = (boundLeft + boundRight) / 2;
+      const patternCenterY = (boundTop + boundBottom) / 2;
+
+      // moveX/moveY define where the pattern center should be
+      // offset.x/y is where user dragged the pattern to (relative to hoop center)
+      moveX = patternOffset.x - patternCenterX;
+      moveY = patternOffset.y - patternCenterY;
+
+      console.log('[LAYOUT] Using user-defined offset:', {
+        patternOffset,
+        patternCenter: { x: patternCenterX, y: patternCenterY },
+        moveX,
+        moveY,
+      });
+    } else {
+      // Auto-center: position pattern center at machine center (0, 0)
+      const patternCenterX = (boundLeft + boundRight) / 2;
+      const patternCenterY = (boundTop + boundBottom) / 2;
+      moveX = -patternCenterX;
+      moveY = -patternCenterY;
+
+      console.log('[LAYOUT] Auto-centering pattern:', { moveX, moveY });
+    }
 
     // Send layout with actual pattern bounds
     // sizeX/sizeY are scaling factors (100 = 100% = no scaling)
     await this.sendLayout(
-      Math.round(moveX), // moveX - center the pattern
-      Math.round(moveY), // moveY - center the pattern
+      Math.round(moveX), // moveX - position the pattern
+      Math.round(moveY), // moveY - position the pattern
       100, // sizeX (100% - no scaling)
       100, // sizeY (100% - no scaling)
       0, // rotate

@@ -193,7 +193,7 @@ export function useBrotherMachine() {
     }, [service, resumeAvailable, refreshPatternInfo]);
 
   const uploadPattern = useCallback(
-    async (penData: Uint8Array, pesData: PesPatternData, fileName: string) => {
+    async (penData: Uint8Array, pesData: PesPatternData, fileName: string, patternOffset?: { x: number; y: number }) => {
       if (!isConnected) {
         setError("Not connected to machine");
         return;
@@ -208,6 +208,7 @@ export function useBrotherMachine() {
             setUploadProgress(progress);
           },
           pesData.bounds,
+          patternOffset,
         );
         setUploadProgress(100);
 

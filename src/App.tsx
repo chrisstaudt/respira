@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useBrotherMachine } from './hooks/useBrotherMachine';
 import { MachineConnection } from './components/MachineConnection';
 import { FileUpload } from './components/FileUpload';
@@ -13,6 +13,7 @@ function App() {
   const [pesData, setPesData] = useState<PesPatternData | null>(null);
   const [pyodideReady, setPyodideReady] = useState(false);
   const [pyodideError, setPyodideError] = useState<string | null>(null);
+  const [patternOffset, setPatternOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Initialize Pyodide on mount
   useEffect(() => {
@@ -36,9 +37,16 @@ function App() {
     }
   }, [machine.resumedPattern, pesData, machine.resumeFileName]);
 
-  const handlePatternLoaded = (data: PesPatternData) => {
+  const handlePatternLoaded = useCallback((data: PesPatternData) => {
     setPesData(data);
-  };
+    // Reset pattern offset when new pattern is loaded
+    setPatternOffset({ x: 0, y: 0 });
+  }, []);
+
+  const handlePatternOffsetChange = useCallback((offsetX: number, offsetY: number) => {
+    setPatternOffset({ x: offsetX, y: offsetY });
+    console.log('[App] Pattern offset changed:', { x: offsetX, y: offsetY });
+  }, []);
 
   return (
     <div className="app">
@@ -78,6 +86,7 @@ function App() {
             onPatternLoaded={handlePatternLoaded}
             onUpload={machine.uploadPattern}
             pyodideReady={pyodideReady}
+            patternOffset={patternOffset}
           />
 
           <ProgressMonitor
@@ -97,6 +106,7 @@ function App() {
             pesData={pesData}
             sewingProgress={machine.sewingProgress}
             machineInfo={machine.machineInfo}
+            onPatternOffsetChange={handlePatternOffsetChange}
           />
         </div>
       </div>

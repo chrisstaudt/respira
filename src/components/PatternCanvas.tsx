@@ -1,284 +1,442 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import Konva from 'konva';
 import type { PesPatternData } from '../utils/pystitchConverter';
-import { getThreadColor } from '../utils/pystitchConverter';
 import type { SewingProgress, MachineInfo } from '../types/machine';
+import {
+  renderGrid,
+  renderOrigin,
+  renderHoop,
+  renderStitches,
+  renderPatternBounds,
+  renderCurrentPosition,
+  calculateInitialScale,
+} from '../utils/konvaRenderers';
 
 interface PatternCanvasProps {
   pesData: PesPatternData | null;
   sewingProgress: SewingProgress | null;
   machineInfo: MachineInfo | null;
+  onPatternOffsetChange?: (offsetX: number, offsetY: number) => void;
 }
 
-export function PatternCanvas({ pesData, sewingProgress, machineInfo }: PatternCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+export function PatternCanvas({ pesData, sewingProgress, machineInfo, onPatternOffsetChange }: PatternCanvasProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<Konva.Stage | null>(null);
+  const backgroundLayerRef = useRef<Konva.Layer | null>(null);
+  const patternLayerRef = useRef<Konva.Layer | null>(null);
+  const currentPosLayerRef = useRef<Konva.Layer | null>(null);
+  const patternGroupRef = useRef<Konva.Group | null>(null);
 
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [patternOffset, setPatternOffset] = useState({ x: 0, y: 0 });
+  const initialScaleRef = useRef<number>(1);
+  const isDraggingRef = useRef(false);
+
+  // Initialize Konva stage and layers
   useEffect(() => {
-    if (!canvasRef.current || !pesData) return;
+    if (!containerRef.current) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const container = containerRef.current;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Create stage
+    const stage = new Konva.Stage({
+      container,
+      width: container.offsetWidth,
+      height: container.offsetHeight,
+      draggable: false, // Stage itself is not draggable
+    });
 
-    const currentStitch = sewingProgress?.currentStitch || 0;
+    // Configure stage to center on embroidery origin (0,0)
+    // Simply position the stage so that (0,0) appears at the center
+    stage.position({ x: stage.width() / 2, y: stage.height() / 2 });
+
+    // Create layers
+    const backgroundLayer = new Konva.Layer();
+    const patternLayer = new Konva.Layer();
+    const currentPosLayer = new Konva.Layer();
+
+    stage.add(backgroundLayer, patternLayer, currentPosLayer);
+
+    // Store refs
+    stageRef.current = stage;
+    backgroundLayerRef.current = backgroundLayer;
+    patternLayerRef.current = patternLayer;
+    currentPosLayerRef.current = currentPosLayer;
+
+    // Set initial cursor - grab for panning
+    stage.container().style.cursor = 'grab';
+
+    // Make stage draggable for panning
+    stage.draggable(true);
+
+    // Update cursor on drag
+    stage.on('dragstart', () => {
+      stage.container().style.cursor = 'grabbing';
+    });
+
+    stage.on('dragend', () => {
+      stage.container().style.cursor = 'grab';
+    });
+
+    return () => {
+      stage.destroy();
+    };
+  }, []);
+
+  // Handle responsive resizing
+  useEffect(() => {
+    if (!containerRef.current || !stageRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        const stage = stageRef.current;
+
+        if (stage) {
+          // Keep the current pan/zoom, just update size
+          const oldWidth = stage.width();
+          const oldHeight = stage.height();
+          const oldPos = stage.position();
+
+          stage.width(width);
+          stage.height(height);
+
+          // Adjust position to maintain center point
+          stage.position({
+            x: oldPos.x + (width - oldWidth) / 2,
+            y: oldPos.y + (height - oldHeight) / 2,
+          });
+
+          stage.batchDraw();
+        }
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  // Mouse wheel zoom handler
+  const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
+    e.evt.preventDefault();
+
+    const stage = e.target.getStage();
+    if (!stage) return;
+
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+
+    const scaleBy = 1.1;
+    const direction = e.evt.deltaY > 0 ? -1 : 1;
+    let newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+
+    // Apply constraints
+    newScale = Math.max(0.1, Math.min(10, newScale));
+
+    // Zoom towards pointer
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
+
+    const newPos = {
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    };
+
+    stage.scale({ x: newScale, y: newScale });
+    stage.position(newPos);
+    setZoomLevel(newScale);
+    stage.batchDraw();
+  }, []);
+
+  // Attach wheel event handler
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    stage.on('wheel', handleWheel);
+
+    return () => {
+      stage.off('wheel', handleWheel);
+    };
+  }, [handleWheel]);
+
+  // Helper function to zoom to a specific point
+  const zoomToPoint = useCallback(
+    (point: { x: number; y: number }, newScale: number) => {
+      const stage = stageRef.current;
+      if (!stage) return;
+
+      const oldScale = stage.scaleX();
+
+      const mousePointTo = {
+        x: (point.x - stage.x()) / oldScale,
+        y: (point.y - stage.y()) / oldScale,
+      };
+
+      const newPos = {
+        x: point.x - mousePointTo.x * newScale,
+        y: point.y - mousePointTo.y * newScale,
+      };
+
+      stage.scale({ x: newScale, y: newScale });
+      stage.position(newPos);
+      setZoomLevel(newScale);
+      stage.batchDraw();
+    },
+    []
+  );
+
+  // Zoom control handlers
+  const handleZoomIn = useCallback(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const newScale = Math.min(stage.scaleX() * 1.2, 10);
+    const center = {
+      x: stage.width() / 2,
+      y: stage.height() / 2,
+    };
+
+    zoomToPoint(center, newScale);
+  }, [zoomToPoint]);
+
+  const handleZoomOut = useCallback(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const newScale = Math.max(stage.scaleX() / 1.2, 0.1);
+    const center = {
+      x: stage.width() / 2,
+      y: stage.height() / 2,
+    };
+
+    zoomToPoint(center, newScale);
+  }, [zoomToPoint]);
+
+  const handleZoomReset = useCallback(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const initialScale = initialScaleRef.current;
+
+    stage.scale({ x: initialScale, y: initialScale });
+    stage.position({ x: stage.width() / 2, y: stage.height() / 2 });
+    setZoomLevel(initialScale);
+    stage.batchDraw();
+  }, []);
+
+  // Render background layer (grid, origin, hoop)
+  useEffect(() => {
+    const layer = backgroundLayerRef.current;
+    const stage = stageRef.current;
+    if (!layer || !stage || !pesData) return;
+
+    layer.destroyChildren();
+
+    const { bounds } = pesData;
+
+    // Determine view dimensions - always fit to hoop if available, otherwise fit to pattern
+    const viewWidth = machineInfo ? machineInfo.maxWidth : bounds.maxX - bounds.minX;
+    const viewHeight = machineInfo ? machineInfo.maxHeight : bounds.maxY - bounds.minY;
+
+    // Calculate and store initial scale
+    const initialScale = calculateInitialScale(stage.width(), stage.height(), viewWidth, viewHeight);
+    initialScaleRef.current = initialScale;
+
+    // Always reset to initial scale when background is re-rendered (e.g., when pattern or hoop changes)
+    stage.scale({ x: initialScale, y: initialScale });
+    stage.position({ x: stage.width() / 2, y: stage.height() / 2 });
+    setZoomLevel(initialScale);
+
+    // Render background elements
+    const gridSize = 100; // 10mm grid (100 units in 0.1mm)
+    renderGrid(layer, gridSize, bounds, machineInfo);
+    renderOrigin(layer);
+
+    if (machineInfo) {
+      renderHoop(layer, machineInfo);
+    }
+
+    // Cache the background layer for performance
+    layer.cache();
+    layer.batchDraw();
+  }, [machineInfo, pesData, zoomLevel]);
+
+  // Render pattern layer (stitches and bounds in a draggable group)
+  // This effect only runs when the pattern changes, NOT when sewing progress changes
+  useEffect(() => {
+    const layer = patternLayerRef.current;
+    if (!layer || !pesData) return;
+
+    layer.destroyChildren();
 
     const { stitches, bounds } = pesData;
-    const { minX, maxX, minY, maxY } = bounds;
-    const patternWidth = maxX - minX;
-    const patternHeight = maxY - minY;
 
-    const padding = 40;
+    // Create a draggable group for the pattern
+    const patternGroup = new Konva.Group({
+      draggable: true,
+      x: patternOffset.x,
+      y: patternOffset.y,
+    });
 
-    // Calculate scale based on hoop size if available, otherwise pattern size
-    let scale: number;
-    let viewWidth: number;
-    let viewHeight: number;
+    // Store ref
+    patternGroupRef.current = patternGroup;
 
-    if (machineInfo) {
-      // Use hoop dimensions to determine scale
-      viewWidth = machineInfo.maxWidth;
-      viewHeight = machineInfo.maxHeight;
-    } else {
-      // Fallback to pattern dimensions
-      viewWidth = patternWidth;
-      viewHeight = patternHeight;
-    }
+    // Render pattern elements into the group (initial render with currentStitch = 0)
+    const currentStitch = sewingProgress?.currentStitch || 0;
+    renderStitches(patternGroup, stitches, pesData, currentStitch);
+    renderPatternBounds(patternGroup, bounds);
 
-    const scaleX = (canvas.width - 2 * padding) / viewWidth;
-    const scaleY = (canvas.height - 2 * padding) / viewHeight;
-    scale = Math.min(scaleX, scaleY);
+    // Handle drag events
+    patternGroup.on('dragstart', () => {
+      isDraggingRef.current = true;
+    });
 
-    // Center the view (hoop or pattern) in canvas
-    // The origin (0,0) should be at the center of the hoop
-    const offsetX = canvas.width / 2;
-    const offsetY = canvas.height / 2;
+    patternGroup.on('dragend', () => {
+      isDraggingRef.current = false;
+      const newOffset = {
+        x: patternGroup.x(),
+        y: patternGroup.y(),
+      };
+      setPatternOffset(newOffset);
 
-    // Draw grid
-    ctx.strokeStyle = '#e0e0e0';
-    ctx.lineWidth = 1;
-    const gridSize = 100; // 10mm grid (100 units in 0.1mm)
-
-    // Determine grid bounds based on hoop or pattern
-    const gridMinX = machineInfo ? -machineInfo.maxWidth / 2 : minX;
-    const gridMaxX = machineInfo ? machineInfo.maxWidth / 2 : maxX;
-    const gridMinY = machineInfo ? -machineInfo.maxHeight / 2 : minY;
-    const gridMaxY = machineInfo ? machineInfo.maxHeight / 2 : maxY;
-
-    for (let x = Math.floor(gridMinX / gridSize) * gridSize; x <= gridMaxX; x += gridSize) {
-      const canvasX = x * scale + offsetX;
-      ctx.beginPath();
-      ctx.moveTo(canvasX, padding);
-      ctx.lineTo(canvasX, canvas.height - padding);
-      ctx.stroke();
-    }
-    for (let y = Math.floor(gridMinY / gridSize) * gridSize; y <= gridMaxY; y += gridSize) {
-      const canvasY = y * scale + offsetY;
-      ctx.beginPath();
-      ctx.moveTo(padding, canvasY);
-      ctx.lineTo(canvas.width - padding, canvasY);
-      ctx.stroke();
-    }
-
-    // Draw origin
-    ctx.strokeStyle = '#888';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(offsetX - 10, offsetY);
-    ctx.lineTo(offsetX + 10, offsetY);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(offsetX, offsetY - 10);
-    ctx.lineTo(offsetX, offsetY + 10);
-    ctx.stroke();
-
-    // Draw hoop boundary (if machine info available)
-    if (machineInfo) {
-      // Machine info stores dimensions in 0.1mm units
-      const hoopWidth = machineInfo.maxWidth;
-      const hoopHeight = machineInfo.maxHeight;
-
-      // Hoop is centered at origin (0, 0)
-      const hoopLeft = -hoopWidth / 2;
-      const hoopTop = -hoopHeight / 2;
-      const hoopRight = hoopWidth / 2;
-      const hoopBottom = hoopHeight / 2;
-
-      // Draw hoop boundary
-      ctx.strokeStyle = '#2196F3';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([10, 5]);
-      ctx.strokeRect(
-        hoopLeft * scale + offsetX,
-        hoopTop * scale + offsetY,
-        hoopWidth * scale,
-        hoopHeight * scale
-      );
-
-      // Draw hoop label
-      ctx.setLineDash([]);
-      ctx.fillStyle = '#2196F3';
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillText(
-        `Hoop: ${(hoopWidth / 10).toFixed(0)} x ${(hoopHeight / 10).toFixed(0)} mm`,
-        hoopLeft * scale + offsetX + 10,
-        hoopTop * scale + offsetY + 25
-      );
-    }
-
-    // Draw stitches
-    // stitches is number[][], each stitch is [x, y, command, colorIndex]
-    const MOVE = 0x10;
-
-    ctx.lineWidth = 1.5;
-    let lastX = 0;
-    let lastY = 0;
-    let threadColor = getThreadColor(pesData, 0);
-    let currentPosX = 0;
-    let currentPosY = 0;
-
-    for (let i = 0; i < stitches.length; i++) {
-      const stitch = stitches[i];
-      const x = stitch[0] * scale + offsetX;
-      const y = stitch[1] * scale + offsetY;
-      const cmd = stitch[2];
-      const colorIndex = stitch[3]; // Color index from PyStitch
-
-      // Update thread color based on stitch's color index
-      threadColor = getThreadColor(pesData, colorIndex);
-
-      // Track current position for highlighting
-      if (i === currentStitch) {
-        currentPosX = x;
-        currentPosY = y;
+      // Notify parent component of offset change
+      if (onPatternOffsetChange) {
+        onPatternOffsetChange(newOffset.x, newOffset.y);
       }
+    });
 
-      if (i > 0) {
-        const isCompleted = i < currentStitch;
-        const isCurrent = i === currentStitch;
+    // Add visual feedback on hover
+    patternGroup.on('mouseenter', () => {
+      const stage = stageRef.current;
+      if (stage) stage.container().style.cursor = 'move';
+    });
 
-        if ((cmd & MOVE) !== 0) {
-          // Draw jump as dashed line
-          ctx.strokeStyle = isCompleted ? '#cccccc' : '#e8e8e8';
-          ctx.setLineDash([3, 3]);
-        } else {
-          // Draw stitch as solid line with actual thread color
-          // Dim pending stitches
-          if (isCompleted) {
-            ctx.strokeStyle = threadColor;
-            ctx.globalAlpha = 1.0;
-          } else {
-            ctx.strokeStyle = threadColor;
-            ctx.globalAlpha = 0.3;
-          }
-          ctx.setLineDash([]);
-        }
-
-        ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        ctx.globalAlpha = 1.0;
+    patternGroup.on('mouseleave', () => {
+      if (!isDraggingRef.current) {
+        const stage = stageRef.current;
+        if (stage) stage.container().style.cursor = 'grab';
       }
+    });
 
-      lastX = x;
-      lastY = y;
+    layer.add(patternGroup);
+    layer.batchDraw();
+  }, [pesData, onPatternOffsetChange]); // Removed sewingProgress from dependencies
+
+  // Separate effect to update stitches when sewing progress changes
+  // This only updates the stitch rendering, not the entire group
+  useEffect(() => {
+    const patternGroup = patternGroupRef.current;
+    if (!patternGroup || !pesData || isDraggingRef.current) return;
+
+    const currentStitch = sewingProgress?.currentStitch || 0;
+    const { stitches } = pesData;
+
+    // Remove old stitches group and re-render
+    const oldStitchesGroup = patternGroup.findOne('.stitches');
+    if (oldStitchesGroup) {
+      oldStitchesGroup.destroy();
     }
 
-    // Draw current position indicator
+    // Re-render stitches with updated progress
+    renderStitches(patternGroup, stitches, pesData, currentStitch);
+    patternGroup.getLayer()?.batchDraw();
+  }, [sewingProgress, pesData]);
+
+  // Separate effect to update pattern position when offset changes externally (not during drag)
+  useEffect(() => {
+    const patternGroup = patternGroupRef.current;
+    if (patternGroup && !isDraggingRef.current) {
+      patternGroup.position({ x: patternOffset.x, y: patternOffset.y });
+      patternGroup.getLayer()?.batchDraw();
+    }
+  }, [patternOffset.x, patternOffset.y]);
+
+  // Render current position layer (updates frequently, follows pattern offset)
+  useEffect(() => {
+    const layer = currentPosLayerRef.current;
+    if (!layer || !pesData) return;
+
+    layer.destroyChildren();
+
+    const currentStitch = sewingProgress?.currentStitch || 0;
+    const { stitches } = pesData;
+
     if (currentStitch > 0 && currentStitch < stitches.length) {
-      // Draw a pulsing circle at current position
-      ctx.strokeStyle = '#ff0000';
-      ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([]);
+      // Create group at pattern offset
+      const posGroup = new Konva.Group({
+        x: patternOffset.x,
+        y: patternOffset.y,
+      });
 
-      ctx.beginPath();
-      ctx.arc(currentPosX, currentPosY, 8, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.stroke();
-
-      // Draw crosshair
-      ctx.strokeStyle = '#ff0000';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(currentPosX - 12, currentPosY);
-      ctx.lineTo(currentPosX - 3, currentPosY);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(currentPosX + 12, currentPosY);
-      ctx.lineTo(currentPosX + 3, currentPosY);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(currentPosX, currentPosY - 12);
-      ctx.lineTo(currentPosX, currentPosY - 3);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(currentPosX, currentPosY + 12);
-      ctx.lineTo(currentPosX, currentPosY + 3);
-      ctx.stroke();
+      renderCurrentPosition(posGroup, currentStitch, stitches);
+      layer.add(posGroup);
     }
 
-    // Draw bounds
-    ctx.strokeStyle = '#ff0000';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
-    ctx.strokeRect(
-      minX * scale + offsetX,
-      minY * scale + offsetY,
-      patternWidth * scale,
-      patternHeight * scale
-    );
-
-    // Draw color legend using actual thread colors
-    ctx.setLineDash([]);
-    let legendY = 20;
-
-    // Draw legend for each thread
-    for (let i = 0; i < pesData.threads.length; i++) {
-      const color = getThreadColor(pesData, i);
-
-      ctx.fillStyle = color;
-      ctx.fillRect(10, legendY, 20, 20);
-      ctx.strokeStyle = '#000';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(10, legendY, 20, 20);
-
-      ctx.fillStyle = '#000';
-      ctx.font = '12px sans-serif';
-      ctx.fillText(
-        `Thread ${i + 1}`,
-        35,
-        legendY + 15
-      );
-      legendY += 25;
-    }
-
-    // Draw dimensions
-    ctx.fillStyle = '#000';
-    ctx.font = '14px sans-serif';
-    ctx.fillText(
-      `${(patternWidth / 10).toFixed(1)} x ${(patternHeight / 10).toFixed(1)} mm`,
-      canvas.width - 120,
-      canvas.height - 10
-    );
-  }, [pesData, sewingProgress, machineInfo]);
+    layer.batchDraw();
+  }, [pesData, sewingProgress, patternOffset.x, patternOffset.y]);
 
   return (
     <div className="canvas-panel">
       <h2>Pattern Preview</h2>
-      <canvas
-        ref={canvasRef}
-        width={800}
-        height={600}
-        className="pattern-canvas"
-      />
-      {!pesData && (
-        <div className="canvas-placeholder">
-          Load a PES file to preview the pattern
-        </div>
-      )}
+      <div className="canvas-container" ref={containerRef}>
+        {!pesData && (
+          <div className="canvas-placeholder">
+            Load a PES file to preview the pattern
+          </div>
+        )}
+        {pesData && (
+          <>
+            {/* Thread Legend Overlay */}
+            <div className="canvas-legend">
+              <h4>Threads</h4>
+              {pesData.threads.map((thread, index) => (
+                <div key={index} className="legend-item">
+                  <div
+                    className="legend-swatch"
+                    style={{ backgroundColor: thread.hex }}
+                  />
+                  <span className="legend-label">Thread {index + 1}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Pattern Dimensions Overlay */}
+            <div className="canvas-dimensions">
+              {((pesData.bounds.maxX - pesData.bounds.minX) / 10).toFixed(1)} x{' '}
+              {((pesData.bounds.maxY - pesData.bounds.minY) / 10).toFixed(1)} mm
+            </div>
+
+            {/* Pattern Offset Indicator */}
+            <div className="canvas-offset-info">
+              <div className="offset-label">Pattern Position:</div>
+              <div className="offset-value">
+                X: {(patternOffset.x / 10).toFixed(1)}mm, Y: {(patternOffset.y / 10).toFixed(1)}mm
+              </div>
+              <div className="offset-hint">
+                Drag pattern to move • Drag background to pan
+              </div>
+            </div>
+
+            {/* Zoom Controls Overlay */}
+            <div className="zoom-controls">
+              <button className="zoom-btn" onClick={handleZoomIn} title="Zoom In">
+                +
+              </button>
+              <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
+              <button className="zoom-btn" onClick={handleZoomOut} title="Zoom Out">
+                −
+              </button>
+              <button className="zoom-btn zoom-reset" onClick={handleZoomReset} title="Reset Zoom">
+                ⟲
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

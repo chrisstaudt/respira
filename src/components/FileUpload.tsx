@@ -8,8 +8,9 @@ interface FileUploadProps {
   machineStatus: MachineStatus;
   uploadProgress: number;
   onPatternLoaded: (pesData: PesPatternData) => void;
-  onUpload: (penData: Uint8Array, pesData: PesPatternData, fileName: string) => void;
+  onUpload: (penData: Uint8Array, pesData: PesPatternData, fileName: string, patternOffset?: { x: number; y: number }) => void;
   pyodideReady: boolean;
+  patternOffset: { x: number; y: number };
 }
 
 export function FileUpload({
@@ -19,6 +20,7 @@ export function FileUpload({
   onPatternLoaded,
   onUpload,
   pyodideReady,
+  patternOffset,
 }: FileUploadProps) {
   const [pesData, setPesData] = useState<PesPatternData | null>(null);
   const [fileName, setFileName] = useState<string>('');
@@ -55,9 +57,9 @@ export function FileUpload({
 
   const handleUpload = useCallback(() => {
     if (pesData && fileName) {
-      onUpload(pesData.penData, pesData, fileName);
+      onUpload(pesData.penData, pesData, fileName, patternOffset);
     }
-  }, [pesData, fileName, onUpload]);
+  }, [pesData, fileName, onUpload, patternOffset]);
 
   return (
     <div className="file-upload-panel">
