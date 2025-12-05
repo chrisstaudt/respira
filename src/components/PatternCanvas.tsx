@@ -36,6 +36,9 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, onPatternO
   useEffect(() => {
     if (!containerRef.current) return;
 
+    // Prevent double initialization
+    if (stageRef.current) return;
+
     const container = containerRef.current;
 
     // Create stage
@@ -78,7 +81,50 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, onPatternO
       stage.container().style.cursor = 'grab';
     });
 
+    // Mouse wheel zoom handler
+    const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
+      e.evt.preventDefault();
+
+      const oldScale = stage.scaleX();
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+
+      const scaleBy = 1.1;
+      const direction = e.evt.deltaY > 0 ? -1 : 1;
+      let newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+
+      // Apply constraints
+      newScale = Math.max(0.1, Math.min(10, newScale));
+
+      // Zoom towards pointer
+      const mousePointTo = {
+        x: (pointer.x - stage.x()) / oldScale,
+        y: (pointer.y - stage.y()) / oldScale,
+      };
+
+      const newPos = {
+        x: pointer.x - mousePointTo.x * newScale,
+        y: pointer.y - mousePointTo.y * newScale,
+      };
+
+      stage.scale({ x: newScale, y: newScale });
+      stage.position(newPos);
+      setZoomLevel(newScale);
+      stage.batchDraw();
+    };
+
+    // Attach wheel event
+    stage.on('wheel', handleWheel);
+
     return () => {
+      // Clear refs before destroying to prevent race conditions
+      stageRef.current = null;
+      backgroundLayerRef.current = null;
+      patternLayerRef.current = null;
+      currentPosLayerRef.current = null;
+      patternGroupRef.current = null;
+
+      // Destroy the stage (this removes the canvas from DOM)
       stage.destroy();
     };
   }, []);
@@ -115,53 +161,6 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, onPatternO
     resizeObserver.observe(containerRef.current);
     return () => resizeObserver.disconnect();
   }, []);
-
-  // Mouse wheel zoom handler
-  const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
-    e.evt.preventDefault();
-
-    const stage = e.target.getStage();
-    if (!stage) return;
-
-    const oldScale = stage.scaleX();
-    const pointer = stage.getPointerPosition();
-    if (!pointer) return;
-
-    const scaleBy = 1.1;
-    const direction = e.evt.deltaY > 0 ? -1 : 1;
-    let newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
-
-    // Apply constraints
-    newScale = Math.max(0.1, Math.min(10, newScale));
-
-    // Zoom towards pointer
-    const mousePointTo = {
-      x: (pointer.x - stage.x()) / oldScale,
-      y: (pointer.y - stage.y()) / oldScale,
-    };
-
-    const newPos = {
-      x: pointer.x - mousePointTo.x * newScale,
-      y: pointer.y - mousePointTo.y * newScale,
-    };
-
-    stage.scale({ x: newScale, y: newScale });
-    stage.position(newPos);
-    setZoomLevel(newScale);
-    stage.batchDraw();
-  }, []);
-
-  // Attach wheel event handler
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-
-    stage.on('wheel', handleWheel);
-
-    return () => {
-      stage.off('wheel', handleWheel);
-    };
-  }, [handleWheel]);
 
   // Helper function to zoom to a specific point
   const zoomToPoint = useCallback(
@@ -246,10 +245,12 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, onPatternO
     const initialScale = calculateInitialScale(stage.width(), stage.height(), viewWidth, viewHeight);
     initialScaleRef.current = initialScale;
 
-    // Always reset to initial scale when background is re-rendered (e.g., when pattern or hoop changes)
-    stage.scale({ x: initialScale, y: initialScale });
-    stage.position({ x: stage.width() / 2, y: stage.height() / 2 });
-    setZoomLevel(initialScale);
+    // Only set initial scale if this is the first render (zoom level is still 1)
+    if (zoomLevel === 1) {
+      stage.scale({ x: initialScale, y: initialScale });
+      stage.position({ x: stage.width() / 2, y: stage.height() / 2 });
+      setZoomLevel(initialScale);
+    }
 
     // Render background elements
     const gridSize = 100; // 10mm grid (100 units in 0.1mm)
@@ -263,7 +264,7 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, onPatternO
     // Cache the background layer for performance
     layer.cache();
     layer.batchDraw();
-  }, [machineInfo, pesData, zoomLevel]);
+  }, [machineInfo, pesData]);
 
   // Render pattern layer (stitches and bounds in a draggable group)
   // This effect only runs when the pattern changes, NOT when sewing progress changes
@@ -382,12 +383,18 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, onPatternO
   return (
     <div className="canvas-panel">
       <h2>Pattern Preview</h2>
-      <div className="canvas-container" ref={containerRef}>
+      <div className="canvas-container">
+        {/* Konva container - separate from React-managed overlays */}
+        <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'absolute' }} />
+
+        {/* Placeholder overlay when no pattern is loaded */}
         {!pesData && (
           <div className="canvas-placeholder">
             Load a PES file to preview the pattern
           </div>
         )}
+
+        {/* Pattern info overlays */}
         {pesData && (
           <>
             {/* Thread Legend Overlay */}
