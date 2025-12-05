@@ -29,7 +29,7 @@ export function useBrotherMachine() {
   const [isPolling, setIsPolling] = useState(false);
   const [resumeAvailable, setResumeAvailable] = useState(false);
   const [resumeFileName, setResumeFileName] = useState<string | null>(null);
-  const [resumedPattern, setResumedPattern] = useState<PesPatternData | null>(
+  const [resumedPattern, setResumedPattern] = useState<{ pesData: PesPatternData; patternOffset?: { x: number; y: number } } | null>(
     null,
   );
 
@@ -58,11 +58,11 @@ export function useBrotherMachine() {
       const cached = PatternCacheService.getPatternByUUID(uuidStr);
 
       if (cached) {
-        console.log("[Resume] Pattern found in cache:", cached.fileName);
+        console.log("[Resume] Pattern found in cache:", cached.fileName, "Offset:", cached.patternOffset);
         console.log("[Resume] Auto-loading cached pattern...");
         setResumeAvailable(true);
         setResumeFileName(cached.fileName);
-        setResumedPattern(cached.pesData);
+        setResumedPattern({ pesData: cached.pesData, patternOffset: cached.patternOffset });
 
         // Fetch pattern info from machine
         try {
@@ -166,7 +166,7 @@ export function useBrotherMachine() {
   }, [service, isConnected]);
 
   const loadCachedPattern =
-    useCallback(async (): Promise<PesPatternData | null> => {
+    useCallback(async (): Promise<{ pesData: PesPatternData; patternOffset?: { x: number; y: number } } | null> => {
       if (!resumeAvailable) return null;
 
       try {
@@ -177,10 +177,10 @@ export function useBrotherMachine() {
         const cached = PatternCacheService.getPatternByUUID(uuidStr);
 
         if (cached) {
-          console.log("[Resume] Loading cached pattern:", cached.fileName);
+          console.log("[Resume] Loading cached pattern:", cached.fileName, "Offset:", cached.patternOffset);
           // Refresh pattern info from machine
           await refreshPatternInfo();
-          return cached.pesData;
+          return { pesData: cached.pesData, patternOffset: cached.patternOffset };
         }
 
         return null;
@@ -212,10 +212,10 @@ export function useBrotherMachine() {
         );
         setUploadProgress(100);
 
-        // Cache the pattern with its UUID
+        // Cache the pattern with its UUID and offset
         const uuidStr = uuidToString(uuid);
-        PatternCacheService.savePattern(uuidStr, pesData, fileName);
-        console.log("[Cache] Saved pattern:", fileName, "with UUID:", uuidStr);
+        PatternCacheService.savePattern(uuidStr, pesData, fileName, patternOffset);
+        console.log("[Cache] Saved pattern:", fileName, "with UUID:", uuidStr, "Offset:", patternOffset);
 
         // Clear resume state since we just uploaded
         setResumeAvailable(false);

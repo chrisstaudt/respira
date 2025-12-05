@@ -3,33 +3,34 @@ import { Stage, Layer, Group } from 'react-konva';
 import Konva from 'konva';
 import type { PesPatternData } from '../utils/pystitchConverter';
 import type { SewingProgress, MachineInfo } from '../types/machine';
-import {
-  renderGrid,
-  renderOrigin,
-  renderHoop,
-  renderStitches,
-  renderPatternBounds,
-  calculateInitialScale,
-} from '../utils/konvaRenderers';
+import { calculateInitialScale } from '../utils/konvaRenderers';
+import { Grid, Origin, Hoop, Stitches, PatternBounds, CurrentPosition } from './KonvaComponents';
 
 interface PatternCanvasProps {
   pesData: PesPatternData | null;
   sewingProgress: SewingProgress | null;
   machineInfo: MachineInfo | null;
+  initialPatternOffset?: { x: number; y: number };
   onPatternOffsetChange?: (offsetX: number, offsetY: number) => void;
 }
 
-export function PatternCanvas({ pesData, sewingProgress, machineInfo, onPatternOffsetChange }: PatternCanvasProps) {
+export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPatternOffset, onPatternOffsetChange }: PatternCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage | null>(null);
-  const backgroundLayerRef = useRef<Konva.Layer | null>(null);
-  const patternLayerRef = useRef<Konva.Layer | null>(null);
 
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [stageScale, setStageScale] = useState(1);
-  const [patternOffset, setPatternOffset] = useState({ x: 0, y: 0 });
+  const [patternOffset, setPatternOffset] = useState(initialPatternOffset || { x: 0, y: 0 });
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const initialScaleRef = useRef<number>(1);
+
+  // Update pattern offset when initialPatternOffset changes
+  useEffect(() => {
+    if (initialPatternOffset) {
+      setPatternOffset(initialPatternOffset);
+      console.log('[PatternCanvas] Restored pattern offset:', initialPatternOffset);
+    }
+  }, [initialPatternOffset]);
 
   // Track container size
   useEffect(() => {
@@ -166,61 +167,6 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, onPatternO
     }
   }, [onPatternOffsetChange]);
 
-  const handlePatternDragMove = useCallback(() => {
-    // Just for visual feedback during drag
-  }, []);
-
-  // Render background layer content
-  const renderBackgroundLayer = useCallback((layer: Konva.Layer) => {
-    if (!pesData) return;
-
-    layer.destroyChildren();
-
-    const { bounds } = pesData;
-    const gridSize = 100; // 10mm grid (100 units in 0.1mm)
-
-    renderGrid(layer, gridSize, bounds, machineInfo);
-    renderOrigin(layer);
-
-    if (machineInfo) {
-      renderHoop(layer, machineInfo);
-    }
-
-    layer.batchDraw();
-  }, [pesData, machineInfo]);
-
-  // Render pattern layer content
-  const renderPatternLayer = useCallback((layer: Konva.Layer, group: Konva.Group) => {
-    if (!pesData) return;
-
-    group.destroyChildren();
-
-    const currentStitch = sewingProgress?.currentStitch || 0;
-    const { stitches, bounds } = pesData;
-
-    renderStitches(group, stitches, pesData, currentStitch);
-    renderPatternBounds(group, bounds);
-
-    layer.batchDraw();
-  }, [pesData, sewingProgress]);
-
-  // Update background layer when deps change
-  useEffect(() => {
-    if (backgroundLayerRef.current) {
-      renderBackgroundLayer(backgroundLayerRef.current);
-    }
-  }, [renderBackgroundLayer]);
-
-  // Update pattern layer when deps change
-  useEffect(() => {
-    if (patternLayerRef.current) {
-      const patternGroup = patternLayerRef.current.findOne('.pattern-group') as Konva.Group;
-      if (patternGroup) {
-        renderPatternLayer(patternLayerRef.current, patternGroup);
-      }
-    }
-  }, [renderPatternLayer]);
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-4 pb-2 border-b-2 border-gray-300">Pattern Preview</h2>
@@ -253,10 +199,22 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, onPatternO
           }}
         >
           {/* Background layer: grid, origin, hoop */}
-          <Layer ref={backgroundLayerRef} />
+          <Layer>
+            {pesData && (
+              <>
+                <Grid
+                  gridSize={100}
+                  bounds={pesData.bounds}
+                  machineInfo={machineInfo}
+                />
+                <Origin />
+                {machineInfo && <Hoop machineInfo={machineInfo} />}
+              </>
+            )}
+          </Layer>
 
           {/* Pattern layer: draggable stitches and bounds */}
-          <Layer ref={patternLayerRef}>
+          <Layer>
             {pesData && (
               <Group
                 name="pattern-group"
@@ -264,7 +222,6 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, onPatternO
                 x={patternOffset.x}
                 y={patternOffset.y}
                 onDragEnd={handlePatternDragEnd}
-                onDragMove={handlePatternDragMove}
                 onMouseEnter={(e) => {
                   const stage = e.target.getStage();
                   if (stage) stage.container().style.cursor = 'move';
@@ -273,14 +230,26 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, onPatternO
                   const stage = e.target.getStage();
                   if (stage) stage.container().style.cursor = 'grab';
                 }}
-              />
+              >
+                <Stitches
+                  stitches={pesData.stitches}
+                  pesData={pesData}
+                  currentStitchIndex={sewingProgress?.currentStitch || 0}
+                />
+                <PatternBounds bounds={pesData.bounds} />
+              </Group>
             )}
           </Layer>
 
           {/* Current position layer */}
           <Layer>
             {pesData && sewingProgress && sewingProgress.currentStitch > 0 && (
-              <Group x={patternOffset.x} y={patternOffset.y} />
+              <Group x={patternOffset.x} y={patternOffset.y}>
+                <CurrentPosition
+                  currentStitchIndex={sewingProgress.currentStitch}
+                  stitches={pesData.stitches}
+                />
+              </Group>
             )}
           </Layer>
         </Stage>

@@ -5,6 +5,7 @@ interface CachedPattern {
   pesData: PesPatternData;
   fileName: string;
   timestamp: number;
+  patternOffset?: { x: number; y: number };
 }
 
 const CACHE_KEY = 'brother_pattern_cache';
@@ -34,7 +35,8 @@ export class PatternCacheService {
   static savePattern(
     uuid: string,
     pesData: PesPatternData,
-    fileName: string
+    fileName: string,
+    patternOffset?: { x: number; y: number }
   ): void {
     try {
       // Convert penData Uint8Array to array for JSON serialization
@@ -48,10 +50,11 @@ export class PatternCacheService {
         pesData: pesDataWithArrayPenData,
         fileName,
         timestamp: Date.now(),
+        patternOffset,
       };
 
       localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
-      console.log('[PatternCache] Saved pattern:', fileName, 'UUID:', uuid);
+      console.log('[PatternCache] Saved pattern:', fileName, 'UUID:', uuid, 'Offset:', patternOffset);
     } catch (err) {
       console.error('[PatternCache] Failed to save pattern:', err);
       // If quota exceeded, clear and try again

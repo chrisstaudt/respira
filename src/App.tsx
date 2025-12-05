@@ -32,8 +32,12 @@ function App() {
   // Auto-load cached pattern when available
   useEffect(() => {
     if (machine.resumedPattern && !pesData) {
-      console.log('[App] Loading resumed pattern:', machine.resumeFileName);
-      setPesData(machine.resumedPattern);
+      console.log('[App] Loading resumed pattern:', machine.resumeFileName, 'Offset:', machine.resumedPattern.patternOffset);
+      setPesData(machine.resumedPattern.pesData);
+      // Restore the cached pattern offset
+      if (machine.resumedPattern.patternOffset) {
+        setPatternOffset(machine.resumedPattern.patternOffset);
+      }
     }
   }, [machine.resumedPattern, pesData, machine.resumeFileName]);
 
@@ -106,6 +110,7 @@ function App() {
             pesData={pesData}
             sewingProgress={machine.sewingProgress}
             machineInfo={machine.machineInfo}
+            initialPatternOffset={patternOffset}
             onPatternOffsetChange={handlePatternOffsetChange}
           />
         </div>
