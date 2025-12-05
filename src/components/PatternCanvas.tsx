@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Stage, Layer, Group } from 'react-konva';
 import Konva from 'konva';
+import { PlusIcon, MinusIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 import type { PesPatternData } from '../utils/pystitchConverter';
 import type { SewingProgress, MachineInfo } from '../types/machine';
 import { calculateInitialScale } from '../utils/konvaRenderers';
@@ -298,15 +299,15 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
 
             {/* Zoom Controls Overlay */}
             <div className="absolute bottom-5 right-5 flex gap-2 items-center bg-white/95 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg z-10">
-              <button className="w-8 h-8 p-0 text-lg font-bold border border-gray-300 bg-white rounded cursor-pointer transition-all flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-600/30 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleZoomIn} title="Zoom In">
-                +
+              <button className="w-8 h-8 p-1 border border-gray-300 bg-white rounded cursor-pointer transition-all flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600  hover:shadow-md hover:shadow-blue-600/30  disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleZoomIn} title="Zoom In">
+                <PlusIcon className="w-5 h-5" />
               </button>
               <span className="min-w-[50px] text-center text-[13px] font-semibold text-gray-900 select-none">{Math.round(stageScale * 100)}%</span>
-              <button className="w-8 h-8 p-0 text-lg font-bold border border-gray-300 bg-white rounded cursor-pointer transition-all flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-600/30 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleZoomOut} title="Zoom Out">
-                −
+              <button className="w-8 h-8 p-1 border border-gray-300 bg-white rounded cursor-pointer transition-all flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600  hover:shadow-md hover:shadow-blue-600/30  disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleZoomOut} title="Zoom Out">
+                <MinusIcon className="w-5 h-5" />
               </button>
-              <button className="w-8 h-8 p-0 text-xl font-bold border border-gray-300 bg-white rounded cursor-pointer transition-all flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-600/30 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed ml-1" onClick={handleZoomReset} title="Reset Zoom">
-                ⟲
+              <button className="w-8 h-8 p-1 border border-gray-300 bg-white rounded cursor-pointer transition-all flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600  hover:shadow-md hover:shadow-blue-600/30  disabled:opacity-50 disabled:cursor-not-allowed ml-1" onClick={handleZoomReset} title="Reset Zoom">
+                <ArrowPathIcon className="w-5 h-5" />
               </button>
             </div>
           </>

@@ -1,3 +1,4 @@
+import { CheckCircleIcon, ArrowRightIcon, CircleStackIcon, PlayIcon } from '@heroicons/react/24/solid';
 import type { PatternInfo, SewingProgress } from '../types/machine';
 import { MachineStatus } from '../types/machine';
 import type { PesPatternData } from '../utils/pystitchConverter';
@@ -161,9 +162,13 @@ export function ProgressMonitor({
                     <span className="font-semibold flex-1">
                       Thread {block.colorIndex + 1}
                     </span>
-                    <span className={`text-xl font-bold ${isCompleted ? 'text-green-600' : isCurrent ? 'text-blue-600' : 'text-gray-600'}`}>
-                      {isCompleted ? '✓' : isCurrent ? '→' : '○'}
-                    </span>
+                    {isCompleted ? (
+                      <CheckCircleIcon className="w-6 h-6 text-green-600" />
+                    ) : isCurrent ? (
+                      <ArrowRightIcon className="w-6 h-6 text-blue-600" />
+                    ) : (
+                      <CircleStackIcon className="w-6 h-6 text-gray-400" />
+                    )}
                     <span className="text-sm text-gray-600">
                       {block.stitchCount} stitches
                     </span>
@@ -249,12 +254,12 @@ export function ProgressMonitor({
               Mask trace complete!
             </div>
             {canStartSewing(machineStatus) && (
-              <button onClick={onStartSewing} className="px-6 py-3 bg-blue-600 text-white rounded font-semibold text-sm hover:bg-blue-700 transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]">
+              <button onClick={onStartSewing} className="px-6 py-3 bg-blue-600 text-white rounded font-semibold text-sm hover:bg-blue-700 transition-all hover:shadow-md  disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]">
                 Start Sewing
               </button>
             )}
             {canStartMaskTrace(machineStatus) && (
-              <button onClick={onStartMaskTrace} className="px-6 py-3 bg-gray-600 text-white rounded font-semibold text-sm hover:bg-gray-700 transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]">
+              <button onClick={onStartMaskTrace} className="px-6 py-3 bg-gray-600 text-white rounded font-semibold text-sm hover:bg-gray-700 transition-all hover:shadow-md  disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]">
                 Trace Again
               </button>
             )}
@@ -268,7 +273,7 @@ export function ProgressMonitor({
               Pattern uploaded successfully
             </div>
             {canStartMaskTrace(machineStatus) && (
-              <button onClick={onStartMaskTrace} className="px-6 py-3 bg-gray-600 text-white rounded font-semibold text-sm hover:bg-gray-700 transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]">
+              <button onClick={onStartMaskTrace} className="px-6 py-3 bg-gray-600 text-white rounded font-semibold text-sm hover:bg-gray-700 transition-all hover:shadow-md  disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]">
                 Start Mask Trace
               </button>
             )}
@@ -279,12 +284,12 @@ export function ProgressMonitor({
         {machineStatus === MachineStatus.SEWING_WAIT && (
           <>
             {canStartMaskTrace(machineStatus) && (
-              <button onClick={onStartMaskTrace} className="px-6 py-3 bg-gray-600 text-white rounded font-semibold text-sm hover:bg-gray-700 transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]">
+              <button onClick={onStartMaskTrace} className="px-6 py-3 bg-gray-600 text-white rounded font-semibold text-sm hover:bg-gray-700 transition-all hover:shadow-md  disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]">
                 Start Mask Trace
               </button>
             )}
             {canStartSewing(machineStatus) && (
-              <button onClick={onStartSewing} className="px-6 py-3 bg-blue-600 text-white rounded font-semibold text-sm hover:bg-blue-700 transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]">
+              <button onClick={onStartSewing} className="px-6 py-3 bg-blue-600 text-white rounded font-semibold text-sm hover:bg-blue-700 transition-all hover:shadow-md  disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]">
                 Start Sewing
               </button>
             )}
@@ -293,8 +298,9 @@ export function ProgressMonitor({
 
         {/* Resume sewing for interrupted states */}
         {canResumeSewing(machineStatus) && (
-          <button onClick={onResumeSewing} className="px-6 py-3 bg-blue-600 text-white rounded font-semibold text-sm hover:bg-blue-700 transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]">
-            ▶️ Resume Sewing
+          <button onClick={onResumeSewing} className="px-6 py-3 bg-blue-600 text-white rounded font-semibold text-sm hover:bg-blue-700 transition-all hover:shadow-md  disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3] flex items-center gap-2">
+            <PlayIcon className="w-4 h-4" />
+            Resume Sewing
           </button>
         )}
 
@@ -321,7 +327,7 @@ export function ProgressMonitor({
 
         {/* Delete pattern button - ONLY show when safe */}
         {patternInfo && canDeletePattern(machineStatus) && (
-          <button onClick={onDeletePattern} className="px-6 py-3 bg-red-600 text-white rounded font-semibold text-sm hover:bg-red-700 transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]">
+          <button onClick={onDeletePattern} className="px-6 py-3 bg-red-600 text-white rounded font-semibold text-sm hover:bg-red-700 transition-all hover:shadow-md  disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]">
             Delete Pattern
           </button>
         )}

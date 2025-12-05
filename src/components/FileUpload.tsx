@@ -74,7 +74,7 @@ export function FileUpload({
           className="hidden"
           disabled={!pyodideReady || isLoading}
         />
-        <label htmlFor="file-input" className={`inline-block px-6 py-3 bg-gray-600 text-white rounded font-semibold text-sm cursor-pointer transition-all ${!pyodideReady || isLoading ? 'opacity-50 cursor-not-allowed grayscale-[0.3]' : 'hover:bg-gray-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0'}`}>
+        <label htmlFor="file-input" className={`inline-block px-6 py-3 bg-gray-600 text-white rounded font-semibold text-sm cursor-pointer transition-all ${!pyodideReady || isLoading ? 'opacity-50 cursor-not-allowed grayscale-[0.3]' : 'hover:bg-gray-700 hover:shadow-md'}`}>
           {isLoading ? 'Loading...' : !pyodideReady ? 'Initializing...' : 'Choose PES File'}
         </label>
 
@@ -110,7 +110,7 @@ export function FileUpload({
           <button
             onClick={handleUpload}
             disabled={!isConnected || uploadProgress > 0}
-            className="mt-4 px-6 py-3 bg-blue-600 text-white rounded font-semibold text-sm hover:bg-blue-700 transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]"
+            className="mt-4 px-6 py-3 bg-blue-600 text-white rounded font-semibold text-sm hover:bg-blue-700 transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3]"
           >
             {uploadProgress > 0
               ? `Uploading... ${uploadProgress.toFixed(0)}%`
