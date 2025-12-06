@@ -234,16 +234,6 @@ export function FileUpload({
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center">Please wait while your pattern is being transferred...</p>
           </div>
         )}
-
-        {uploadProgress === 100 && (
-          <div className="mt-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-4 py-3 rounded-lg flex items-center gap-3 animate-fadeIn">
-            <CheckCircleIcon className="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-green-900 dark:text-green-200">Upload Complete!</p>
-              <p className="text-xs text-green-700 dark:text-green-300">Pattern successfully transferred to machine</p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
