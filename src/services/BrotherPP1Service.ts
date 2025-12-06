@@ -47,6 +47,29 @@ export class BrotherPP1Service {
   private readCharacteristic: BluetoothRemoteGATTCharacteristic | null = null;
   private commandQueue: Array<() => Promise<void>> = [];
   private isProcessingQueue = false;
+  private isCommunicating = false;
+  private communicationCallbacks: Set<(isCommunicating: boolean) => void> = new Set();
+
+  /**
+   * Subscribe to communication state changes
+   * @param callback Function called when communication state changes
+   * @returns Unsubscribe function
+   */
+  onCommunicationChange(callback: (isCommunicating: boolean) => void): () => void {
+    this.communicationCallbacks.add(callback);
+    // Immediately call with current state
+    callback(this.isCommunicating);
+    return () => {
+      this.communicationCallbacks.delete(callback);
+    };
+  }
+
+  private setCommunicating(value: boolean) {
+    if (this.isCommunicating !== value) {
+      this.isCommunicating = value;
+      this.communicationCallbacks.forEach(callback => callback(value));
+    }
+  }
 
   async connect(): Promise<void> {
     this.device = await navigator.bluetooth.requestDevice({
@@ -103,6 +126,7 @@ export class BrotherPP1Service {
     }
 
     this.isProcessingQueue = true;
+    this.setCommunicating(true);
 
     while (this.commandQueue.length > 0) {
       const command = this.commandQueue.shift();
@@ -117,6 +141,7 @@ export class BrotherPP1Service {
     }
 
     this.isProcessingQueue = false;
+    this.setCommunicating(false);
   }
 
   /**

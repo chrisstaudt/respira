@@ -27,7 +27,7 @@ export function useBrotherMachine() {
   );
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
-  const [isPolling, setIsPolling] = useState(false);
+  const [isCommunicating, setIsCommunicating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [resumeAvailable, setResumeAvailable] = useState(false);
@@ -35,6 +35,12 @@ export function useBrotherMachine() {
   const [resumedPattern, setResumedPattern] = useState<{ pesData: PesPatternData; patternOffset?: { x: number; y: number } } | null>(
     null,
   );
+
+  // Subscribe to service communication state
+  useEffect(() => {
+    const unsubscribe = service.onCommunicationChange(setIsCommunicating);
+    return unsubscribe;
+  }, [service]);
 
   // Define checkResume first (before connect uses it)
   const checkResume = useCallback(async (): Promise<PesPatternData | null> => {
@@ -133,14 +139,11 @@ export function useBrotherMachine() {
     if (!isConnected) return;
 
     try {
-      setIsPolling(true);
       const state = await service.getMachineState();
       setMachineStatus(state.status);
       setMachineError(state.error);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to get status");
-    } finally {
-      setIsPolling(false);
     }
   }, [service, isConnected]);
 
@@ -167,6 +170,22 @@ export function useBrotherMachine() {
       setError(err instanceof Error ? err.message : "Failed to get progress");
     }
   }, [service, isConnected]);
+
+  const refreshServiceCount = useCallback(async () => {
+    if (!isConnected || !machineInfo) return;
+
+    try {
+      const counts = await service.getServiceCount();
+      setMachineInfo({
+        ...machineInfo,
+        serviceCount: counts.serviceCount,
+        totalCount: counts.totalCount,
+      });
+    } catch (err) {
+      // Don't set error for service count failures - it's not critical
+      console.warn("Failed to get service count:", err);
+    }
+  }, [service, isConnected, machineInfo]);
 
   const loadCachedPattern =
     useCallback(async (): Promise<{ pesData: PesPatternData; patternOffset?: { x: number; y: number } } | null> => {
@@ -349,8 +368,16 @@ export function useBrotherMachine() {
       }
     }, pollInterval);
 
-    return () => clearInterval(interval);
-  }, [isConnected, machineStatus, refreshStatus, refreshProgress]);
+    // Separate interval for service count (slower update rate - every 10 seconds)
+    const serviceCountInterval = setInterval(async () => {
+      await refreshServiceCount();
+    }, 10000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(serviceCountInterval);
+    };
+  }, [isConnected, machineStatus, refreshStatus, refreshProgress, refreshServiceCount]);
 
   // Refresh pattern info when status changes to SEWING_WAIT
   // (indicates pattern was just uploaded or is ready)
@@ -372,7 +399,7 @@ export function useBrotherMachine() {
     sewingProgress,
     uploadProgress,
     error,
-    isPolling,
+    isPolling: isCommunicating,
     isUploading,
     isDeleting,
     resumeAvailable,
