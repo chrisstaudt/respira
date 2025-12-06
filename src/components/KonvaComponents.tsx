@@ -35,13 +35,17 @@ export const Grid = memo(({ gridSize, bounds, machineInfo }: GridProps) => {
     return { verticalLines, horizontalLines };
   }, [gridSize, bounds, machineInfo]);
 
+  // Detect dark mode
+  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const gridColor = isDarkMode ? '#404040' : '#e0e0e0';
+
   return (
     <Group name="grid">
       {lines.verticalLines.map((points, i) => (
         <Line
           key={`v-${i}`}
           points={points}
-          stroke="#e0e0e0"
+          stroke={gridColor}
           strokeWidth={1}
         />
       ))}
@@ -49,7 +53,7 @@ export const Grid = memo(({ gridSize, bounds, machineInfo }: GridProps) => {
         <Line
           key={`h-${i}`}
           points={points}
-          stroke="#e0e0e0"
+          stroke={gridColor}
           strokeWidth={1}
         />
       ))}
@@ -60,10 +64,13 @@ export const Grid = memo(({ gridSize, bounds, machineInfo }: GridProps) => {
 Grid.displayName = 'Grid';
 
 export const Origin = memo(() => {
+  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const originColor = isDarkMode ? '#999' : '#888';
+
   return (
     <Group name="origin">
-      <Line points={[-10, 0, 10, 0]} stroke="#888" strokeWidth={2} />
-      <Line points={[0, -10, 0, 10]} stroke="#888" strokeWidth={2} />
+      <Line points={[-10, 0, 10, 0]} stroke={originColor} strokeWidth={2} />
+      <Line points={[0, -10, 0, 10]} stroke={originColor} strokeWidth={2} />
     </Group>
   );
 });
@@ -133,9 +140,10 @@ interface StitchesProps {
   stitches: number[][];
   pesData: PesPatternData;
   currentStitchIndex: number;
+  showProgress?: boolean;
 }
 
-export const Stitches = memo(({ stitches, pesData, currentStitchIndex }: StitchesProps) => {
+export const Stitches = memo(({ stitches, pesData, currentStitchIndex, showProgress = false }: StitchesProps) => {
   const stitchGroups = useMemo(() => {
     interface StitchGroup {
       color: string;
@@ -174,7 +182,7 @@ export const Stitches = memo(({ stitches, pesData, currentStitchIndex }: Stitche
     }
 
     return groups;
-  }, [stitches, pesData, currentStitchIndex]);
+  }, [stitches, pesData, currentStitchIndex, showProgress]);
 
   return (
     <Group name="stitches">
@@ -187,7 +195,7 @@ export const Stitches = memo(({ stitches, pesData, currentStitchIndex }: Stitche
           lineCap="round"
           lineJoin="round"
           dash={group.isJump ? [3, 3] : undefined}
-          opacity={group.isJump ? 1 : (group.completed ? 1.0 : 0.3)}
+          opacity={group.isJump ? 1 : (showProgress && !group.completed ? 0.75 : 1.0)}
         />
       ))}
     </Group>

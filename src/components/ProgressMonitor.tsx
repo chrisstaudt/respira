@@ -97,41 +97,41 @@ export function ProgressMonitor({
   );
 
   const stateIndicatorColors = {
-    idle: 'bg-blue-50 border-l-blue-600',
-    info: 'bg-blue-50 border-l-blue-600',
-    active: 'bg-yellow-50 border-l-yellow-500',
-    waiting: 'bg-yellow-50 border-l-yellow-500',
-    warning: 'bg-yellow-50 border-l-yellow-500',
-    complete: 'bg-green-50 border-l-green-600',
-    success: 'bg-green-50 border-l-green-600',
-    interrupted: 'bg-red-50 border-l-red-600',
-    error: 'bg-red-50 border-l-red-600',
-    danger: 'bg-red-50 border-l-red-600',
+    idle: 'bg-blue-50 dark:bg-blue-900/20 border-l-blue-600',
+    info: 'bg-blue-50 dark:bg-blue-900/20 border-l-blue-600',
+    active: 'bg-yellow-50 dark:bg-yellow-900/20 border-l-yellow-500',
+    waiting: 'bg-yellow-50 dark:bg-yellow-900/20 border-l-yellow-500',
+    warning: 'bg-yellow-50 dark:bg-yellow-900/20 border-l-yellow-500',
+    complete: 'bg-green-50 dark:bg-green-900/20 border-l-green-600',
+    success: 'bg-green-50 dark:bg-green-900/20 border-l-green-600',
+    interrupted: 'bg-red-50 dark:bg-red-900/20 border-l-red-600',
+    error: 'bg-red-50 dark:bg-red-900/20 border-l-red-600',
+    danger: 'bg-red-50 dark:bg-red-900/20 border-l-red-600',
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 animate-fadeIn">
-      <h2 className="text-lg font-semibold mb-3 pb-2 border-b border-gray-300">Sewing Progress</h2>
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 animate-fadeIn">
+      <h2 className="text-lg font-semibold mb-3 pb-2 border-b border-gray-300 dark:border-gray-600 dark:text-white">Sewing Progress</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Left Column - Pattern Info & Progress */}
         <div>
           {patternInfo && (
-            <div className="bg-gray-50 p-3 rounded-lg mb-3">
+            <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg mb-3">
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <div>
-                  <span className="text-gray-600 block text-xs">Total Stitches</span>
-                  <span className="font-semibold text-gray-900">{patternInfo.totalStitches.toLocaleString()}</span>
+                  <span className="text-gray-600 dark:text-gray-400 block text-xs">Total Stitches</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">{patternInfo.totalStitches.toLocaleString()}</span>
                 </div>
                 <div>
-                  <span className="text-gray-600 block text-xs">Est. Time</span>
-                  <span className="font-semibold text-gray-900">
+                  <span className="text-gray-600 dark:text-gray-400 block text-xs">Est. Time</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
                     {Math.floor(patternInfo.totalTime / 60)}:{String(patternInfo.totalTime % 60).padStart(2, '0')}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600 block text-xs">Speed</span>
-                  <span className="font-semibold text-gray-900">{patternInfo.speed} spm</span>
+                  <span className="text-gray-600 dark:text-gray-400 block text-xs">Speed</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">{patternInfo.speed} spm</span>
                 </div>
               </div>
             </div>
@@ -140,23 +140,23 @@ export function ProgressMonitor({
           {sewingProgress && (
             <div className="mb-3">
               <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs font-medium text-gray-600">Progress</span>
-                <span className="text-xl font-bold text-blue-600">{progressPercent.toFixed(1)}%</span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Progress</span>
+                <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{progressPercent.toFixed(1)}%</span>
               </div>
-              <div className="h-3 bg-gray-300 rounded-md overflow-hidden shadow-inner relative mb-2">
-                <div className="h-full bg-gradient-to-r from-blue-600 to-blue-700 transition-all duration-300 ease-out relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/30 after:to-transparent after:animate-[shimmer_2s_infinite]" style={{ width: `${progressPercent}%` }} />
+              <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded-md overflow-hidden shadow-inner relative mb-2">
+                <div className="h-full bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-600 dark:to-blue-800 transition-all duration-300 ease-out relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/30 after:to-transparent after:animate-[shimmer_2s_infinite]" style={{ width: `${progressPercent}%` }} />
               </div>
 
-              <div className="bg-gray-50 p-2 rounded-lg grid grid-cols-2 gap-2 text-sm">
+              <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg grid grid-cols-2 gap-2 text-sm">
                 <div>
-                  <span className="text-gray-600 block text-xs">Current Stitch</span>
-                  <span className="font-semibold text-gray-900">
+                  <span className="text-gray-600 dark:text-gray-400 block text-xs">Current Stitch</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
                     {sewingProgress.currentStitch.toLocaleString()} / {patternInfo?.totalStitches.toLocaleString() || 0}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600 block text-xs">Time Elapsed</span>
-                  <span className="font-semibold text-gray-900">
+                  <span className="text-gray-600 dark:text-gray-400 block text-xs">Time Elapsed</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
                     {Math.floor(sewingProgress.currentTime / 60)}:{String(sewingProgress.currentTime % 60).padStart(2, '0')}
                   </span>
                 </div>
@@ -167,12 +167,12 @@ export function ProgressMonitor({
           {/* State Visual Indicator */}
           {patternInfo && (() => {
             const iconMap = {
-              ready: <ClockIcon className="w-6 h-6" />,
-              active: <PlayIcon className="w-6 h-6" />,
-              waiting: <PauseCircleIcon className="w-6 h-6" />,
-              complete: <CheckBadgeIcon className="w-6 h-6" />,
-              interrupted: <PauseCircleIcon className="w-6 h-6" />,
-              error: <ExclamationCircleIcon className="w-6 h-6" />
+              ready: <ClockIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />,
+              active: <PlayIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />,
+              waiting: <PauseCircleIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />,
+              complete: <CheckBadgeIcon className="w-6 h-6 text-green-600 dark:text-green-400" />,
+              interrupted: <PauseCircleIcon className="w-6 h-6 text-red-600 dark:text-red-400" />,
+              error: <ExclamationCircleIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
             };
 
             return (
@@ -181,8 +181,8 @@ export function ProgressMonitor({
                   {iconMap[stateVisual.iconName]}
                 </div>
                 <div className="flex-1">
-                  <div className="font-semibold text-sm">{stateVisual.label}</div>
-                  <div className="text-xs text-gray-600">{stateVisual.description}</div>
+                  <div className="font-semibold text-sm dark:text-gray-100">{stateVisual.label}</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">{stateVisual.description}</div>
                 </div>
               </div>
             );
@@ -194,7 +194,7 @@ export function ProgressMonitor({
               {canResumeSewing(machineStatus) && (
                 <button
                   onClick={onResumeSewing}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 active:bg-blue-800 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 dark:bg-blue-700 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-500 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                   aria-label="Resume sewing the current pattern"
                 >
                   <PlayIcon className="w-4 h-4" />
@@ -206,7 +206,7 @@ export function ProgressMonitor({
               {canStartSewing(machineStatus) && !canResumeSewing(machineStatus) && (
                 <button
                   onClick={onStartSewing}
-                  className="px-4 py-2.5 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 active:bg-blue-800 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2"
+                  className="px-4 py-2.5 bg-blue-600 dark:bg-blue-700 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-500 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                   aria-label="Start sewing the pattern"
                 >
                   Start Sewing
@@ -217,7 +217,7 @@ export function ProgressMonitor({
               {canStartMaskTrace(machineStatus) && (
                 <button
                   onClick={onStartMaskTrace}
-                  className="px-4 py-2.5 bg-gray-600 text-white rounded-lg font-semibold text-sm hover:bg-gray-700 active:bg-gray-800 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                  className="px-4 py-2.5 bg-gray-600 dark:bg-gray-700 text-white rounded-lg font-semibold text-sm hover:bg-gray-700 dark:hover:bg-gray-600 active:bg-gray-800 dark:active:bg-gray-500 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                   aria-label={isMaskTraceComplete ? 'Start mask trace again' : 'Start mask trace'}
                 >
                   {isMaskTraceComplete ? 'Trace Again' : 'Start Mask Trace'}
@@ -228,7 +228,7 @@ export function ProgressMonitor({
               {patternInfo && canDeletePattern(machineStatus) && (
                 <button
                   onClick={onDeletePattern}
-                  className="px-4 py-2.5 bg-red-600 text-white rounded-lg font-semibold text-sm hover:bg-red-700 active:bg-red-800 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2 ml-auto"
+                  className="px-4 py-2.5 bg-red-600 dark:bg-red-700 text-white rounded-lg font-semibold text-sm hover:bg-red-700 dark:hover:bg-red-600 active:bg-red-800 dark:active:bg-red-500 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-300 dark:focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ml-auto"
                   aria-label="Delete the current pattern from machine"
                 >
                   Delete Pattern
@@ -241,7 +241,7 @@ export function ProgressMonitor({
         <div>
           {colorBlocks.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold mb-2 text-gray-700">Color Blocks</h3>
+              <h3 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Color Blocks</h3>
               <div className="flex flex-col gap-2">
             {colorBlocks.map((block, index) => {
               const isCompleted = currentStitch >= block.endStitch;
@@ -260,10 +260,10 @@ export function ProgressMonitor({
                   key={index}
                   className={`p-3 rounded-lg border-2 transition-all duration-300 ${
                     isCompleted
-                      ? 'border-green-600 bg-green-50 hover:bg-green-100'
+                      ? 'border-green-600 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30'
                       : isCurrent
-                      ? 'border-blue-600 bg-blue-50 shadow-lg shadow-blue-600/20 animate-pulseGlow'
-                      : 'border-gray-200 bg-gray-50 opacity-70 hover:opacity-90'
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 shadow-lg shadow-blue-600/20 animate-pulseGlow'
+                      : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 opacity-70 hover:opacity-90'
                   }`}
                   role="listitem"
                   aria-label={`Thread ${block.colorIndex + 1}, ${block.stitchCount} stitches, ${isCompleted ? 'completed' : isCurrent ? 'in progress' : 'pending'}`}
@@ -271,7 +271,7 @@ export function ProgressMonitor({
                   <div className="flex items-center gap-3">
                     {/* Larger color swatch with better visibility */}
                     <div
-                      className="w-8 h-8 rounded-lg border-2 border-gray-300 shadow-md flex-shrink-0 ring-2 ring-offset-2 ring-transparent"
+                      className="w-8 h-8 rounded-lg border-2 border-gray-300 dark:border-gray-600 shadow-md flex-shrink-0 ring-2 ring-offset-2 ring-transparent dark:ring-offset-gray-800"
                       style={{
                         backgroundColor: block.threadHex,
                         ...(isCurrent && { borderColor: '#2563eb', ringColor: '#93c5fd' })
@@ -282,10 +282,10 @@ export function ProgressMonitor({
 
                     {/* Thread info */}
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm text-gray-900">
+                      <div className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                         Thread {block.colorIndex + 1}
                       </div>
-                      <div className="text-xs text-gray-600 mt-0.5">
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                         {block.stitchCount.toLocaleString()} stitches
                       </div>
                     </div>
@@ -302,9 +302,9 @@ export function ProgressMonitor({
 
                   {/* Progress bar for current block */}
                   {isCurrent && (
-                    <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="mt-2 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-blue-600 transition-all duration-300 rounded-full"
+                        className="h-full bg-blue-600 dark:bg-blue-500 transition-all duration-300 rounded-full"
                         style={{ width: `${blockProgress}%` }}
                         role="progressbar"
                         aria-valuenow={Math.round(blockProgress)}

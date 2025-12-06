@@ -14,9 +14,10 @@ interface PatternCanvasProps {
   initialPatternOffset?: { x: number; y: number };
   onPatternOffsetChange?: (offsetX: number, offsetY: number) => void;
   patternUploaded?: boolean;
+  isUploading?: boolean;
 }
 
-export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPatternOffset, onPatternOffsetChange, patternUploaded = false }: PatternCanvasProps) {
+export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPatternOffset, onPatternOffsetChange, patternUploaded = false, isUploading = false }: PatternCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage | null>(null);
 
@@ -170,9 +171,9 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
   }, [onPatternOffsetChange]);
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
-      <h2 className="text-xl font-semibold mb-4 pb-2 border-b-2 border-gray-300">Pattern Preview</h2>
-      <div className="relative w-full h-[600px] border border-gray-300 rounded bg-gray-50 overflow-hidden" ref={containerRef}>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
+      <h2 className="text-xl font-semibold mb-4 pb-2 border-b-2 border-gray-300 dark:border-gray-600 dark:text-white">Pattern Preview</h2>
+      <div className="relative w-full h-[600px] border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-900 overflow-hidden" ref={containerRef}>
         {containerSize.width > 0 && (
           <Stage
             width={containerSize.width}
@@ -220,23 +221,24 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
             {pesData && (
               <Group
                 name="pattern-group"
-                draggable={!patternUploaded}
+                draggable={!patternUploaded && !isUploading}
                 x={patternOffset.x}
                 y={patternOffset.y}
                 onDragEnd={handlePatternDragEnd}
                 onMouseEnter={(e) => {
                   const stage = e.target.getStage();
-                  if (stage && !patternUploaded) stage.container().style.cursor = 'move';
+                  if (stage && !patternUploaded && !isUploading) stage.container().style.cursor = 'move';
                 }}
                 onMouseLeave={(e) => {
                   const stage = e.target.getStage();
-                  if (stage && !patternUploaded) stage.container().style.cursor = 'grab';
+                  if (stage && !patternUploaded && !isUploading) stage.container().style.cursor = 'grab';
                 }}
               >
                 <Stitches
                   stitches={pesData.stitches}
                   pesData={pesData}
                   currentStitchIndex={sewingProgress?.currentStitch || 0}
+                  showProgress={patternUploaded || isUploading}
                 />
                 <PatternBounds bounds={pesData.bounds} />
               </Group>
@@ -259,7 +261,7 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
 
         {/* Placeholder overlay when no pattern is loaded */}
         {!pesData && (
-          <div className="flex items-center justify-center h-[600px] text-gray-600 italic">
+          <div className="flex items-center justify-center h-[600px] text-gray-600 dark:text-gray-400 italic">
             Load a PES file to preview the pattern
           </div>
         )}
@@ -268,57 +270,57 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
         {pesData && (
           <>
             {/* Thread Legend Overlay */}
-            <div className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg z-10 max-w-[150px]">
-              <h4 className="m-0 mb-2 text-[13px] font-semibold text-gray-900 border-b border-gray-300 pb-1.5">Threads</h4>
+            <div className="absolute top-2.5 left-2.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-3 rounded-lg shadow-lg z-10 max-w-[150px]">
+              <h4 className="m-0 mb-2 text-[13px] font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-300 dark:border-gray-600 pb-1.5">Threads</h4>
               {pesData.threads.map((thread, index) => (
                 <div key={index} className="flex items-center gap-2 mb-1.5 last:mb-0">
                   <div
-                    className="w-5 h-5 rounded border border-black flex-shrink-0"
+                    className="w-5 h-5 rounded border border-black dark:border-gray-300 flex-shrink-0"
                     style={{ backgroundColor: thread.hex }}
                   />
-                  <span className="text-xs text-gray-900">Thread {index + 1}</span>
+                  <span className="text-xs text-gray-900 dark:text-gray-100">Thread {index + 1}</span>
                 </div>
               ))}
             </div>
 
             {/* Pattern Dimensions Overlay */}
-            <div className="absolute bottom-[165px] right-5 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg z-[11] text-sm font-semibold text-gray-900">
+            <div className="absolute bottom-[165px] right-5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg z-[11] text-sm font-semibold text-gray-900 dark:text-gray-100">
               {((pesData.bounds.maxX - pesData.bounds.minX) / 10).toFixed(1)} x{' '}
               {((pesData.bounds.maxY - pesData.bounds.minY) / 10).toFixed(1)} mm
             </div>
 
             {/* Pattern Offset Indicator */}
             <div className={`absolute bottom-20 right-5 backdrop-blur-sm p-2.5 px-3.5 rounded-lg shadow-lg z-[11] min-w-[180px] transition-colors ${
-              patternUploaded ? 'bg-amber-50/95 border-2 border-amber-300' : 'bg-white/95'
+              patternUploaded ? 'bg-amber-50/95 dark:bg-amber-900/80 border-2 border-amber-300 dark:border-amber-600' : 'bg-white/95 dark:bg-gray-800/95'
             }`}>
               <div className="flex items-center justify-between mb-1">
-                <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider">Pattern Position:</div>
+                <div className="text-[11px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Pattern Position:</div>
                 {patternUploaded && (
-                  <div className="flex items-center gap-1 text-amber-600">
+                  <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
                     <LockClosedIcon className="w-3.5 h-3.5" />
                     <span className="text-[10px] font-bold">LOCKED</span>
                   </div>
                 )}
               </div>
-              <div className="text-[13px] font-semibold text-blue-600 mb-1">
+              <div className="text-[13px] font-semibold text-blue-600 dark:text-blue-400 mb-1">
                 X: {(patternOffset.x / 10).toFixed(1)}mm, Y: {(patternOffset.y / 10).toFixed(1)}mm
               </div>
-              <div className="text-[10px] text-gray-600 italic">
+              <div className="text-[10px] text-gray-600 dark:text-gray-400 italic">
                 {patternUploaded ? 'Pattern locked • Drag background to pan' : 'Drag pattern to move • Drag background to pan'}
               </div>
             </div>
 
             {/* Zoom Controls Overlay */}
-            <div className="absolute bottom-5 right-5 flex gap-2 items-center bg-white/95 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg z-10">
-              <button className="w-8 h-8 p-1 border border-gray-300 bg-white rounded cursor-pointer transition-all flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600  hover:shadow-md hover:shadow-blue-600/30  disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleZoomIn} title="Zoom In">
-                <PlusIcon className="w-5 h-5" />
+            <div className="absolute bottom-5 right-5 flex gap-2 items-center bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg z-10">
+              <button className="w-8 h-8 p-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded cursor-pointer transition-all flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600 dark:hover:border-blue-600 hover:shadow-md hover:shadow-blue-600/30 disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleZoomIn} title="Zoom In">
+                <PlusIcon className="w-5 h-5 dark:text-gray-200" />
               </button>
-              <span className="min-w-[50px] text-center text-[13px] font-semibold text-gray-900 select-none">{Math.round(stageScale * 100)}%</span>
-              <button className="w-8 h-8 p-1 border border-gray-300 bg-white rounded cursor-pointer transition-all flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600  hover:shadow-md hover:shadow-blue-600/30  disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleZoomOut} title="Zoom Out">
-                <MinusIcon className="w-5 h-5" />
+              <span className="min-w-[50px] text-center text-[13px] font-semibold text-gray-900 dark:text-gray-100 select-none">{Math.round(stageScale * 100)}%</span>
+              <button className="w-8 h-8 p-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded cursor-pointer transition-all flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600 dark:hover:border-blue-600 hover:shadow-md hover:shadow-blue-600/30 disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleZoomOut} title="Zoom Out">
+                <MinusIcon className="w-5 h-5 dark:text-gray-200" />
               </button>
-              <button className="w-8 h-8 p-1 border border-gray-300 bg-white rounded cursor-pointer transition-all flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600  hover:shadow-md hover:shadow-blue-600/30  disabled:opacity-50 disabled:cursor-not-allowed ml-1" onClick={handleZoomReset} title="Reset Zoom">
-                <ArrowPathIcon className="w-5 h-5" />
+              <button className="w-8 h-8 p-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded cursor-pointer transition-all flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600 dark:hover:border-blue-600 hover:shadow-md hover:shadow-blue-600/30 disabled:opacity-50 disabled:cursor-not-allowed ml-1" onClick={handleZoomReset} title="Reset Zoom">
+                <ArrowPathIcon className="w-5 h-5 dark:text-gray-200" />
               </button>
             </div>
           </>

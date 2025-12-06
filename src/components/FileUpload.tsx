@@ -76,21 +76,21 @@ export function FileUpload({
   }, [pesData, displayFileName, onUpload, patternOffset]);
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
-      <h2 className="text-xl font-semibold mb-4 pb-2 border-b-2 border-gray-300">Pattern File</h2>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
+      <h2 className="text-xl font-semibold mb-4 pb-2 border-b-2 border-gray-300 dark:border-gray-600 dark:text-white">Pattern File</h2>
 
       <div>
         {resumeAvailable && resumeFileName && (
-          <div className="bg-green-50 border border-green-200 px-4 py-3 rounded mb-4">
-            <p className="text-sm text-green-800">
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-4 py-3 rounded mb-4">
+            <p className="text-sm text-green-800 dark:text-green-200">
               <strong>Loaded cached pattern:</strong> "{resumeFileName}"
             </p>
           </div>
         )}
 
         {patternUploaded && (
-          <div className="bg-blue-50 border border-blue-200 px-4 py-3 rounded mb-4">
-            <p className="text-sm text-blue-800">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-4 py-3 rounded mb-4">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
               <strong>Pattern uploaded successfully!</strong> The pattern is now locked and cannot be changed.
               To upload a different pattern, you must first complete or delete the current one.
             </p>
@@ -107,10 +107,10 @@ export function FileUpload({
         />
         <label
           htmlFor="file-input"
-          className={`inline-flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold text-sm transition-all ${
+          className={`inline-flex items-center gap-2 px-6 py-3 bg-gray-600 dark:bg-gray-700 text-white rounded-lg font-semibold text-sm transition-all ${
             !pyodideReady || isLoading || patternUploaded
               ? 'opacity-50 cursor-not-allowed grayscale-[0.3]'
-              : 'cursor-pointer hover:bg-gray-700 hover:shadow-lg active:scale-[0.98]'
+              : 'cursor-pointer hover:bg-gray-700 dark:hover:bg-gray-600 hover:shadow-lg active:scale-[0.98]'
           }`}
         >
           {isLoading ? (
@@ -143,36 +143,36 @@ export function FileUpload({
 
         {!isLoading && pesData && (
           <div className="mt-4 animate-fadeIn">
-            <h3 className="text-base font-semibold my-4">Pattern Information</h3>
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg space-y-3 border border-gray-200 shadow-sm">
+            <h3 className="text-base font-semibold my-4 dark:text-white">Pattern Information</h3>
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700/50 dark:to-gray-800/50 p-4 rounded-lg space-y-3 border border-gray-200 dark:border-gray-600 shadow-sm">
               <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-700">File Name:</span>
-                <span className="font-semibold text-gray-900 text-right max-w-[200px] truncate" title={displayFileName}>
+                <span className="font-medium text-gray-700 dark:text-gray-300">File Name:</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100 text-right max-w-[200px] truncate" title={displayFileName}>
                   {displayFileName}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-700">Pattern Size:</span>
-                <span className="font-semibold text-gray-900">
+                <span className="font-medium text-gray-700 dark:text-gray-300">Pattern Size:</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
                   {((pesData.bounds.maxX - pesData.bounds.minX) / 10).toFixed(1)} x{' '}
                   {((pesData.bounds.maxY - pesData.bounds.minY) / 10).toFixed(1)} mm
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-700">Thread Colors:</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">Thread Colors:</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-900">{pesData.colorCount}</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">{pesData.colorCount}</span>
                   <div className="flex gap-1">
                     {pesData.threads.slice(0, 5).map((thread, idx) => (
                       <div
                         key={idx}
-                        className="w-4 h-4 rounded-full border border-gray-300 shadow-sm"
+                        className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 shadow-sm"
                         style={{ backgroundColor: thread.hex }}
                         title={`Thread ${idx + 1}: ${thread.hex}`}
                       />
                     ))}
                     {pesData.colorCount > 5 && (
-                      <div className="w-4 h-4 rounded-full bg-gray-300 border border-gray-400 flex items-center justify-center text-[8px] font-bold text-gray-600">
+                      <div className="w-4 h-4 rounded-full bg-gray-300 dark:bg-gray-600 border border-gray-400 dark:border-gray-500 flex items-center justify-center text-[8px] font-bold text-gray-600 dark:text-gray-300">
                         +{pesData.colorCount - 5}
                       </div>
                     )}
@@ -180,8 +180,8 @@ export function FileUpload({
                 </div>
               </div>
               <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-700">Total Stitches:</span>
-                <span className="font-semibold text-gray-900">{pesData.stitchCount.toLocaleString()}</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">Total Stitches:</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">{pesData.stitchCount.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -191,7 +191,7 @@ export function FileUpload({
           <button
             onClick={handleUpload}
             disabled={!isConnected || uploadProgress > 0}
-            className="mt-4 inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 active:bg-blue-800 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 disabled:hover:shadow-none disabled:active:scale-100"
+            className="mt-4 inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 dark:bg-blue-700 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-500 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 disabled:hover:shadow-none disabled:active:scale-100"
             aria-label={uploadProgress > 0 ? `Uploading pattern: ${uploadProgress.toFixed(0)}% complete` : 'Upload pattern to machine'}
           >
             {uploadProgress > 0 ? (
@@ -212,7 +212,7 @@ export function FileUpload({
         )}
 
         {pesData && !canUploadPattern(machineStatus) && (
-          <div className="bg-yellow-100 text-yellow-800 px-4 py-3 rounded-lg border border-yellow-200 my-4 font-medium animate-fadeIn">
+          <div className="bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 px-4 py-3 rounded-lg border border-yellow-200 dark:border-yellow-800 my-4 font-medium animate-fadeIn">
             Cannot upload pattern while machine is {getMachineStateCategory(machineStatus)}
           </div>
         )}
@@ -220,25 +220,25 @@ export function FileUpload({
         {uploadProgress > 0 && uploadProgress < 100 && (
           <div className="mt-4 animate-fadeIn">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-gray-700">Uploading to Machine</span>
-              <span className="text-sm font-bold text-blue-600">{uploadProgress.toFixed(1)}%</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Uploading to Machine</span>
+              <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{uploadProgress.toFixed(1)}%</span>
             </div>
-            <div className="h-3 bg-gray-300 rounded-full overflow-hidden shadow-inner relative">
+            <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden shadow-inner relative">
               <div
-                className="h-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 transition-all duration-300 ease-out relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/30 after:to-transparent after:animate-[shimmer_2s_infinite] rounded-full"
+                className="h-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 dark:from-blue-600 dark:via-blue-700 dark:to-blue-800 transition-all duration-300 ease-out relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/30 after:to-transparent after:animate-[shimmer_2s_infinite] rounded-full"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
-            <p className="text-xs text-gray-600 mt-2 text-center">Please wait while your pattern is being transferred...</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center">Please wait while your pattern is being transferred...</p>
           </div>
         )}
 
         {uploadProgress === 100 && (
-          <div className="mt-4 bg-green-50 border border-green-200 px-4 py-3 rounded-lg flex items-center gap-3 animate-fadeIn">
-            <CheckCircleIcon className="w-6 h-6 text-green-600 flex-shrink-0" />
+          <div className="mt-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-4 py-3 rounded-lg flex items-center gap-3 animate-fadeIn">
+            <CheckCircleIcon className="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-green-900">Upload Complete!</p>
-              <p className="text-xs text-green-700">Pattern successfully transferred to machine</p>
+              <p className="text-sm font-semibold text-green-900 dark:text-green-200">Upload Complete!</p>
+              <p className="text-xs text-green-700 dark:text-green-300">Pattern successfully transferred to machine</p>
             </div>
           </div>
         )}
