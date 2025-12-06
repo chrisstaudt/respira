@@ -277,10 +277,30 @@ export function useBrotherMachine() {
 
     try {
       setError(null);
+
+      // Delete pattern from cache to prevent auto-resume
+      try {
+        const machineUuid = await service.getPatternUUID();
+        if (machineUuid) {
+          const uuidStr = uuidToString(machineUuid);
+          PatternCacheService.deletePattern(uuidStr);
+          console.log("[Cache] Deleted pattern with UUID:", uuidStr);
+        }
+      } catch (err) {
+        console.warn("[Cache] Failed to get UUID for cache deletion:", err);
+      }
+
       await service.deletePattern();
+
+      // Clear machine-related state but keep pattern data in UI for re-editing
       setPatternInfo(null);
       setSewingProgress(null);
       setUploadProgress(0); // Reset upload progress to allow new uploads
+      setResumeAvailable(false);
+      setResumeFileName(null);
+      // NOTE: We intentionally DON'T clear setResumedPattern(null)
+      // so the pattern remains visible in the canvas for re-editing
+
       await refreshStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete pattern");
@@ -314,7 +334,7 @@ export function useBrotherMachine() {
     const interval = setInterval(async () => {
       await refreshStatus();
 
-      // Also refresh progress during sewing
+      // Refresh progress during sewing
       if (machineStatus === MachineStatus.SEWING) {
         await refreshProgress();
       }

@@ -62,7 +62,7 @@ export function MachineConnection({
   const errorInfo = (isConnected && hasError(machineError)) ? getErrorDetails(machineError) : null;
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
       <div className="flex items-center justify-between mb-4 pb-2 border-b-2 border-gray-300">
         <h2 className="text-xl font-semibold">Machine Connection</h2>
         <div className="flex items-center gap-3">

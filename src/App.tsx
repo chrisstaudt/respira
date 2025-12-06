@@ -66,7 +66,8 @@ function App() {
   const handleDeletePattern = useCallback(async () => {
     await machine.deletePattern();
     setPatternUploaded(false);
-    setPesData(null);
+    // NOTE: We intentionally DON'T clear setPesData(null) here
+    // so the pattern remains visible in the canvas for re-editing and re-uploading
   }, [machine]);
 
   // Track pattern uploaded state based on machine status
@@ -87,7 +88,7 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-3 shadow-lg">
+      <header className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 px-8 py-3 shadow-lg border-b-2 border-blue-900/20">
         <div className="max-w-[1600px] mx-auto flex items-center gap-8">
           <h1 className="text-xl font-bold text-white whitespace-nowrap">SKiTCH Controller</h1>
 
@@ -108,18 +109,38 @@ function App() {
       <div className="flex-1 p-6 max-w-[1600px] w-full mx-auto">
         {/* Global errors */}
         {machine.error && (
-          <div className="bg-red-100 text-red-900 px-6 py-4 rounded-lg border-l-4 border-red-600 mb-6 shadow-md">
-            <strong>Error:</strong> {machine.error}
+          <div className="bg-red-50 text-red-900 px-6 py-4 rounded-lg border-l-4 border-red-600 mb-6 shadow-md hover:shadow-lg transition-shadow animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div>
+                <strong className="font-semibold">Error:</strong> {machine.error}
+              </div>
+            </div>
           </div>
         )}
         {pyodideError && (
-          <div className="bg-red-100 text-red-900 px-6 py-4 rounded-lg border-l-4 border-red-600 mb-6 shadow-md">
-            <strong>Python Error:</strong> {pyodideError}
+          <div className="bg-red-50 text-red-900 px-6 py-4 rounded-lg border-l-4 border-red-600 mb-6 shadow-md hover:shadow-lg transition-shadow animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <strong className="font-semibold">Python Error:</strong> {pyodideError}
+              </div>
+            </div>
           </div>
         )}
         {!pyodideReady && !pyodideError && (
-          <div className="bg-blue-100 text-blue-900 px-6 py-4 rounded-lg border-l-4 border-blue-600 mb-6 shadow-md">
-            Initializing Python environment...
+          <div className="bg-blue-50 text-blue-900 px-6 py-4 rounded-lg border-l-4 border-blue-600 mb-6 shadow-md animate-fadeIn">
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span className="font-medium">Initializing Python environment...</span>
+            </div>
           </div>
         )}
 
@@ -177,17 +198,48 @@ function App() {
                 machineInfo={machine.machineInfo}
                 initialPatternOffset={patternOffset}
                 onPatternOffsetChange={handlePatternOffsetChange}
+                patternUploaded={patternUploaded}
               />
             ) : (
-              <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="bg-white p-6 rounded-lg shadow-md animate-fadeIn">
                 <h2 className="text-xl font-semibold mb-4 pb-2 border-b-2 border-gray-300">Pattern Preview</h2>
-                <div className="flex items-center justify-center h-[600px] bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <div className="text-center">
-                    <svg className="w-24 h-24 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    <p className="text-gray-600 text-lg mb-2">No Pattern Loaded</p>
-                    <p className="text-gray-500 text-sm">Connect to your machine and choose a PES file to begin</p>
+                <div className="flex items-center justify-center h-[600px] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300 relative overflow-hidden">
+                  {/* Decorative background pattern */}
+                  <div className="absolute inset-0 opacity-5">
+                    <div className="absolute top-10 left-10 w-32 h-32 border-4 border-gray-400 rounded-full"></div>
+                    <div className="absolute bottom-10 right-10 w-40 h-40 border-4 border-gray-400 rounded-full"></div>
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-4 border-gray-400 rounded-full"></div>
+                  </div>
+
+                  <div className="text-center relative z-10">
+                    <div className="relative inline-block mb-6">
+                      <svg className="w-28 h-28 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                      </div>
+                    </div>
+                    <h3 className="text-gray-700 text-xl font-semibold mb-2">No Pattern Loaded</h3>
+                    <p className="text-gray-500 text-sm mb-4 max-w-sm mx-auto">
+                      Connect to your machine and choose a PES embroidery file to see your design preview
+                    </p>
+                    <div className="flex items-center justify-center gap-6 text-xs text-gray-400">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                        <span>Drag to Position</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span>Zoom & Pan</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                        <span>Real-time Preview</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

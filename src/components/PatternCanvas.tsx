@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Stage, Layer, Group } from 'react-konva';
 import Konva from 'konva';
-import { PlusIcon, MinusIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
+import { PlusIcon, MinusIcon, ArrowPathIcon, LockClosedIcon } from '@heroicons/react/24/solid';
 import type { PesPatternData } from '../utils/pystitchConverter';
 import type { SewingProgress, MachineInfo } from '../types/machine';
 import { calculateInitialScale } from '../utils/konvaRenderers';
@@ -13,9 +13,10 @@ interface PatternCanvasProps {
   machineInfo: MachineInfo | null;
   initialPatternOffset?: { x: number; y: number };
   onPatternOffsetChange?: (offsetX: number, offsetY: number) => void;
+  patternUploaded?: boolean;
 }
 
-export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPatternOffset, onPatternOffsetChange }: PatternCanvasProps) {
+export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPatternOffset, onPatternOffsetChange, patternUploaded = false }: PatternCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage | null>(null);
 
@@ -169,7 +170,7 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
   }, [onPatternOffsetChange]);
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
       <h2 className="text-xl font-semibold mb-4 pb-2 border-b-2 border-gray-300">Pattern Preview</h2>
       <div className="relative w-full h-[600px] border border-gray-300 rounded bg-gray-50 overflow-hidden" ref={containerRef}>
         {containerSize.width > 0 && (
@@ -219,17 +220,17 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
             {pesData && (
               <Group
                 name="pattern-group"
-                draggable
+                draggable={!patternUploaded}
                 x={patternOffset.x}
                 y={patternOffset.y}
                 onDragEnd={handlePatternDragEnd}
                 onMouseEnter={(e) => {
                   const stage = e.target.getStage();
-                  if (stage) stage.container().style.cursor = 'move';
+                  if (stage && !patternUploaded) stage.container().style.cursor = 'move';
                 }}
                 onMouseLeave={(e) => {
                   const stage = e.target.getStage();
-                  if (stage) stage.container().style.cursor = 'grab';
+                  if (stage && !patternUploaded) stage.container().style.cursor = 'grab';
                 }}
               >
                 <Stitches
@@ -287,13 +288,23 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
             </div>
 
             {/* Pattern Offset Indicator */}
-            <div className="absolute bottom-20 right-5 bg-white/95 backdrop-blur-sm p-2.5 px-3.5 rounded-lg shadow-lg z-[11] min-w-[180px]">
-              <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider mb-1">Pattern Position:</div>
+            <div className={`absolute bottom-20 right-5 backdrop-blur-sm p-2.5 px-3.5 rounded-lg shadow-lg z-[11] min-w-[180px] transition-colors ${
+              patternUploaded ? 'bg-amber-50/95 border-2 border-amber-300' : 'bg-white/95'
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider">Pattern Position:</div>
+                {patternUploaded && (
+                  <div className="flex items-center gap-1 text-amber-600">
+                    <LockClosedIcon className="w-3.5 h-3.5" />
+                    <span className="text-[10px] font-bold">LOCKED</span>
+                  </div>
+                )}
+              </div>
               <div className="text-[13px] font-semibold text-blue-600 mb-1">
                 X: {(patternOffset.x / 10).toFixed(1)}mm, Y: {(patternOffset.y / 10).toFixed(1)}mm
               </div>
               <div className="text-[10px] text-gray-600 italic">
-                Drag pattern to move • Drag background to pan
+                {patternUploaded ? 'Pattern locked • Drag background to pan' : 'Drag pattern to move • Drag background to pan'}
               </div>
             </div>
 

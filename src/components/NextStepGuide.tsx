@@ -28,7 +28,7 @@ export function NextStepGuide({
     // Check if this is informational (like initialization steps) vs a real error
     if (errorDetails?.isInformational) {
       return (
-        <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg shadow-md">
+        <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg shadow-md animate-fadeIn">
           <div className="flex items-start gap-4">
             <InformationCircleIcon className="w-8 h-8 text-blue-600 flex-shrink-0 mt-1" />
             <div className="flex-1">
@@ -56,7 +56,7 @@ export function NextStepGuide({
 
     // Regular error display for actual errors
     return (
-      <div className="bg-red-50 border-l-4 border-red-600 p-6 rounded-lg shadow-md">
+      <div className="bg-red-50 border-l-4 border-red-600 p-6 rounded-lg shadow-md animate-fadeIn">
         <div className="flex items-start gap-4">
           <ExclamationTriangleIcon className="w-8 h-8 text-red-600 flex-shrink-0 mt-1" />
           <div className="flex-1">
@@ -90,7 +90,7 @@ export function NextStepGuide({
   // Determine what to show based on current state
   if (!isConnected) {
     return (
-      <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg shadow-md">
+      <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg shadow-md animate-fadeIn">
         <div className="flex items-start gap-4">
           <InformationCircleIcon className="w-8 h-8 text-blue-600 flex-shrink-0 mt-1" />
           <div className="flex-1">
@@ -109,7 +109,7 @@ export function NextStepGuide({
 
   if (!hasPattern) {
     return (
-      <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg shadow-md">
+      <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg shadow-md animate-fadeIn">
         <div className="flex items-start gap-4">
           <InformationCircleIcon className="w-8 h-8 text-blue-600 flex-shrink-0 mt-1" />
           <div className="flex-1">
@@ -129,7 +129,7 @@ export function NextStepGuide({
 
   if (!patternUploaded) {
     return (
-      <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg shadow-md">
+      <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg shadow-md animate-fadeIn">
         <div className="flex items-start gap-4">
           <InformationCircleIcon className="w-8 h-8 text-blue-600 flex-shrink-0 mt-1" />
           <div className="flex-1">
@@ -169,7 +169,7 @@ export function NextStepGuide({
 
     case MachineStatus.MASK_TRACE_LOCK_WAIT:
       return (
-        <div className="bg-yellow-50 border-l-4 border-yellow-600 p-6 rounded-lg shadow-md">
+        <div className="bg-yellow-50 border-l-4 border-yellow-600 p-6 rounded-lg shadow-md animate-fadeIn">
           <div className="flex items-start gap-4">
             <InformationCircleIcon className="w-8 h-8 text-yellow-600 flex-shrink-0 mt-1" />
             <div className="flex-1">
@@ -187,7 +187,7 @@ export function NextStepGuide({
 
     case MachineStatus.MASK_TRACING:
       return (
-        <div className="bg-cyan-50 border-l-4 border-cyan-600 p-6 rounded-lg shadow-md">
+        <div className="bg-cyan-50 border-l-4 border-cyan-600 p-6 rounded-lg shadow-md animate-fadeIn">
           <div className="flex items-start gap-4">
             <InformationCircleIcon className="w-8 h-8 text-cyan-600 flex-shrink-0 mt-1" />
             <div className="flex-1">
@@ -206,7 +206,7 @@ export function NextStepGuide({
     case MachineStatus.MASK_TRACE_COMPLETE:
     case MachineStatus.SEWING_WAIT:
       return (
-        <div className="bg-green-50 border-l-4 border-green-600 p-6 rounded-lg shadow-md">
+        <div className="bg-green-50 border-l-4 border-green-600 p-6 rounded-lg shadow-md animate-fadeIn">
           <div className="flex items-start gap-4">
             <InformationCircleIcon className="w-8 h-8 text-green-600 flex-shrink-0 mt-1" />
             <div className="flex-1">
@@ -224,7 +224,7 @@ export function NextStepGuide({
 
     case MachineStatus.SEWING:
       return (
-        <div className="bg-cyan-50 border-l-4 border-cyan-600 p-6 rounded-lg shadow-md">
+        <div className="bg-cyan-50 border-l-4 border-cyan-600 p-6 rounded-lg shadow-md animate-fadeIn">
           <div className="flex items-start gap-4">
             <InformationCircleIcon className="w-8 h-8 text-cyan-600 flex-shrink-0 mt-1" />
             <div className="flex-1">
@@ -242,7 +242,7 @@ export function NextStepGuide({
 
     case MachineStatus.COLOR_CHANGE_WAIT:
       return (
-        <div className="bg-yellow-50 border-l-4 border-yellow-600 p-6 rounded-lg shadow-md">
+        <div className="bg-yellow-50 border-l-4 border-yellow-600 p-6 rounded-lg shadow-md animate-fadeIn">
           <div className="flex items-start gap-4">
             <InformationCircleIcon className="w-8 h-8 text-yellow-600 flex-shrink-0 mt-1" />
             <div className="flex-1">
@@ -262,7 +262,7 @@ export function NextStepGuide({
     case MachineStatus.STOP:
     case MachineStatus.SEWING_INTERRUPTION:
       return (
-        <div className="bg-yellow-50 border-l-4 border-yellow-600 p-6 rounded-lg shadow-md">
+        <div className="bg-yellow-50 border-l-4 border-yellow-600 p-6 rounded-lg shadow-md animate-fadeIn">
           <div className="flex items-start gap-4">
             <InformationCircleIcon className="w-8 h-8 text-yellow-600 flex-shrink-0 mt-1" />
             <div className="flex-1">
@@ -280,7 +280,7 @@ export function NextStepGuide({
 
     case MachineStatus.SEWING_COMPLETE:
       return (
-        <div className="bg-green-50 border-l-4 border-green-600 p-6 rounded-lg shadow-md">
+        <div className="bg-green-50 border-l-4 border-green-600 p-6 rounded-lg shadow-md animate-fadeIn">
           <div className="flex items-start gap-4">
             <InformationCircleIcon className="w-8 h-8 text-green-600 flex-shrink-0 mt-1" />
             <div className="flex-1">

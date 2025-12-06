@@ -110,7 +110,7 @@ export function ProgressMonitor({
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
+    <div className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 animate-fadeIn">
       <h2 className="text-lg font-semibold mb-3 pb-2 border-b border-gray-300">Sewing Progress</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -258,12 +258,12 @@ export function ProgressMonitor({
               return (
                 <div
                   key={index}
-                  className={`p-3 rounded-lg border-2 transition-all ${
+                  className={`p-3 rounded-lg border-2 transition-all duration-300 ${
                     isCompleted
-                      ? 'border-green-600 bg-green-50'
+                      ? 'border-green-600 bg-green-50 hover:bg-green-100'
                       : isCurrent
-                      ? 'border-blue-600 bg-blue-50 shadow-lg shadow-blue-600/20'
-                      : 'border-gray-200 bg-gray-50 opacity-70'
+                      ? 'border-blue-600 bg-blue-50 shadow-lg shadow-blue-600/20 animate-pulseGlow'
+                      : 'border-gray-200 bg-gray-50 opacity-70 hover:opacity-90'
                   }`}
                   role="listitem"
                   aria-label={`Thread ${block.colorIndex + 1}, ${block.stitchCount} stitches, ${isCompleted ? 'completed' : isCurrent ? 'in progress' : 'pending'}`}
