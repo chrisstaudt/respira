@@ -65,17 +65,32 @@ export function MachineConnection({
     <div className="bg-white p-6 rounded-lg shadow-md">
       <div className="flex items-center justify-between mb-4 pb-2 border-b-2 border-gray-300">
         <h2 className="text-xl font-semibold">Machine Connection</h2>
-        {isConnected && isPolling && (
-          <span className="flex items-center gap-2 text-xs text-gray-500">
-            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-            Auto-refreshing
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {isConnected && isPolling && (
+            <span className="flex items-center gap-2 text-xs text-gray-500">
+              <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+              Auto-refreshing
+            </span>
+          )}
+          {isConnected && (
+            <button
+              onClick={handleDisconnectClick}
+              className="px-3 py-1.5 bg-gray-600 text-white rounded-lg font-semibold text-xs hover:bg-gray-700 active:bg-gray-800 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+              aria-label="Disconnect from embroidery machine"
+            >
+              Disconnect
+            </button>
+          )}
+        </div>
       </div>
 
       {!isConnected ? (
         <div className="flex gap-3 mt-4 flex-wrap">
-          <button onClick={onConnect} className="px-6 py-3 bg-blue-600 text-white rounded font-semibold text-sm hover:bg-blue-700 transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3] cursor-pointer">
+          <button
+            onClick={onConnect}
+            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 active:bg-blue-800 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2"
+            aria-label="Connect to embroidery machine"
+          >
             Connect to Machine
           </button>
         </div>
@@ -135,13 +150,6 @@ export function MachineConnection({
               </div>
             </div>
           )}
-
-          {/* Disconnect Button */}
-          <div className="flex gap-3 mt-4">
-            <button onClick={handleDisconnectClick} className="w-full px-6 py-3 bg-red-600 text-white rounded font-semibold text-sm hover:bg-red-700 transition-all hover:shadow-md cursor-pointer">
-              Disconnect
-            </button>
-          </div>
         </div>
       )}
 

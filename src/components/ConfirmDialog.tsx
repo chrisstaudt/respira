@@ -55,14 +55,20 @@ export function ConfirmDialog({
         <div className="p-4 px-6 flex gap-3 justify-end border-t border-gray-300">
           <button
             onClick={onCancel}
-            className="px-6 py-3 bg-gray-600 text-white rounded font-semibold text-sm hover:bg-gray-700 transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3] cursor-pointer"
+            className="px-6 py-2.5 bg-gray-600 text-white rounded-lg font-semibold text-sm hover:bg-gray-700 active:bg-gray-800 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
             autoFocus
+            aria-label="Cancel action"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
-            className={variant === 'danger' ? 'px-6 py-3 bg-red-600 text-white rounded font-semibold text-sm hover:bg-red-700 transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3] cursor-pointer' : 'px-6 py-3 bg-blue-600 text-white rounded font-semibold text-sm hover:bg-blue-700 transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.3] cursor-pointer'}
+            className={
+              variant === 'danger'
+                ? 'px-6 py-2.5 bg-red-600 text-white rounded-lg font-semibold text-sm hover:bg-red-700 active:bg-red-800 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2'
+                : 'px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 active:bg-blue-800 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2'
+            }
+            aria-label={`Confirm: ${confirmText}`}
           >
             {confirmText}
           </button>

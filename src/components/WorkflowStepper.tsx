@@ -59,17 +59,22 @@ export function WorkflowStepper({ machineStatus, isConnected, hasPattern, patter
   const currentStep = getCurrentStep(machineStatus, isConnected, hasPattern, patternUploaded);
 
   return (
-    <div className="relative max-w-5xl mx-auto mt-4">
+    <div className="relative max-w-5xl mx-auto mt-4" role="navigation" aria-label="Workflow progress">
       {/* Progress bar background */}
-      <div className="absolute top-4 left-0 right-0 h-0.5 bg-blue-400/30" style={{ left: '20px', right: '20px' }} />
+      <div className="absolute top-5 left-0 right-0 h-1 bg-blue-400/20 rounded-full" style={{ left: '24px', right: '24px' }} />
 
       {/* Progress bar fill */}
       <div
-        className="absolute top-4 left-0 h-0.5 bg-blue-100 transition-all duration-500"
+        className="absolute top-5 left-0 h-1 bg-gradient-to-r from-green-500 to-blue-500 transition-all duration-500 rounded-full"
         style={{
-          left: '20px',
-          width: `calc(${((currentStep - 1) / (steps.length - 1)) * 100}% - 20px)`
+          left: '24px',
+          width: `calc(${((currentStep - 1) / (steps.length - 1)) * 100}% - 24px)`
         }}
+        role="progressbar"
+        aria-valuenow={currentStep}
+        aria-valuemin={1}
+        aria-valuemax={steps.length}
+        aria-label={`Step ${currentStep} of ${steps.length}`}
       />
 
       {/* Steps */}
@@ -80,26 +85,35 @@ export function WorkflowStepper({ machineStatus, isConnected, hasPattern, patter
           const isUpcoming = step.id > currentStep;
 
           return (
-            <div key={step.id} className="flex flex-col items-center" style={{ flex: 1 }}>
+            <div
+              key={step.id}
+              className="flex flex-col items-center"
+              style={{ flex: 1 }}
+              role="listitem"
+              aria-current={isCurrent ? 'step' : undefined}
+            >
               {/* Step circle */}
               <div
                 className={`
-                  w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 border-2
-                  ${isComplete ? 'bg-green-500 border-green-500 text-white' : ''}
-                  ${isCurrent ? 'bg-blue-600 border-blue-600 text-white scale-110' : ''}
-                  ${isUpcoming ? 'bg-blue-700 border-blue-400/30 text-blue-200' : ''}
+                  w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 border-2 shadow-md
+                  ${isComplete ? 'bg-green-500 border-green-400 text-white shadow-green-500/30' : ''}
+                  ${isCurrent ? 'bg-blue-600 border-blue-500 text-white scale-110 shadow-blue-600/40 ring-2 ring-blue-300 ring-offset-2' : ''}
+                  ${isUpcoming ? 'bg-blue-700 border-blue-500/30 text-blue-200/70' : ''}
                 `}
+                aria-label={`${step.label}: ${isComplete ? 'completed' : isCurrent ? 'current' : 'upcoming'}`}
               >
                 {isComplete ? (
-                  <CheckCircleIcon className="w-5 h-5" />
+                  <CheckCircleIcon className="w-6 h-6" aria-hidden="true" />
                 ) : (
                   step.id
                 )}
               </div>
 
               {/* Step label */}
-              <div className="mt-1.5 text-center">
-                <div className={`text-xs font-semibold ${isCurrent ? 'text-white' : isComplete ? 'text-blue-100' : 'text-blue-300'}`}>
+              <div className="mt-2 text-center">
+                <div className={`text-xs font-semibold leading-tight ${
+                  isCurrent ? 'text-white' : isComplete ? 'text-green-200' : 'text-blue-300/70'
+                }`}>
                   {step.label}
                 </div>
               </div>

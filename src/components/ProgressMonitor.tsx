@@ -114,7 +114,7 @@ export function ProgressMonitor({
       <h2 className="text-lg font-semibold mb-3 pb-2 border-b border-gray-300">Sewing Progress</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Left Column - Pattern Info & Color Blocks */}
+        {/* Left Column - Pattern Info & Progress */}
         <div>
           {patternInfo && (
             <div className="bg-gray-50 p-3 rounded-lg mb-3">
@@ -137,92 +137,31 @@ export function ProgressMonitor({
             </div>
           )}
 
-          {colorBlocks.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold mb-2 text-gray-700">Color Blocks</h3>
-              <div className="flex flex-col gap-2">
-            {colorBlocks.map((block, index) => {
-              const isCompleted = currentStitch >= block.endStitch;
-              const isCurrent = index === currentBlockIndex;
+          {sewingProgress && (
+            <div className="mb-3">
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-xs font-medium text-gray-600">Progress</span>
+                <span className="text-xl font-bold text-blue-600">{progressPercent.toFixed(1)}%</span>
+              </div>
+              <div className="h-3 bg-gray-300 rounded-md overflow-hidden shadow-inner relative mb-2">
+                <div className="h-full bg-gradient-to-r from-blue-600 to-blue-700 transition-all duration-300 ease-out relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/30 after:to-transparent after:animate-[shimmer_2s_infinite]" style={{ width: `${progressPercent}%` }} />
+              </div>
 
-              // Calculate progress within current block
-              let blockProgress = 0;
-              if (isCurrent) {
-                blockProgress = ((currentStitch - block.startStitch) / block.stitchCount) * 100;
-              } else if (isCompleted) {
-                blockProgress = 100;
-              }
-
-              return (
-                <div
-                  key={index}
-                  className={`p-2 rounded bg-gray-100 border-2 border-transparent transition-all ${
-                    isCompleted ? 'border-green-600 bg-green-50' : isCurrent ? 'border-blue-600 bg-blue-50 shadow-md shadow-blue-600/20' : 'opacity-60'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-5 h-5 rounded border-2 border-gray-300 shadow-sm flex-shrink-0"
-                      style={{ backgroundColor: block.threadHex }}
-                      title={block.threadHex}
-                    />
-                    <span className="font-semibold flex-1 text-sm">
-                      Thread {block.colorIndex + 1}
-                    </span>
-                    {isCompleted ? (
-                      <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                    ) : isCurrent ? (
-                      <ArrowRightIcon className="w-5 h-5 text-blue-600" />
-                    ) : (
-                      <CircleStackIcon className="w-5 h-5 text-gray-400" />
-                    )}
-                    <span className="text-xs text-gray-600">
-                      {block.stitchCount.toLocaleString()}
-                    </span>
-                  </div>
-                  {isCurrent && (
-                    <div className="mt-1.5 h-1 bg-white rounded overflow-hidden">
-                      <div
-                        className="h-full bg-blue-600 transition-all duration-300"
-                        style={{ width: `${blockProgress}%` }}
-                      />
-                    </div>
-                  )}
+              <div className="bg-gray-50 p-2 rounded-lg grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-gray-600 block text-xs">Current Stitch</span>
+                  <span className="font-semibold text-gray-900">
+                    {sewingProgress.currentStitch.toLocaleString()} / {patternInfo?.totalStitches.toLocaleString() || 0}
+                  </span>
                 </div>
-              );
-            })}
+                <div>
+                  <span className="text-gray-600 block text-xs">Time Elapsed</span>
+                  <span className="font-semibold text-gray-900">
+                    {Math.floor(sewingProgress.currentTime / 60)}:{String(sewingProgress.currentTime % 60).padStart(2, '0')}
+                  </span>
+                </div>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Right Column - Progress & Controls */}
-        <div>
-          {sewingProgress && (
-        <div className="mb-3">
-          <div className="flex justify-between items-center mb-1.5">
-            <span className="text-xs font-medium text-gray-600">Progress</span>
-            <span className="text-xl font-bold text-blue-600">{progressPercent.toFixed(1)}%</span>
-          </div>
-          <div className="h-3 bg-gray-300 rounded-md overflow-hidden shadow-inner relative mb-2">
-            <div className="h-full bg-gradient-to-r from-blue-600 to-blue-700 transition-all duration-300 ease-out relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/30 after:to-transparent after:animate-[shimmer_2s_infinite]" style={{ width: `${progressPercent}%` }} />
-          </div>
-
-          <div className="bg-gray-50 p-2 rounded-lg grid grid-cols-2 gap-2 text-sm">
-            <div>
-              <span className="text-gray-600 block text-xs">Current Stitch</span>
-              <span className="font-semibold text-gray-900">
-                {sewingProgress.currentStitch.toLocaleString()} / {patternInfo?.totalStitches.toLocaleString() || 0}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-600 block text-xs">Time Elapsed</span>
-              <span className="font-semibold text-gray-900">
-                {Math.floor(sewingProgress.currentTime / 60)}:{String(sewingProgress.currentTime % 60).padStart(2, '0')}
-              </span>
-            </div>
-          </div>
-          </div>
           )}
 
           {/* State Visual Indicator */}
@@ -253,7 +192,11 @@ export function ProgressMonitor({
           <div className="flex gap-2 flex-wrap">
               {/* Resume has highest priority when available */}
               {canResumeSewing(machineStatus) && (
-                <button onClick={onResumeSewing} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded font-semibold text-sm hover:bg-blue-700 transition-all hover:shadow-md cursor-pointer">
+                <button
+                  onClick={onResumeSewing}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 active:bg-blue-800 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2"
+                  aria-label="Resume sewing the current pattern"
+                >
                   <PlayIcon className="w-4 h-4" />
                   Resume Sewing
                 </button>
@@ -261,25 +204,122 @@ export function ProgressMonitor({
 
               {/* Start Sewing - primary action */}
               {canStartSewing(machineStatus) && !canResumeSewing(machineStatus) && (
-                <button onClick={onStartSewing} className="px-4 py-2 bg-blue-600 text-white rounded font-semibold text-sm hover:bg-blue-700 transition-all hover:shadow-md cursor-pointer">
+                <button
+                  onClick={onStartSewing}
+                  className="px-4 py-2.5 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 active:bg-blue-800 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2"
+                  aria-label="Start sewing the pattern"
+                >
                   Start Sewing
                 </button>
               )}
 
               {/* Start Mask Trace - secondary action */}
               {canStartMaskTrace(machineStatus) && (
-                <button onClick={onStartMaskTrace} className="px-4 py-2 bg-gray-600 text-white rounded font-semibold text-sm hover:bg-gray-700 transition-all hover:shadow-md cursor-pointer">
+                <button
+                  onClick={onStartMaskTrace}
+                  className="px-4 py-2.5 bg-gray-600 text-white rounded-lg font-semibold text-sm hover:bg-gray-700 active:bg-gray-800 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                  aria-label={isMaskTraceComplete ? 'Start mask trace again' : 'Start mask trace'}
+                >
                   {isMaskTraceComplete ? 'Trace Again' : 'Start Mask Trace'}
                 </button>
               )}
 
               {/* Delete - destructive action, always last */}
               {patternInfo && canDeletePattern(machineStatus) && (
-                <button onClick={onDeletePattern} className="px-4 py-2 bg-red-600 text-white rounded font-semibold text-sm hover:bg-red-700 transition-all hover:shadow-md ml-auto cursor-pointer">
+                <button
+                  onClick={onDeletePattern}
+                  className="px-4 py-2.5 bg-red-600 text-white rounded-lg font-semibold text-sm hover:bg-red-700 active:bg-red-800 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2 ml-auto"
+                  aria-label="Delete the current pattern from machine"
+                >
                   Delete Pattern
                 </button>
               )}
           </div>
+        </div>
+
+        {/* Right Column - Color Blocks */}
+        <div>
+          {colorBlocks.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold mb-2 text-gray-700">Color Blocks</h3>
+              <div className="flex flex-col gap-2">
+            {colorBlocks.map((block, index) => {
+              const isCompleted = currentStitch >= block.endStitch;
+              const isCurrent = index === currentBlockIndex;
+
+              // Calculate progress within current block
+              let blockProgress = 0;
+              if (isCurrent) {
+                blockProgress = ((currentStitch - block.startStitch) / block.stitchCount) * 100;
+              } else if (isCompleted) {
+                blockProgress = 100;
+              }
+
+              return (
+                <div
+                  key={index}
+                  className={`p-3 rounded-lg border-2 transition-all ${
+                    isCompleted
+                      ? 'border-green-600 bg-green-50'
+                      : isCurrent
+                      ? 'border-blue-600 bg-blue-50 shadow-lg shadow-blue-600/20'
+                      : 'border-gray-200 bg-gray-50 opacity-70'
+                  }`}
+                  role="listitem"
+                  aria-label={`Thread ${block.colorIndex + 1}, ${block.stitchCount} stitches, ${isCompleted ? 'completed' : isCurrent ? 'in progress' : 'pending'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Larger color swatch with better visibility */}
+                    <div
+                      className="w-8 h-8 rounded-lg border-2 border-gray-300 shadow-md flex-shrink-0 ring-2 ring-offset-2 ring-transparent"
+                      style={{
+                        backgroundColor: block.threadHex,
+                        ...(isCurrent && { borderColor: '#2563eb', ringColor: '#93c5fd' })
+                      }}
+                      title={`Thread color: ${block.threadHex}`}
+                      aria-label={`Thread color ${block.threadHex}`}
+                    />
+
+                    {/* Thread info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm text-gray-900">
+                        Thread {block.colorIndex + 1}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-0.5">
+                        {block.stitchCount.toLocaleString()} stitches
+                      </div>
+                    </div>
+
+                    {/* Status icon */}
+                    {isCompleted ? (
+                      <CheckCircleIcon className="w-6 h-6 text-green-600 flex-shrink-0" aria-label="Completed" />
+                    ) : isCurrent ? (
+                      <ArrowRightIcon className="w-6 h-6 text-blue-600 flex-shrink-0 animate-pulse" aria-label="In progress" />
+                    ) : (
+                      <CircleStackIcon className="w-6 h-6 text-gray-400 flex-shrink-0" aria-label="Pending" />
+                    )}
+                  </div>
+
+                  {/* Progress bar for current block */}
+                  {isCurrent && (
+                    <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-blue-600 transition-all duration-300 rounded-full"
+                        style={{ width: `${blockProgress}%` }}
+                        role="progressbar"
+                        aria-valuenow={Math.round(blockProgress)}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`${Math.round(blockProgress)}% complete`}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
