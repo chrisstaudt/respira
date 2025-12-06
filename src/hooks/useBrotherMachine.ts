@@ -28,6 +28,8 @@ export function useBrotherMachine() {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [resumeAvailable, setResumeAvailable] = useState(false);
   const [resumeFileName, setResumeFileName] = useState<string | null>(null);
   const [resumedPattern, setResumedPattern] = useState<{ pesData: PesPatternData; patternOffset?: { x: number; y: number } } | null>(
@@ -203,6 +205,7 @@ export function useBrotherMachine() {
       try {
         setError(null);
         setUploadProgress(0);
+        setIsUploading(true); // Set loading state immediately
         const uuid = await service.uploadPattern(
           penData,
           (progress) => {
@@ -229,6 +232,8 @@ export function useBrotherMachine() {
         setError(
           err instanceof Error ? err.message : "Failed to upload pattern",
         );
+      } finally {
+        setIsUploading(false); // Clear loading state
       }
     },
     [service, isConnected, refreshStatus, refreshPatternInfo],
@@ -277,6 +282,7 @@ export function useBrotherMachine() {
 
     try {
       setError(null);
+      setIsDeleting(true); // Set loading state immediately
 
       // Delete pattern from cache to prevent auto-resume
       try {
@@ -304,6 +310,8 @@ export function useBrotherMachine() {
       await refreshStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete pattern");
+    } finally {
+      setIsDeleting(false); // Clear loading state
     }
   }, [service, isConnected, refreshStatus]);
 
@@ -364,6 +372,8 @@ export function useBrotherMachine() {
     uploadProgress,
     error,
     isPolling,
+    isUploading,
+    isDeleting,
     resumeAvailable,
     resumeFileName,
     resumedPattern,

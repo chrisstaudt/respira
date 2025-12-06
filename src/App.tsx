@@ -185,6 +185,7 @@ function App() {
                 resumeAvailable={machine.resumeAvailable}
                 resumeFileName={machine.resumeFileName}
                 pesData={pesData}
+                isUploading={machine.isUploading}
               />
             )}
           </div>
@@ -257,6 +258,7 @@ function App() {
                 onStartSewing={machine.startSewing}
                 onResumeSewing={machine.resumeSewing}
                 onDeletePattern={handleDeletePattern}
+                isDeleting={machine.isDeleting}
               />
             )}
           </div>

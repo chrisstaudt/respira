@@ -128,6 +128,21 @@ export class PatternCacheService {
   }
 
   /**
+   * Delete a specific pattern by UUID
+   */
+  static deletePattern(uuid: string): void {
+    try {
+      const cached = this.getPatternByUUID(uuid);
+      if (cached) {
+        localStorage.removeItem(CACHE_KEY);
+        console.log('[PatternCache] Deleted pattern with UUID:', uuid);
+      }
+    } catch (err) {
+      console.error('[PatternCache] Failed to delete pattern:', err);
+    }
+  }
+
+  /**
    * Clear the pattern cache
    */
   static clearCache(): void {

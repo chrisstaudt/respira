@@ -17,6 +17,7 @@ interface FileUploadProps {
   resumeAvailable: boolean;
   resumeFileName: string | null;
   pesData: PesPatternData | null;
+  isUploading?: boolean;
 }
 
 export function FileUpload({
@@ -31,6 +32,7 @@ export function FileUpload({
   resumeAvailable,
   resumeFileName,
   pesData: pesDataProp,
+  isUploading = false,
 }: FileUploadProps) {
   const [localPesData, setLocalPesData] = useState<PesPatternData | null>(null);
   const [fileName, setFileName] = useState<string>('');
@@ -190,17 +192,17 @@ export function FileUpload({
         {pesData && canUploadPattern(machineStatus) && !patternUploaded && uploadProgress < 100 && (
           <button
             onClick={handleUpload}
-            disabled={!isConnected || uploadProgress > 0}
+            disabled={!isConnected || isUploading}
             className="mt-4 inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 dark:bg-blue-700 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-500 hover:shadow-lg active:scale-[0.98] transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 disabled:hover:shadow-none disabled:active:scale-100"
-            aria-label={uploadProgress > 0 ? `Uploading pattern: ${uploadProgress.toFixed(0)}% complete` : 'Upload pattern to machine'}
+            aria-label={isUploading ? `Uploading pattern: ${uploadProgress.toFixed(0)}% complete` : 'Upload pattern to machine'}
           >
-            {uploadProgress > 0 ? (
+            {isUploading ? (
               <>
                 <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span>Uploading... {uploadProgress.toFixed(0)}%</span>
+                <span>Uploading... {uploadProgress > 0 ? uploadProgress.toFixed(0) + '%' : ''}</span>
               </>
             ) : (
               <>
@@ -217,11 +219,11 @@ export function FileUpload({
           </div>
         )}
 
-        {uploadProgress > 0 && uploadProgress < 100 && (
+        {isUploading && uploadProgress < 100 && (
           <div className="mt-4 animate-fadeIn">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Uploading to Machine</span>
-              <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{uploadProgress.toFixed(1)}%</span>
+              <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{uploadProgress > 0 ? uploadProgress.toFixed(1) + '%' : 'Starting...'}</span>
             </div>
             <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden shadow-inner relative">
               <div
