@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Stage, Layer, Group } from 'react-konva';
 import Konva from 'konva';
-import { PlusIcon, MinusIcon, ArrowPathIcon, LockClosedIcon } from '@heroicons/react/24/solid';
+import { PlusIcon, MinusIcon, ArrowPathIcon, LockClosedIcon, PhotoIcon } from '@heroicons/react/24/solid';
 import type { PesPatternData } from '../utils/pystitchConverter';
 import type { SewingProgress, MachineInfo } from '../types/machine';
 import { calculateInitialScale } from '../utils/konvaRenderers';
@@ -181,9 +181,24 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
     }
   }, [onPatternOffsetChange]);
 
+  const borderColor = pesData ? 'border-teal-600 dark:border-teal-500' : 'border-gray-400 dark:border-gray-600';
+  const iconColor = pesData ? 'text-teal-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-400';
+
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
-      <h2 className="text-xl font-semibold mb-4 pb-2 border-b-2 border-gray-300 dark:border-gray-600 dark:text-white">Pattern Preview</h2>
+    <div className={`bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border-l-4 ${borderColor}`}>
+      <div className="flex items-start gap-3 mb-3">
+        <PhotoIcon className={`w-6 h-6 ${iconColor} flex-shrink-0 mt-0.5`} />
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Pattern Preview</h3>
+          {pesData ? (
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              {((pesData.bounds.maxX - pesData.bounds.minX) / 10).toFixed(1)} × {((pesData.bounds.maxY - pesData.bounds.minY) / 10).toFixed(1)} mm
+            </p>
+          ) : (
+            <p className="text-xs text-gray-600 dark:text-gray-400">No pattern loaded</p>
+          )}
+        </div>
+      </div>
       <div className="relative w-full h-[600px] border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-900 overflow-hidden" ref={containerRef}>
         {containerSize.width > 0 && (
           <Stage
@@ -281,23 +296,17 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
         {pesData && (
           <>
             {/* Thread Legend Overlay */}
-            <div className="absolute top-2.5 left-2.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-3 rounded-lg shadow-lg z-10 max-w-[150px]">
-              <h4 className="m-0 mb-2 text-[13px] font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-300 dark:border-gray-600 pb-1.5">Threads</h4>
+            <div className="absolute top-2.5 left-2.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-2.5 rounded-lg shadow-lg z-10 max-w-[150px]">
+              <h4 className="m-0 mb-2 text-xs font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-300 dark:border-gray-600 pb-1.5">Threads</h4>
               {pesData.threads.map((thread, index) => (
                 <div key={index} className="flex items-center gap-2 mb-1.5 last:mb-0">
                   <div
-                    className="w-5 h-5 rounded border border-black dark:border-gray-300 flex-shrink-0"
+                    className="w-4 h-4 rounded border border-black dark:border-gray-300 flex-shrink-0"
                     style={{ backgroundColor: thread.hex }}
                   />
-                  <span className="text-xs text-gray-900 dark:text-gray-100">Thread {index + 1}</span>
+                  <span className="text-[11px] text-gray-900 dark:text-gray-100">Thread {index + 1}</span>
                 </div>
               ))}
-            </div>
-
-            {/* Pattern Dimensions Overlay */}
-            <div className="absolute bottom-[165px] right-5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg z-[11] text-sm font-semibold text-gray-900 dark:text-gray-100">
-              {((pesData.bounds.maxX - pesData.bounds.minX) / 10).toFixed(1)} x{' '}
-              {((pesData.bounds.maxY - pesData.bounds.minY) / 10).toFixed(1)} mm
             </div>
 
             {/* Pattern Offset Indicator */}

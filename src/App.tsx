@@ -6,9 +6,11 @@ import { PatternCanvas } from './components/PatternCanvas';
 import { ProgressMonitor } from './components/ProgressMonitor';
 import { WorkflowStepper } from './components/WorkflowStepper';
 import { NextStepGuide } from './components/NextStepGuide';
+import { PatternSummaryCard } from './components/PatternSummaryCard';
 import type { PesPatternData } from './utils/pystitchConverter';
 import { pyodideLoader } from './utils/pyodideLoader';
 import { hasError } from './utils/errorCodeHelpers';
+import { canDeletePattern } from './utils/machineStateHelpers';
 import './App.css';
 
 function App() {
@@ -153,17 +155,6 @@ function App() {
         <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6">
           {/* Left Column - Controls */}
           <div className="flex flex-col gap-6">
-            {/* Next Step Guide - Always visible */}
-            <NextStepGuide
-              machineStatus={machine.machineStatus}
-              isConnected={machine.isConnected}
-              hasPattern={pesData !== null}
-              patternUploaded={patternUploaded}
-              hasError={hasError(machine.machineError)}
-              errorMessage={machine.error || undefined}
-              errorCode={machine.machineError}
-            />
-
             {/* Machine Connection - Always visible */}
             <MachineConnection
               isConnected={machine.isConnected}
@@ -177,8 +168,8 @@ function App() {
               onRefresh={machine.refreshStatus}
             />
 
-            {/* Pattern File - Only show when connected */}
-            {machine.isConnected && (
+            {/* Pattern File - Show during upload stage (before pattern is uploaded) */}
+            {machine.isConnected && !patternUploaded && (
               <FileUpload
                 isConnected={machine.isConnected}
                 machineStatus={machine.machineStatus}
@@ -193,6 +184,32 @@ function App() {
                 pesData={pesData}
                 currentFileName={currentFileName}
                 isUploading={machine.isUploading}
+              />
+            )}
+
+            {/* Compact Pattern Summary - Show after upload (during sewing stages) */}
+            {machine.isConnected && patternUploaded && pesData && (
+              <PatternSummaryCard
+                pesData={pesData}
+                fileName={currentFileName}
+                onDeletePattern={handleDeletePattern}
+                canDelete={canDeletePattern(machine.machineStatus)}
+                isDeleting={machine.isDeleting}
+              />
+            )}
+
+            {/* Progress Monitor - Show when pattern is uploaded */}
+            {machine.isConnected && patternUploaded && (
+              <ProgressMonitor
+                machineStatus={machine.machineStatus}
+                patternInfo={machine.patternInfo}
+                sewingProgress={machine.sewingProgress}
+                pesData={pesData}
+                onStartMaskTrace={machine.startMaskTrace}
+                onStartSewing={machine.startSewing}
+                onResumeSewing={machine.resumeSewing}
+                onDeletePattern={handleDeletePattern}
+                isDeleting={machine.isDeleting}
               />
             )}
           </div>
@@ -254,20 +271,16 @@ function App() {
               </div>
             )}
 
-            {/* Progress Monitor - Wide section below pattern preview */}
-            {machine.isConnected && patternUploaded && (
-              <ProgressMonitor
-                machineStatus={machine.machineStatus}
-                patternInfo={machine.patternInfo}
-                sewingProgress={machine.sewingProgress}
-                pesData={pesData}
-                onStartMaskTrace={machine.startMaskTrace}
-                onStartSewing={machine.startSewing}
-                onResumeSewing={machine.resumeSewing}
-                onDeletePattern={handleDeletePattern}
-                isDeleting={machine.isDeleting}
-              />
-            )}
+            {/* Next Step Guide - Below pattern preview */}
+            <NextStepGuide
+              machineStatus={machine.machineStatus}
+              isConnected={machine.isConnected}
+              hasPattern={pesData !== null}
+              patternUploaded={patternUploaded}
+              hasError={hasError(machine.machineError)}
+              errorMessage={machine.error || undefined}
+              errorCode={machine.machineError}
+            />
           </div>
         </div>
       </div>
