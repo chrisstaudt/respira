@@ -154,23 +154,6 @@ export function FileUpload({
         </div>
       )}
 
-      {isUploading && uploadProgress < 100 && (
-        <div className="mb-3">
-          <div className="flex justify-between items-center mb-1.5">
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Uploading</span>
-            <span className="text-xs font-bold text-orange-600 dark:text-orange-400">
-              {uploadProgress > 0 ? uploadProgress.toFixed(1) + '%' : 'Starting...'}
-            </span>
-          </div>
-          <div className="h-2.5 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden shadow-inner relative">
-            <div
-              className="h-full bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 dark:from-orange-600 dark:via-orange-700 dark:to-orange-800 transition-all duration-300 ease-out relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/30 after:to-transparent after:animate-[shimmer_2s_infinite] rounded-full"
-              style={{ width: `${uploadProgress}%` }}
-            />
-          </div>
-        </div>
-      )}
-
       <div className="flex gap-2">
         <input
           type="file"
@@ -241,6 +224,23 @@ export function FileUpload({
           </button>
         )}
       </div>
+
+      {isUploading && uploadProgress < 100 && (
+        <div className="mt-3">
+          <div className="flex justify-between items-center mb-1.5">
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Uploading</span>
+            <span className="text-xs font-bold text-orange-600 dark:text-orange-400">
+              {uploadProgress > 0 ? uploadProgress.toFixed(1) + '%' : 'Starting...'}
+            </span>
+          </div>
+          <div className="h-2.5 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden shadow-inner relative">
+            <div
+              className="h-full bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 dark:from-orange-600 dark:via-orange-700 dark:to-orange-800 transition-all duration-300 ease-out relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/30 after:to-transparent after:animate-[shimmer_2s_infinite] rounded-full"
+              style={{ width: `${uploadProgress}%` }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
