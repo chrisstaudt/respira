@@ -5,6 +5,7 @@
   "description": "Desktop controller for Brother embroidery machines",
   "author": "Your Name",
   "private": true,
+  "license": "Apache-2.0",
   "main": ".vite/build/main.js",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
