@@ -4,8 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
-import { writeFile, mkdir } from 'fs/promises'
-import { existsSync } from 'fs'
 import type { Plugin } from 'vite'
 
 const PYODIDE_EXCLUDE = [
@@ -44,10 +42,16 @@ async function getPyPIWheelUrl(packageName: string, version: string): Promise<{ 
     throw new Error(`Failed to fetch PyPI metadata: ${response.statusText}`)
   }
 
-  const data = await response.json()
+  const data = await response.json() as {
+    urls: Array<{
+      packagetype: string
+      filename: string
+      url: string
+    }>
+  }
 
   // Find the wheel file (.whl) for py3-none-any
-  const wheelFile = data.urls.find((file: any) =>
+  const wheelFile = data.urls.find((file) =>
     file.packagetype === 'bdist_wheel' &&
     file.filename.endsWith('-py3-none-any.whl')
   )

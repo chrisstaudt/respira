@@ -19,7 +19,6 @@ interface MachineConnectionProps {
   machineStatus: MachineStatus;
   machineStatusName: string;
   machineError: number;
-  isPolling: boolean;
   onConnect: () => void;
   onDisconnect: () => void;
   onRefresh: () => void;
@@ -31,7 +30,6 @@ export function MachineConnection({
   machineStatus,
   machineStatusName,
   machineError,
-  isPolling,
   onConnect,
   onDisconnect,
 }: MachineConnectionProps) {
