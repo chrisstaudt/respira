@@ -146,7 +146,7 @@ function App() {
                   <>
                     <button
                       onClick={machine.disconnect}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-white/10 hover:bg-white/20 text-blue-100 hover:text-white border border-white/20 hover:border-white/30 cursor-pointer transition-all flex-shrink-0"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-white/10 hover:bg-red-600 text-blue-100 hover:text-white border border-white/20 hover:border-red-600 cursor-pointer transition-all flex-shrink-0"
                       title="Disconnect from machine"
                       aria-label="Disconnect from machine"
                     >

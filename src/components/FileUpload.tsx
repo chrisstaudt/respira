@@ -3,7 +3,7 @@ import { convertPesToPen, type PesPatternData } from '../utils/pystitchConverter
 import { MachineStatus } from '../types/machine';
 import { canUploadPattern, getMachineStateCategory } from '../utils/machineStateHelpers';
 import { PatternInfoSkeleton } from './SkeletonLoader';
-import { ArrowUpTrayIcon, CheckCircleIcon, DocumentTextIcon } from '@heroicons/react/24/solid';
+import { ArrowUpTrayIcon, CheckCircleIcon, DocumentTextIcon, FolderOpenIcon } from '@heroicons/react/24/solid';
 
 interface FileUploadProps {
   isConnected: boolean;
@@ -210,7 +210,10 @@ export function FileUpload({
               <span>Locked</span>
             </>
           ) : (
-            <span>Choose PES File</span>
+            <>
+              <FolderOpenIcon className="w-3.5 h-3.5" />
+              <span>Choose PES File</span>
+            </>
           )}
         </label>
 

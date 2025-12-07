@@ -7,7 +7,8 @@ import {
   ClockIcon,
   PauseCircleIcon,
   ExclamationCircleIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/solid';
 import type { PatternInfo, SewingProgress } from '../types/machine';
 import { MachineStatus } from '../types/machine';
@@ -270,13 +271,13 @@ export function ProgressMonitor({
       )}
 
       {/* Action buttons */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2">
         {/* Resume has highest priority when available */}
         {canResumeSewing(machineStatus) && (
           <button
             onClick={onResumeSewing}
             disabled={isDeleting}
-            className="flex items-center gap-2 px-3 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded font-semibold text-xs hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded font-semibold text-xs hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Resume sewing the current pattern"
           >
             <PlayIcon className="w-3.5 h-3.5" />
@@ -284,14 +285,15 @@ export function ProgressMonitor({
           </button>
         )}
 
-        {/* Start Sewing - primary action */}
+        {/* Start Sewing - primary action, takes more space */}
         {canStartSewing(machineStatus) && !canResumeSewing(machineStatus) && (
           <button
             onClick={onStartSewing}
             disabled={isDeleting}
-            className="px-3 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded font-semibold text-xs hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-[2] flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded font-semibold text-xs hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Start sewing the pattern"
           >
+            <PlayIcon className="w-3.5 h-3.5" />
             Start Sewing
           </button>
         )}
@@ -301,9 +303,10 @@ export function ProgressMonitor({
           <button
             onClick={onStartMaskTrace}
             disabled={isDeleting}
-            className="px-3 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded font-semibold text-xs hover:bg-gray-700 dark:hover:bg-gray-600 active:bg-gray-800 dark:active:bg-gray-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded font-semibold text-xs hover:bg-gray-700 dark:hover:bg-gray-600 active:bg-gray-800 dark:active:bg-gray-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label={isMaskTraceComplete ? 'Start mask trace again' : 'Start mask trace'}
           >
+            <ArrowPathIcon className="w-3.5 h-3.5" />
             {isMaskTraceComplete ? 'Trace Again' : 'Start Mask Trace'}
           </button>
         )}
