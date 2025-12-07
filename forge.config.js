@@ -1,11 +1,6 @@
-const path = require('path');
-
 module.exports = {
   packagerConfig: {
     asar: true,
-    extraResource: [
-      path.join(__dirname, 'dist', 'assets'),
-    ],
   },
   rebuildConfig: {},
   makers: [
