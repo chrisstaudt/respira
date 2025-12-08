@@ -77,7 +77,7 @@ jobs:
       - name: Upload Linux assets
         if: matrix.os == 'ubuntu-latest'
         run: |
-          for file in out/make/deb/x64/*.deb out/make/AppImage/x64/*.AppImage; do
+          for file in out/make/rpm/x64/*.rpm out/make/deb/x64/*.deb out/make/AppImage/x64/*.AppImage; do
             gh release upload ${{ needs.draft-release.outputs.tag-name }} "$file" --clobber
           done
         env:
