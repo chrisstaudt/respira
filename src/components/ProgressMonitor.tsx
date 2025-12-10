@@ -1,3 +1,4 @@
+import { useRef, useEffect, useState } from "react";
 import {
   CheckCircleIcon,
   ArrowRightIcon,
@@ -42,6 +43,10 @@ export function ProgressMonitor({
   onResumeSewing,
   isDeleting = false,
 }: ProgressMonitorProps) {
+  const currentBlockRef = useRef<HTMLDivElement>(null);
+  const colorBlocksScrollRef = useRef<HTMLDivElement>(null);
+  const [showGradient, setShowGradient] = useState(true);
+
   // State indicators
   const isMaskTraceComplete =
     machineStatus === MachineStatus.MASK_TRACE_COMPLETE;
@@ -108,6 +113,40 @@ export function ProgressMonitor({
       currentStitch >= block.startStitch && currentStitch < block.endStitch,
   );
 
+  // Auto-scroll to current block
+  useEffect(() => {
+    if (currentBlockRef.current) {
+      currentBlockRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [currentBlockIndex]);
+
+  // Handle scroll to detect if at bottom
+  const handleColorBlocksScroll = () => {
+    if (colorBlocksScrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = colorBlocksScrollRef.current;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 5; // 5px threshold
+      setShowGradient(!isAtBottom);
+    }
+  };
+
+  // Check initial scroll state and update on resize
+  useEffect(() => {
+    const checkScrollable = () => {
+      if (colorBlocksScrollRef.current) {
+        const { scrollHeight, clientHeight } = colorBlocksScrollRef.current;
+        const isScrollable = scrollHeight > clientHeight;
+        setShowGradient(isScrollable);
+      }
+    };
+
+    checkScrollable();
+    window.addEventListener('resize', checkScrollable);
+    return () => window.removeEventListener('resize', checkScrollable);
+  }, [colorBlocks]);
+
   const stateIndicatorColors = {
     idle: "bg-blue-50 dark:bg-blue-900/20 border-blue-600",
     info: "bg-blue-50 dark:bg-blue-900/20 border-blue-600",
@@ -122,7 +161,7 @@ export function ProgressMonitor({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border-l-4 border-purple-600 dark:border-purple-500">
+    <div className="lg:h-full bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border-l-4 border-purple-600 dark:border-purple-500 flex flex-col lg:overflow-hidden">
       <div className="flex items-start gap-3 mb-3">
         <ChartBarIcon className="w-6 h-6 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
@@ -246,12 +285,17 @@ export function ProgressMonitor({
 
       {/* Color Blocks */}
       {colorBlocks.length > 0 && (
-        <div className="mb-3">
-          <h4 className="text-xs font-semibold mb-2 text-gray-700 dark:text-gray-300">
+        <div className="mb-3 lg:flex-1 lg:min-h-0 flex flex-col">
+          <h4 className="text-xs font-semibold mb-2 text-gray-700 dark:text-gray-300 flex-shrink-0">
             Color Blocks
           </h4>
-          <div className="flex flex-col gap-2">
-            {colorBlocks.map((block, index) => {
+          <div className="relative lg:flex-1 lg:min-h-0">
+            <div
+              ref={colorBlocksScrollRef}
+              onScroll={handleColorBlocksScroll}
+              className="lg:absolute lg:inset-0 flex flex-col gap-2 lg:overflow-y-auto scroll-smooth pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-700 [&::-webkit-scrollbar-thumb]:bg-blue-600 dark:[&::-webkit-scrollbar-thumb]:bg-blue-500 [&::-webkit-scrollbar-thumb]:rounded-full"
+            >
+              {colorBlocks.map((block, index) => {
               const isCompleted = currentStitch >= block.endStitch;
               const isCurrent = index === currentBlockIndex;
 
@@ -268,6 +312,7 @@ export function ProgressMonitor({
               return (
                 <div
                   key={index}
+                  ref={isCurrent ? currentBlockRef : null}
                   className={`p-2.5 rounded-lg border-2 transition-all duration-300 ${
                     isCompleted
                       ? "border-green-600 bg-green-50 dark:bg-green-900/20"
@@ -358,12 +403,17 @@ export function ProgressMonitor({
                 </div>
               );
             })}
+            </div>
+            {/* Gradient overlay to indicate more content below - only on desktop and when not at bottom */}
+            {showGradient && (
+              <div className="hidden lg:block absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-gray-800 to-transparent pointer-events-none" />
+            )}
           </div>
         </div>
       )}
 
       {/* Action buttons */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-shrink-0">
         {/* Resume has highest priority when available */}
         {canResumeSewing(machineStatus) && (
           <button

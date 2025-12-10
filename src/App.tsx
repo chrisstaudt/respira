@@ -108,9 +108,9 @@ function App() {
   const StatusIcon = stateIcons[stateVisual.iconName];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      <header className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 dark:from-blue-700 dark:via-blue-800 dark:to-blue-900 px-4 sm:px-6 lg:px-8 py-3 shadow-lg border-b-2 border-blue-900/20 dark:border-blue-800/30">
-        <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 lg:gap-8 items-center">
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      <header className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 dark:from-blue-700 dark:via-blue-800 dark:to-blue-900 px-4 sm:px-6 lg:px-8 py-3 shadow-lg border-b-2 border-blue-900/20 dark:border-blue-800/30 flex-shrink-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 lg:gap-8 items-center">
           {/* Machine Connection Status - Responsive width column */}
           <div className="flex items-center gap-3 w-full lg:w-[280px]">
             <div className="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50" style={{ visibility: machine.isConnected ? 'visible' : 'hidden' }}></div>
@@ -178,7 +178,7 @@ function App() {
         </div>
       </header>
 
-      <div className="flex-1 p-4 sm:p-5 lg:p-6 max-w-[1600px] w-full mx-auto">
+      <div className="flex-1 p-4 sm:p-5 lg:p-6 w-full overflow-y-auto lg:overflow-hidden flex flex-col">
         {/* Global errors */}
         {machine.error && (
           <div className={`px-6 py-4 rounded-lg border-l-4 mb-6 shadow-md hover:shadow-lg transition-shadow animate-fadeIn ${
@@ -225,9 +225,9 @@ function App() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-4 md:gap-5 lg:gap-6">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-4 md:gap-5 lg:gap-6 lg:overflow-hidden">
           {/* Left Column - Controls */}
-          <div className="flex flex-col gap-4 md:gap-5 lg:gap-6">
+          <div className="flex flex-col gap-4 md:gap-5 lg:gap-6 lg:overflow-hidden">
             {/* Connect Button - Show when disconnected */}
             {!machine.isConnected && (
               <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border-l-4 border-gray-400 dark:border-gray-600">
@@ -284,22 +284,24 @@ function App() {
 
             {/* Progress Monitor - Show when pattern is uploaded */}
             {machine.isConnected && patternUploaded && (
-              <ProgressMonitor
-                machineStatus={machine.machineStatus}
-                patternInfo={machine.patternInfo}
-                sewingProgress={machine.sewingProgress}
-                pesData={pesData}
-                onStartMaskTrace={machine.startMaskTrace}
-                onStartSewing={machine.startSewing}
-                onResumeSewing={machine.resumeSewing}
-                onDeletePattern={handleDeletePattern}
-                isDeleting={machine.isDeleting}
-              />
+              <div className="lg:flex-1 lg:min-h-0">
+                <ProgressMonitor
+                  machineStatus={machine.machineStatus}
+                  patternInfo={machine.patternInfo}
+                  sewingProgress={machine.sewingProgress}
+                  pesData={pesData}
+                  onStartMaskTrace={machine.startMaskTrace}
+                  onStartSewing={machine.startSewing}
+                  onResumeSewing={machine.resumeSewing}
+                  onDeletePattern={handleDeletePattern}
+                  isDeleting={machine.isDeleting}
+                />
+              </div>
             )}
           </div>
 
           {/* Right Column - Pattern Preview */}
-          <div className="flex flex-col gap-4 md:gap-5 lg:gap-6">
+          <div className="flex flex-col lg:overflow-hidden lg:h-full">
             {pesData ? (
               <PatternCanvas
                 pesData={pesData}
@@ -311,9 +313,9 @@ function App() {
                 isUploading={machine.uploadProgress > 0 && machine.uploadProgress < 100}
               />
             ) : (
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md animate-fadeIn">
-                <h2 className="text-base lg:text-lg font-semibold mb-4 pb-2 border-b-2 border-gray-300 dark:border-gray-600 dark:text-white">Pattern Preview</h2>
-                <div className="flex items-center justify-center h-[400px] sm:h-[500px] lg:h-[600px] max-h-[70vh] bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 relative overflow-hidden">
+              <div className="lg:h-full bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md animate-fadeIn flex flex-col">
+                <h2 className="text-base lg:text-lg font-semibold mb-4 pb-2 border-b-2 border-gray-300 dark:border-gray-600 dark:text-white flex-shrink-0">Pattern Preview</h2>
+                <div className="h-[400px] sm:h-[500px] lg:flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 relative overflow-hidden">
                   {/* Decorative background pattern */}
                   <div className="absolute inset-0 opacity-5 dark:opacity-10">
                     <div className="absolute top-10 left-10 w-32 h-32 border-4 border-gray-400 dark:border-gray-500 rounded-full"></div>
@@ -354,23 +356,23 @@ function App() {
                 </div>
               </div>
             )}
-
-            {/* Next Step Guide - Below pattern preview */}
-            <NextStepGuide
-              machineStatus={machine.machineStatus}
-              isConnected={machine.isConnected}
-              hasPattern={pesData !== null}
-              patternUploaded={patternUploaded}
-              hasError={hasError(machine.machineError)}
-              errorMessage={machine.error || undefined}
-              errorCode={machine.machineError}
-            />
           </div>
         </div>
 
         {/* Bluetooth Device Picker (Electron only) */}
         <BluetoothDevicePicker />
       </div>
+
+      {/* Next Step Guide - Fixed floating overlay */}
+      <NextStepGuide
+        machineStatus={machine.machineStatus}
+        isConnected={machine.isConnected}
+        hasPattern={pesData !== null}
+        patternUploaded={patternUploaded}
+        hasError={hasError(machine.machineError)}
+        errorMessage={machine.error || undefined}
+        errorCode={machine.machineError}
+      />
     </div>
   );
 }
