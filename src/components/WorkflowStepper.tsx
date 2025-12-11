@@ -21,12 +21,13 @@ interface Step {
 
 const steps: Step[] = [
   { id: 1, label: 'Connect', description: 'Connect to machine' },
-  { id: 2, label: 'Load Pattern', description: 'Choose PES file' },
-  { id: 3, label: 'Upload', description: 'Upload to machine' },
-  { id: 4, label: 'Mask Trace', description: 'Trace pattern area' },
-  { id: 5, label: 'Start Sewing', description: 'Begin embroidery' },
-  { id: 6, label: 'Monitor', description: 'Watch progress' },
-  { id: 7, label: 'Complete', description: 'Finish and remove' },
+  { id: 2, label: 'Home Machine', description: 'Initialize hoop position' },
+  { id: 3, label: 'Load Pattern', description: 'Choose PES file' },
+  { id: 4, label: 'Upload', description: 'Upload to machine' },
+  { id: 5, label: 'Mask Trace', description: 'Trace pattern area' },
+  { id: 6, label: 'Start Sewing', description: 'Begin embroidery' },
+  { id: 7, label: 'Monitor', description: 'Watch progress' },
+  { id: 8, label: 'Complete', description: 'Finish and remove' },
 ];
 
 // Helper function to get guide content for a step
@@ -76,7 +77,21 @@ function getGuideContent(
     case 2:
       return {
         type: 'info' as const,
-        title: 'Step 2: Load Your Pattern',
+        title: 'Step 2: Home Machine',
+        description: 'The hoop needs to be removed and an initial homing procedure must be performed.',
+        items: [
+          'Remove the embroidery hoop from the machine completely',
+          'Press the Accept button on the machine',
+          'Wait for the machine to complete its initialization (homing)',
+          'Once initialization is complete, reattach the hoop',
+          'The machine should now recognize the hoop correctly'
+        ]
+      };
+
+    case 3:
+      return {
+        type: 'info' as const,
+        title: 'Step 3: Load Your Pattern',
         description: 'Choose a PES embroidery file from your computer to preview and upload.',
         items: [
           'Click "Choose PES File" in the Pattern File section',
@@ -86,10 +101,10 @@ function getGuideContent(
         ]
       };
 
-    case 3:
+    case 4:
       return {
         type: 'info' as const,
-        title: 'Step 3: Upload Pattern to Machine',
+        title: 'Step 4: Upload Pattern to Machine',
         description: 'Send your pattern to the embroidery machine to prepare for sewing.',
         items: [
           'Review the pattern preview to ensure it\'s positioned correctly',
@@ -99,7 +114,7 @@ function getGuideContent(
         ]
       };
 
-    case 4:
+    case 5:
       // Check machine status for substates
       if (machineStatus === MachineStatus.MASK_TRACE_LOCK_WAIT) {
         return {
@@ -127,7 +142,7 @@ function getGuideContent(
       }
       return {
         type: 'info' as const,
-        title: 'Step 4: Start Mask Trace',
+        title: 'Step 5: Start Mask Trace',
         description: 'The mask trace helps the machine understand the pattern boundaries.',
         items: [
           'Click "Start Mask Trace" button in the Sewing Progress section',
@@ -136,10 +151,10 @@ function getGuideContent(
         ]
       };
 
-    case 5:
+    case 6:
       return {
         type: 'success' as const,
-        title: 'Step 5: Ready to Sew!',
+        title: 'Step 6: Ready to Sew!',
         description: 'The machine is ready to begin embroidering your pattern.',
         items: [
           'Verify your thread colors are correct',
@@ -148,7 +163,7 @@ function getGuideContent(
         ]
       };
 
-    case 6:
+    case 7:
       // Check for substates
       if (machineStatus === MachineStatus.COLOR_CHANGE_WAIT) {
         return {
@@ -178,7 +193,7 @@ function getGuideContent(
       }
       return {
         type: 'progress' as const,
-        title: 'Step 6: Sewing In Progress',
+        title: 'Step 7: Sewing In Progress',
         description: 'Your embroidery is being stitched. Monitor the progress below.',
         items: [
           'Watch the progress bar and current stitch count',
@@ -187,10 +202,10 @@ function getGuideContent(
         ]
       };
 
-    case 7:
+    case 8:
       return {
         type: 'success' as const,
-        title: 'Step 7: Embroidery Complete!',
+        title: 'Step 8: Embroidery Complete!',
         description: 'Your embroidery is finished. Great work!',
         items: [
           'Remove the hoop from the machine',
@@ -208,32 +223,36 @@ function getGuideContent(
 
 function getCurrentStep(machineStatus: MachineStatus, isConnected: boolean, hasPattern: boolean, patternUploaded: boolean): number {
   if (!isConnected) return 1;
-  if (!hasPattern) return 2;
-  if (!patternUploaded) return 3;
+
+  // Check if machine needs homing (Initial state)
+  if (machineStatus === MachineStatus.Initial) return 2;
+
+  if (!hasPattern) return 3;
+  if (!patternUploaded) return 4;
 
   // After upload, determine step based on machine status
   switch (machineStatus) {
     case MachineStatus.IDLE:
     case MachineStatus.MASK_TRACE_LOCK_WAIT:
     case MachineStatus.MASK_TRACING:
-      return 4;
+      return 5;
 
     case MachineStatus.MASK_TRACE_COMPLETE:
     case MachineStatus.SEWING_WAIT:
-      return 5;
+      return 6;
 
     case MachineStatus.SEWING:
     case MachineStatus.COLOR_CHANGE_WAIT:
     case MachineStatus.PAUSE:
     case MachineStatus.STOP:
     case MachineStatus.SEWING_INTERRUPTION:
-      return 6;
-
-    case MachineStatus.SEWING_COMPLETE:
       return 7;
 
+    case MachineStatus.SEWING_COMPLETE:
+      return 8;
+
     default:
-      return 4;
+      return 5;
   }
 }
 
