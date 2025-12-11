@@ -319,7 +319,7 @@ function App() {
       </header>
 
       <div className="flex-1 p-4 sm:p-5 lg:p-6 w-full overflow-y-auto lg:overflow-hidden flex flex-col">
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-4 md:gap-5 lg:gap-6 lg:overflow-hidden">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[480px_1fr] gap-4 md:gap-5 lg:gap-6 lg:overflow-hidden">
           {/* Left Column - Controls */}
           <div className="flex flex-col gap-4 md:gap-5 lg:gap-6 lg:overflow-hidden">
             {/* Connect Button - Show when disconnected */}
