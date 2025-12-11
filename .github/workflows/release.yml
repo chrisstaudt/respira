@@ -68,7 +68,7 @@ jobs:
       - name: Upload macOS assets
         if: matrix.os == 'macos-latest'
         run: |
-          for file in out/make/zip/darwin/**/*.zip out/make/*.dmg; do
+          for file in out/make/zip/darwin/**/*.zip out/make/zip/darwin/**/*RELEASES.json out/make/*.dmg; do
             gh release upload ${{ needs.draft-release.outputs.tag-name }} "$file" --clobber
           done
         env:
