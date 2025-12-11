@@ -9,6 +9,8 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  pages: write
+  id-token: write
 
 jobs:
   draft-release:
@@ -55,30 +57,74 @@ jobs:
       - name: Package and make
         run: npm run make
 
-      - name: Upload Windows assets
+      - name: Upload Windows artifacts
         if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          for file in out/make/squirrel.windows/x64/*; do
-            gh release upload ${{ needs.draft-release.outputs.tag-name }} "$file" --clobber
-          done
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: out/make/squirrel.windows/x64/*
 
-      - name: Upload macOS assets
+      - name: Upload macOS artifacts
         if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: |
+            out/make/zip/darwin/**/*.zip
+            out/make/zip/darwin/**/*RELEASES.json
+            out/make/*.dmg
+
+      - name: Upload Linux artifacts
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: |
+            out/make/rpm/x64/*.rpm
+            out/make/deb/x64/*.deb
+            out/make/AppImage/x64/*.AppImage
+
+  upload-to-release:
+    name: Upload to GitHub Release
+    needs: [draft-release, build-release]
+    if: needs.draft-release.outputs.tag-name != ''
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Upload all assets to release
         run: |
-          for file in out/make/zip/darwin/**/*.zip out/make/zip/darwin/**/*RELEASES.json out/make/*.dmg; do
-            gh release upload ${{ needs.draft-release.outputs.tag-name }} "$file" --clobber
-          done
+          find artifacts -type f -exec gh release upload ${{ needs.draft-release.outputs.tag-name }} {} --clobber \;
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Linux assets
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          for file in out/make/rpm/x64/*.rpm out/make/deb/x64/*.deb out/make/AppImage/x64/*.AppImage; do
-            gh release upload ${{ needs.draft-release.outputs.tag-name }} "$file" --clobber
-          done
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  publish-to-pages:
+    name: Publish to GitHub Pages
+    needs: [draft-release, build-release]
+    if: needs.draft-release.outputs.tag-name != ''
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: update
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'update'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
