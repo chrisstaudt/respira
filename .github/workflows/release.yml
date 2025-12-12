@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
+      # pull_request event is required only for autolabeler
+  pull_request:
+    types: [opened, reopened, synchronize]
 
 permissions:
   contents: write
@@ -21,7 +23,7 @@ jobs:
     steps:
       - name: Draft release
         id: drafter
-        uses: release-drafter/release-drafter@v5
+        uses: release-drafter/release-drafter@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -42,8 +44,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Update package.json version
         run: |
@@ -102,4 +104,3 @@ jobs:
           find artifacts -type f -exec gh release upload ${{ needs.draft-release.outputs.tag-name }} {} --clobber \;
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
