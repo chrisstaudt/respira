@@ -9,7 +9,7 @@ import { ProgressMonitor } from './components/ProgressMonitor';
 import { WorkflowStepper } from './components/WorkflowStepper';
 import { PatternSummaryCard } from './components/PatternSummaryCard';
 import { BluetoothDevicePicker } from './components/BluetoothDevicePicker';
-import { hasError, getErrorDetails } from './utils/errorCodeHelpers';
+import { getErrorDetails } from './utils/errorCodeHelpers';
 import { getStateVisualInfo } from './utils/machineStateHelpers';
 import { CheckCircleIcon, BoltIcon, PauseCircleIcon, ExclamationTriangleIcon, ArrowPathIcon, XMarkIcon, InformationCircleIcon } from '@heroicons/react/24/solid';
 import './App.css';
@@ -320,15 +320,7 @@ function App() {
 
           {/* Workflow Stepper - Flexible width column */}
           <div>
-            <WorkflowStepper
-              machineStatus={machineStatus}
-              isConnected={isConnected}
-              hasPattern={pesData !== null}
-              patternUploaded={patternUploaded}
-              hasError={hasError(machineError)}
-              errorMessage={machineErrorMessage || undefined}
-              errorCode={machineError}
-            />
+            <WorkflowStepper />
           </div>
         </div>
       </header>
