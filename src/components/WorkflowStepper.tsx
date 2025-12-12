@@ -1,17 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
+import { useShallow } from 'zustand/react/shallow';
+import { useMachineStore } from '../stores/useMachineStore';
+import { usePatternStore } from '../stores/usePatternStore';
 import { CheckCircleIcon, InformationCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 import { MachineStatus } from '../types/machine';
-import { getErrorDetails } from '../utils/errorCodeHelpers';
-
-interface WorkflowStepperProps {
-  machineStatus: MachineStatus;
-  isConnected: boolean;
-  hasPattern: boolean;
-  patternUploaded: boolean;
-  hasError?: boolean;
-  errorMessage?: string;
-  errorCode?: number;
-}
+import { getErrorDetails, hasError } from '../utils/errorCodeHelpers';
 
 interface Step {
   id: number;
@@ -256,15 +249,35 @@ function getCurrentStep(machineStatus: MachineStatus, isConnected: boolean, hasP
   }
 }
 
-export function WorkflowStepper({
-  machineStatus,
-  isConnected,
-  hasPattern,
-  patternUploaded,
-  hasError = false,
-  errorMessage,
-  errorCode
-}: WorkflowStepperProps) {
+export function WorkflowStepper() {
+  // Machine store
+  const {
+    machineStatus,
+    isConnected,
+    machineError,
+    error: errorMessage,
+  } = useMachineStore(
+    useShallow((state) => ({
+      machineStatus: state.machineStatus,
+      isConnected: state.isConnected,
+      machineError: state.machineError,
+      error: state.error,
+    }))
+  );
+
+  // Pattern store
+  const {
+    pesData,
+    patternUploaded,
+  } = usePatternStore(
+    useShallow((state) => ({
+      pesData: state.pesData,
+      patternUploaded: state.patternUploaded,
+    }))
+  );
+
+  const hasPattern = pesData !== null;
+  const hasErrorFlag = hasError(machineError);
   const currentStep = getCurrentStep(machineStatus, isConnected, hasPattern, patternUploaded);
   const [showPopover, setShowPopover] = useState(false);
   const [popoverStep, setPopoverStep] = useState<number | null>(null);
@@ -383,7 +396,7 @@ export function WorkflowStepper({
           aria-label="Step guidance"
         >
           {(() => {
-            const content = getGuideContent(popoverStep, machineStatus, hasError, errorCode, errorMessage);
+            const content = getGuideContent(popoverStep, machineStatus, hasErrorFlag, machineError, errorMessage || undefined);
             if (!content) return null;
 
             const colorClasses = {

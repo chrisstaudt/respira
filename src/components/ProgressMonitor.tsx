@@ -1,4 +1,7 @@
 import { useRef, useEffect, useState, useMemo } from "react";
+import { useShallow } from 'zustand/react/shallow';
+import { useMachineStore } from '../stores/useMachineStore';
+import { usePatternStore } from '../stores/usePatternStore';
 import {
   CheckCircleIcon,
   ArrowRightIcon,
@@ -11,9 +14,7 @@ import {
   ChartBarIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/solid";
-import type { PatternInfo, SewingProgress } from "../types/machine";
 import { MachineStatus } from "../types/machine";
-import type { PesPatternData } from "../utils/pystitchConverter";
 import {
   canStartSewing,
   canStartMaskTrace,
@@ -21,28 +22,30 @@ import {
   getStateVisualInfo,
 } from "../utils/machineStateHelpers";
 
-interface ProgressMonitorProps {
-  machineStatus: MachineStatus;
-  patternInfo: PatternInfo | null;
-  sewingProgress: SewingProgress | null;
-  pesData: PesPatternData | null;
-  onStartMaskTrace: () => void;
-  onStartSewing: () => void;
-  onResumeSewing: () => void;
-  onDeletePattern: () => void;
-  isDeleting?: boolean;
-}
+export function ProgressMonitor() {
+  // Machine store
+  const {
+    machineStatus,
+    patternInfo,
+    sewingProgress,
+    isDeleting,
+    startMaskTrace,
+    startSewing,
+    resumeSewing,
+  } = useMachineStore(
+    useShallow((state) => ({
+      machineStatus: state.machineStatus,
+      patternInfo: state.patternInfo,
+      sewingProgress: state.sewingProgress,
+      isDeleting: state.isDeleting,
+      startMaskTrace: state.startMaskTrace,
+      startSewing: state.startSewing,
+      resumeSewing: state.resumeSewing,
+    }))
+  );
 
-export function ProgressMonitor({
-  machineStatus,
-  patternInfo,
-  sewingProgress,
-  pesData,
-  onStartMaskTrace,
-  onStartSewing,
-  onResumeSewing,
-  isDeleting = false,
-}: ProgressMonitorProps) {
+  // Pattern store
+  const pesData = usePatternStore((state) => state.pesData);
   const currentBlockRef = useRef<HTMLDivElement>(null);
   const colorBlocksScrollRef = useRef<HTMLDivElement>(null);
   const [showGradient, setShowGradient] = useState(true);
@@ -417,7 +420,7 @@ export function ProgressMonitor({
         {/* Resume has highest priority when available */}
         {canResumeSewing(machineStatus) && (
           <button
-            onClick={onResumeSewing}
+            onClick={resumeSewing}
             disabled={isDeleting}
             className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 bg-blue-600 dark:bg-blue-700 text-white rounded font-semibold text-xs hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Resume sewing the current pattern"
@@ -430,7 +433,7 @@ export function ProgressMonitor({
         {/* Start Sewing - primary action, takes more space */}
         {canStartSewing(machineStatus) && !canResumeSewing(machineStatus) && (
           <button
-            onClick={onStartSewing}
+            onClick={startSewing}
             disabled={isDeleting}
             className="flex-[2] flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 bg-blue-600 dark:bg-blue-700 text-white rounded font-semibold text-xs hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Start sewing the pattern"
@@ -443,7 +446,7 @@ export function ProgressMonitor({
         {/* Start Mask Trace - secondary action */}
         {canStartMaskTrace(machineStatus) && (
           <button
-            onClick={onStartMaskTrace}
+            onClick={startMaskTrace}
             disabled={isDeleting}
             className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 bg-gray-600 dark:bg-gray-700 text-white rounded font-semibold text-xs hover:bg-gray-700 dark:hover:bg-gray-600 active:bg-gray-800 dark:active:bg-gray-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label={

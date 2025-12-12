@@ -1,45 +1,58 @@
 import { useState, useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
+import { useMachineStore } from '../stores/useMachineStore';
+import { usePatternStore } from '../stores/usePatternStore';
+import { useUIStore } from '../stores/useUIStore';
 import { convertPesToPen, type PesPatternData } from '../utils/pystitchConverter';
-import { MachineStatus, type MachineInfo } from '../types/machine';
 import { canUploadPattern, getMachineStateCategory } from '../utils/machineStateHelpers';
 import { PatternInfoSkeleton } from './SkeletonLoader';
 import { ArrowUpTrayIcon, CheckCircleIcon, DocumentTextIcon, FolderOpenIcon } from '@heroicons/react/24/solid';
 import { createFileService } from '../platform';
 import type { IFileService } from '../platform/interfaces/IFileService';
 
-interface FileUploadProps {
-  isConnected: boolean;
-  machineStatus: MachineStatus;
-  uploadProgress: number;
-  onPatternLoaded: (pesData: PesPatternData, fileName: string) => void;
-  onUpload: (penData: Uint8Array, pesData: PesPatternData, fileName: string, patternOffset?: { x: number; y: number }) => void;
-  pyodideReady: boolean;
-  patternOffset: { x: number; y: number };
-  patternUploaded: boolean;
-  resumeAvailable: boolean;
-  resumeFileName: string | null;
-  pesData: PesPatternData | null;
-  currentFileName: string;
-  isUploading?: boolean;
-  machineInfo: MachineInfo | null;
-}
+export function FileUpload() {
+  // Machine store
+  const {
+    isConnected,
+    machineStatus,
+    uploadProgress,
+    isUploading,
+    machineInfo,
+    resumeAvailable,
+    resumeFileName,
+    uploadPattern,
+  } = useMachineStore(
+    useShallow((state) => ({
+      isConnected: state.isConnected,
+      machineStatus: state.machineStatus,
+      uploadProgress: state.uploadProgress,
+      isUploading: state.isUploading,
+      machineInfo: state.machineInfo,
+      resumeAvailable: state.resumeAvailable,
+      resumeFileName: state.resumeFileName,
+      uploadPattern: state.uploadPattern,
+    }))
+  );
 
-export function FileUpload({
-  isConnected,
-  machineStatus,
-  uploadProgress,
-  onPatternLoaded,
-  onUpload,
-  pyodideReady,
-  patternOffset,
-  patternUploaded,
-  resumeAvailable,
-  resumeFileName,
-  pesData: pesDataProp,
-  currentFileName,
-  isUploading = false,
-  machineInfo,
-}: FileUploadProps) {
+  // Pattern store
+  const {
+    pesData: pesDataProp,
+    currentFileName,
+    patternOffset,
+    patternUploaded,
+    setPattern,
+  } = usePatternStore(
+    useShallow((state) => ({
+      pesData: state.pesData,
+      currentFileName: state.currentFileName,
+      patternOffset: state.patternOffset,
+      patternUploaded: state.patternUploaded,
+      setPattern: state.setPattern,
+    }))
+  );
+
+  // UI store
+  const pyodideReady = useUIStore((state) => state.pyodideReady);
   const [localPesData, setLocalPesData] = useState<PesPatternData | null>(null);
   const [fileName, setFileName] = useState<string>('');
   const [fileService] = useState<IFileService>(() => createFileService());
@@ -77,7 +90,7 @@ export function FileUpload({
         const data = await convertPesToPen(file);
         setLocalPesData(data);
         setFileName(file.name);
-        onPatternLoaded(data, file.name);
+        setPattern(data, file.name);
       } catch (err) {
         alert(
           `Failed to load PES file: ${
@@ -88,14 +101,14 @@ export function FileUpload({
         setIsLoading(false);
       }
     },
-    [fileService, onPatternLoaded, pyodideReady]
+    [fileService, setPattern, pyodideReady]
   );
 
   const handleUpload = useCallback(() => {
     if (pesData && displayFileName) {
-      onUpload(pesData.penData, pesData, displayFileName, patternOffset);
+      uploadPattern(pesData.penData, pesData, displayFileName, patternOffset);
     }
-  }, [pesData, displayFileName, onUpload, patternOffset]);
+  }, [pesData, displayFileName, uploadPattern, patternOffset]);
 
   // Check if pattern (with offset) fits within hoop bounds
   const checkPatternFitsInHoop = useCallback(() => {
