@@ -1,39 +1,58 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
+import { useMachineStore } from '../stores/useMachineStore';
+import { usePatternStore } from '../stores/usePatternStore';
 import { Stage, Layer, Group } from 'react-konva';
 import Konva from 'konva';
 import { PlusIcon, MinusIcon, ArrowPathIcon, LockClosedIcon, PhotoIcon } from '@heroicons/react/24/solid';
 import type { PesPatternData } from '../utils/pystitchConverter';
-import type { SewingProgress, MachineInfo } from '../types/machine';
 import { calculateInitialScale } from '../utils/konvaRenderers';
 import { Grid, Origin, Hoop, Stitches, PatternBounds, CurrentPosition } from './KonvaComponents';
 
-interface PatternCanvasProps {
-  pesData: PesPatternData | null;
-  sewingProgress: SewingProgress | null;
-  machineInfo: MachineInfo | null;
-  initialPatternOffset?: { x: number; y: number };
-  onPatternOffsetChange?: (offsetX: number, offsetY: number) => void;
-  patternUploaded?: boolean;
-  isUploading?: boolean;
-}
+export function PatternCanvas() {
+  // Machine store
+  const {
+    sewingProgress,
+    machineInfo,
+    isUploading,
+  } = useMachineStore(
+    useShallow((state) => ({
+      sewingProgress: state.sewingProgress,
+      machineInfo: state.machineInfo,
+      isUploading: state.isUploading,
+    }))
+  );
 
-export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPatternOffset, onPatternOffsetChange, patternUploaded = false, isUploading = false }: PatternCanvasProps) {
+  // Pattern store
+  const {
+    pesData,
+    patternOffset: initialPatternOffset,
+    patternUploaded,
+    setPatternOffset,
+  } = usePatternStore(
+    useShallow((state) => ({
+      pesData: state.pesData,
+      patternOffset: state.patternOffset,
+      patternUploaded: state.patternUploaded,
+      setPatternOffset: state.setPatternOffset,
+    }))
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage | null>(null);
 
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [stageScale, setStageScale] = useState(1);
-  const [patternOffset, setPatternOffset] = useState(initialPatternOffset || { x: 0, y: 0 });
+  const [localPatternOffset, setLocalPatternOffset] = useState(initialPatternOffset || { x: 0, y: 0 });
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const initialScaleRef = useRef<number>(1);
   const prevPesDataRef = useRef<PesPatternData | null>(null);
 
   // Update pattern offset when initialPatternOffset changes
   if (initialPatternOffset && (
-    patternOffset.x !== initialPatternOffset.x ||
-    patternOffset.y !== initialPatternOffset.y
+    localPatternOffset.x !== initialPatternOffset.x ||
+    localPatternOffset.y !== initialPatternOffset.y
   )) {
-    setPatternOffset(initialPatternOffset);
+    setLocalPatternOffset(initialPatternOffset);
     console.log('[PatternCanvas] Restored pattern offset:', initialPatternOffset);
   }
 
@@ -178,12 +197,9 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
       x: e.target.x(),
       y: e.target.y(),
     };
-    setPatternOffset(newOffset);
-
-    if (onPatternOffsetChange) {
-      onPatternOffsetChange(newOffset.x, newOffset.y);
-    }
-  }, [onPatternOffsetChange]);
+    setLocalPatternOffset(newOffset);
+    setPatternOffset(newOffset.x, newOffset.y);
+  }, [setPatternOffset]);
 
   const borderColor = pesData ? 'border-teal-600 dark:border-teal-500' : 'border-gray-400 dark:border-gray-600';
   const iconColor = pesData ? 'text-teal-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-400';
@@ -252,8 +268,8 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
               <Group
                 name="pattern-group"
                 draggable={!patternUploaded && !isUploading}
-                x={patternOffset.x}
-                y={patternOffset.y}
+                x={localPatternOffset.x}
+                y={localPatternOffset.y}
                 onDragEnd={handlePatternDragEnd}
                 onMouseEnter={(e) => {
                   const stage = e.target.getStage();
@@ -278,7 +294,7 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
           {/* Current position layer */}
           <Layer>
             {pesData && sewingProgress && sewingProgress.currentStitch > 0 && (
-              <Group x={patternOffset.x} y={patternOffset.y}>
+              <Group x={localPatternOffset.x} y={localPatternOffset.y}>
                 <CurrentPosition
                   currentStitchIndex={sewingProgress.currentStitch}
                   stitches={pesData.stitches}
@@ -352,7 +368,7 @@ export function PatternCanvas({ pesData, sewingProgress, machineInfo, initialPat
                 )}
               </div>
               <div className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-1">
-                X: {(patternOffset.x / 10).toFixed(1)}mm, Y: {(patternOffset.y / 10).toFixed(1)}mm
+                X: {(localPatternOffset.x / 10).toFixed(1)}mm, Y: {(localPatternOffset.y / 10).toFixed(1)}mm
               </div>
               <div className="text-xs text-gray-600 dark:text-gray-400 italic">
                 {patternUploaded ? 'Pattern locked • Drag background to pan' : 'Drag pattern to move • Drag background to pan'}

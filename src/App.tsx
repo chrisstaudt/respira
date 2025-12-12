@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useMachineStore } from './stores/useMachineStore';
 import { usePatternStore } from './stores/usePatternStore';
@@ -9,9 +9,8 @@ import { ProgressMonitor } from './components/ProgressMonitor';
 import { WorkflowStepper } from './components/WorkflowStepper';
 import { PatternSummaryCard } from './components/PatternSummaryCard';
 import { BluetoothDevicePicker } from './components/BluetoothDevicePicker';
-import type { PesPatternData } from './utils/pystitchConverter';
 import { hasError, getErrorDetails } from './utils/errorCodeHelpers';
-import { canDeletePattern, getStateVisualInfo } from './utils/machineStateHelpers';
+import { getStateVisualInfo } from './utils/machineStateHelpers';
 import { CheckCircleIcon, BoltIcon, PauseCircleIcon, ExclamationTriangleIcon, ArrowPathIcon, XMarkIcon, InformationCircleIcon } from '@heroicons/react/24/solid';
 import './App.css';
 
@@ -24,23 +23,13 @@ function App() {
     machineStatusName,
     machineError,
     patternInfo,
-    sewingProgress,
-    uploadProgress,
     error: machineErrorMessage,
     isPairingError,
     isCommunicating: isPolling,
-    isUploading,
-    isDeleting,
-    resumeAvailable,
     resumeFileName,
     resumedPattern,
     connect,
     disconnect,
-    uploadPattern,
-    startMaskTrace,
-    startSewing,
-    resumeSewing,
-    deletePattern,
   } = useMachineStore(
     useShallow((state) => ({
       isConnected: state.isConnected,
@@ -49,59 +38,41 @@ function App() {
       machineStatusName: state.machineStatusName,
       machineError: state.machineError,
       patternInfo: state.patternInfo,
-      sewingProgress: state.sewingProgress,
-      uploadProgress: state.uploadProgress,
       error: state.error,
       isPairingError: state.isPairingError,
       isCommunicating: state.isCommunicating,
-      isUploading: state.isUploading,
-      isDeleting: state.isDeleting,
-      resumeAvailable: state.resumeAvailable,
       resumeFileName: state.resumeFileName,
       resumedPattern: state.resumedPattern,
       connect: state.connect,
       disconnect: state.disconnect,
-      uploadPattern: state.uploadPattern,
-      startMaskTrace: state.startMaskTrace,
-      startSewing: state.startSewing,
-      resumeSewing: state.resumeSewing,
-      deletePattern: state.deletePattern,
     }))
   );
 
   // Pattern store
   const {
     pesData,
-    currentFileName,
-    patternOffset,
     patternUploaded,
     setPattern,
     setPatternOffset,
     setPatternUploaded,
-    clearPattern,
   } = usePatternStore(
     useShallow((state) => ({
       pesData: state.pesData,
-      currentFileName: state.currentFileName,
-      patternOffset: state.patternOffset,
       patternUploaded: state.patternUploaded,
       setPattern: state.setPattern,
       setPatternOffset: state.setPatternOffset,
       setPatternUploaded: state.setPatternUploaded,
-      clearPattern: state.clearPattern,
     }))
   );
 
   // UI store
   const {
-    pyodideReady,
     pyodideError,
     showErrorPopover,
     initializePyodide,
     setErrorPopover,
   } = useUIStore(
     useShallow((state) => ({
-      pyodideReady: state.pyodideReady,
       pyodideError: state.pyodideError,
       showErrorPopover: state.showErrorPopover,
       initializePyodide: state.initializePyodide,
@@ -146,25 +117,6 @@ function App() {
     }
   }
 
-  const handlePatternLoaded = useCallback((data: PesPatternData, fileName: string) => {
-    setPattern(data, fileName);
-  }, [setPattern]);
-
-  const handlePatternOffsetChange = useCallback((offsetX: number, offsetY: number) => {
-    setPatternOffset(offsetX, offsetY);
-  }, [setPatternOffset]);
-
-  const handleUpload = useCallback(async (penData: Uint8Array, pesData: PesPatternData, fileName: string, patternOffset?: { x: number; y: number }) => {
-    await uploadPattern(penData, pesData, fileName, patternOffset);
-    setPatternUploaded(true);
-  }, [uploadPattern, setPatternUploaded]);
-
-  const handleDeletePattern = useCallback(async () => {
-    await deletePattern();
-    clearPattern();
-    // NOTE: We intentionally DON'T clear pesData in the pattern store
-    // so the pattern remains visible in the canvas for re-editing and re-uploading
-  }, [deletePattern, clearPattern]);
 
   // Track pattern uploaded state based on machine status
   if (!isConnected) {
@@ -410,49 +362,18 @@ function App() {
 
             {/* Pattern File - Show during upload stage (before pattern is uploaded) */}
             {isConnected && !patternUploaded && (
-              <FileUpload
-                isConnected={isConnected}
-                machineStatus={machineStatus}
-                uploadProgress={uploadProgress}
-                onPatternLoaded={handlePatternLoaded}
-                onUpload={handleUpload}
-                pyodideReady={pyodideReady}
-                patternOffset={patternOffset}
-                patternUploaded={patternUploaded}
-                resumeAvailable={resumeAvailable}
-                resumeFileName={resumeFileName}
-                pesData={pesData}
-                currentFileName={currentFileName}
-                isUploading={isUploading}
-                machineInfo={machineInfo}
-              />
+              <FileUpload />
             )}
 
             {/* Compact Pattern Summary - Show after upload (during sewing stages) */}
             {isConnected && patternUploaded && pesData && (
-              <PatternSummaryCard
-                pesData={pesData}
-                fileName={currentFileName}
-                onDeletePattern={handleDeletePattern}
-                canDelete={canDeletePattern(machineStatus)}
-                isDeleting={isDeleting}
-              />
+              <PatternSummaryCard />
             )}
 
             {/* Progress Monitor - Show when pattern is uploaded */}
             {isConnected && patternUploaded && (
               <div className="lg:flex-1 lg:min-h-0">
-                <ProgressMonitor
-                  machineStatus={machineStatus}
-                  patternInfo={patternInfo}
-                  sewingProgress={sewingProgress}
-                  pesData={pesData}
-                  onStartMaskTrace={startMaskTrace}
-                  onStartSewing={startSewing}
-                  onResumeSewing={resumeSewing}
-                  onDeletePattern={handleDeletePattern}
-                  isDeleting={isDeleting}
-                />
+                <ProgressMonitor />
               </div>
             )}
           </div>
@@ -460,15 +381,7 @@ function App() {
           {/* Right Column - Pattern Preview */}
           <div className="flex flex-col lg:overflow-hidden lg:h-full">
             {pesData ? (
-              <PatternCanvas
-                pesData={pesData}
-                sewingProgress={sewingProgress}
-                machineInfo={machineInfo}
-                initialPatternOffset={patternOffset}
-                onPatternOffsetChange={handlePatternOffsetChange}
-                patternUploaded={patternUploaded}
-                isUploading={uploadProgress > 0 && uploadProgress < 100}
-              />
+              <PatternCanvas />
             ) : (
               <div className="lg:h-full bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md animate-fadeIn flex flex-col">
                 <h2 className="text-base lg:text-lg font-semibold mb-4 pb-2 border-b-2 border-gray-300 dark:border-gray-600 dark:text-white flex-shrink-0">Pattern Preview</h2>
