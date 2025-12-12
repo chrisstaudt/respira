@@ -31,6 +31,7 @@ function createWindow() {
     minWidth: 1280, // Prevent layout from breaking into single-column mobile view
     minHeight: 800,
     autoHideMenuBar: true, // Hide the menu bar (can be toggled with Alt key)
+    title: `Respira v${app.getVersion()}`,
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       nodeIntegration: false,
