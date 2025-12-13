@@ -45,8 +45,8 @@ export function parsePenData(data: Uint8Array): PenData {
     if (ySigned > 0x7FFF) ySigned = ySigned - 0x10000;
 
     // Step 3: Shift right by 3 (arithmetic shift, preserves sign)
-    let x = xSigned >> 3;
-    let y = ySigned >> 3;
+    const x = xSigned >> 3;
+    const y = ySigned >> 3;
 
     const stitch: PenStitch = {
       x,

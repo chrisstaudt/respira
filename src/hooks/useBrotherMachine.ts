@@ -280,7 +280,7 @@ export function useBrotherMachine() {
         setIsUploading(false); // Clear loading state
       }
     },
-    [service, storageService, isConnected, refreshStatus, refreshPatternInfo],
+    [service, storageService, isConnected, refreshStatus],
   );
 
   const startMaskTrace = useCallback(async () => {

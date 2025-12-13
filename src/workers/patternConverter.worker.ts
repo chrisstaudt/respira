@@ -485,7 +485,7 @@ for i, stitch in enumerate(pattern.stitches):
           penStitches.push(...generateLockStitches(prevX, prevY, finishDir.dirX, finishDir.dirY));
 
           // Encode jump with both FEED and CUT flags
-          let xEncoded = (absX << 3) & 0xffff;
+          const xEncoded = (absX << 3) & 0xffff;
           let yEncoded = (absY << 3) & 0xffff;
           yEncoded |= PEN_FEED_DATA; // Jump flag
           yEncoded |= PEN_CUT_DATA;  // Cut flag for long jumps
@@ -579,8 +579,8 @@ for i, stitch in enumerate(pattern.stitches):
 
         // Step 3: If next stitch is a JUMP, encode it and skip it in the loop
         // Otherwise, add a jump ourselves if positions differ
-        let jumpToX = nextStitchX;
-        let jumpToY = nextStitchY;
+        const jumpToX = nextStitchX;
+        const jumpToY = nextStitchY;
 
         if (nextIsJump) {
           // The PES has a JUMP to the new color position, we'll add it here and skip it later
@@ -596,7 +596,7 @@ for i, stitch in enumerate(pattern.stitches):
 
         // Add jump to new position (if position changed)
         if (jumpToX !== absX || jumpToY !== absY) {
-          let jumpXEncoded = (jumpToX << 3) & 0xffff;
+          const jumpXEncoded = (jumpToX << 3) & 0xffff;
           let jumpYEncoded = (jumpToY << 3) & 0xffff;
           jumpYEncoded |= PEN_FEED_DATA; // Jump flag
 
@@ -612,7 +612,7 @@ for i, stitch in enumerate(pattern.stitches):
         // Step 4: Add COLOR_END marker at NEW position
         // This is where the machine pauses and waits for the user to change thread color
         let colorEndXEncoded = (jumpToX << 3) & 0xffff;
-        let colorEndYEncoded = (jumpToY << 3) & 0xffff;
+        const colorEndYEncoded = (jumpToY << 3) & 0xffff;
 
         // Add COLOR_END flag to X coordinate
         colorEndXEncoded = (colorEndXEncoded & 0xfff8) | PEN_COLOR_END;
