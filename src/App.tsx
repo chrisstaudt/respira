@@ -83,7 +83,7 @@ function App() {
   const errorPopoverRef = useRef<HTMLDivElement>(null);
   const errorButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Initialize Pyodide on mount
+  // Initialize Pyodide in background on mount (non-blocking thanks to worker)
   useEffect(() => {
     initializePyodide();
   }, [initializePyodide]);

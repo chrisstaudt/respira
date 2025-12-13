@@ -52,7 +52,19 @@ export function FileUpload() {
   );
 
   // UI store
-  const pyodideReady = useUIStore((state) => state.pyodideReady);
+  const {
+    pyodideReady,
+    pyodideProgress,
+    pyodideLoadingStep,
+    initializePyodide,
+  } = useUIStore(
+    useShallow((state) => ({
+      pyodideReady: state.pyodideReady,
+      pyodideProgress: state.pyodideProgress,
+      pyodideLoadingStep: state.pyodideLoadingStep,
+      initializePyodide: state.initializePyodide,
+    }))
+  );
   const [localPesData, setLocalPesData] = useState<PesPatternData | null>(null);
   const [fileName, setFileName] = useState<string>('');
   const [fileService] = useState<IFileService>(() => createFileService());
@@ -65,13 +77,15 @@ export function FileUpload() {
 
   const handleFileChange = useCallback(
     async (event?: React.ChangeEvent<HTMLInputElement>) => {
-      if (!pyodideReady) {
-        alert('Python environment is still loading. Please wait...');
-        return;
-      }
-
       setIsLoading(true);
       try {
+        // Wait for Pyodide if it's still loading
+        if (!pyodideReady) {
+          console.log('[FileUpload] Waiting for Pyodide to finish loading...');
+          await initializePyodide();
+          console.log('[FileUpload] Pyodide ready');
+        }
+
         let file: File | null = null;
 
         // In Electron, use native file dialogs
@@ -101,7 +115,7 @@ export function FileUpload() {
         setIsLoading(false);
       }
     },
-    [fileService, setPattern, pyodideReady]
+    [fileService, setPattern, pyodideReady, initializePyodide]
   );
 
   const handleUpload = useCallback(() => {
@@ -256,13 +270,13 @@ export function FileUpload() {
           onChange={handleFileChange}
           id="file-input"
           className="hidden"
-          disabled={!pyodideReady || isLoading || patternUploaded || isUploading}
+          disabled={isLoading || patternUploaded || isUploading}
         />
         <label
           htmlFor={fileService.hasNativeDialogs() ? undefined : "file-input"}
           onClick={fileService.hasNativeDialogs() ? () => handleFileChange() : undefined}
           className={`flex-[2] flex items-center justify-center gap-2 px-3 py-2.5 sm:py-2 rounded font-semibold text-sm transition-all ${
-            !pyodideReady || isLoading || patternUploaded || isUploading
+            isLoading || patternUploaded || isUploading
               ? 'opacity-50 cursor-not-allowed bg-gray-400 dark:bg-gray-600 text-white'
               : 'cursor-pointer bg-gray-600 dark:bg-gray-700 text-white hover:bg-gray-700 dark:hover:bg-gray-600'
           }`}
@@ -274,14 +288,6 @@ export function FileUpload() {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
               <span>Loading...</span>
-            </>
-          ) : !pyodideReady ? (
-            <>
-              <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span>Initializing...</span>
             </>
           ) : patternUploaded ? (
             <>
@@ -320,6 +326,33 @@ export function FileUpload() {
           </button>
         )}
       </div>
+
+      {/* Pyodide initialization progress indicator - shown when initializing or waiting */}
+      {!pyodideReady && pyodideProgress > 0 && (
+        <div className="mb-3">
+          <div className="flex justify-between items-center mb-1.5">
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+              {isLoading && !pyodideReady
+                ? 'Please wait - initializing Python environment...'
+                : pyodideLoadingStep || 'Initializing Python environment...'}
+            </span>
+            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+              {pyodideProgress.toFixed(0)}%
+            </span>
+          </div>
+          <div className="h-2.5 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden shadow-inner relative">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 dark:from-blue-600 dark:via-blue-700 dark:to-blue-800 transition-all duration-300 ease-out relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/30 after:to-transparent after:animate-[shimmer_2s_infinite] rounded-full"
+              style={{ width: `${pyodideProgress}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 italic">
+            {isLoading && !pyodideReady
+              ? 'File dialog will open automatically when ready'
+              : 'This only happens once on first use'}
+          </p>
+        </div>
+      )}
 
       {/* Error/warning messages with smooth transition - placed after buttons */}
       <div className="transition-all duration-200 ease-in-out overflow-hidden" style={{

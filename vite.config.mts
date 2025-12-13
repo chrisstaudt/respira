@@ -144,10 +144,15 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['pyodide'],
   },
+  worker: {
+    format: 'es',
+  },
   server: {
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',
+      // Mark all dev server resources as same-origin
+      'Cross-Origin-Resource-Policy': 'same-origin',
     },
   },
 })
