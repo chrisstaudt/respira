@@ -155,6 +155,12 @@ async function initializePyodide(pyodideIndexURL?: string, pystitchWheelURL?: st
 /**
  * Calculate lock stitch direction by accumulating movement vectors
  * Matches the C# logic that accumulates coordinates until reaching threshold
+ *
+ * Three use cases from C# ConvertEmb function:
+ * - Loop A (Jump/Entry): lookAhead=true - Hides knot under upcoming stitches
+ * - Loop B (End/Cut): lookAhead=false - Hides knot inside previous stitches
+ * - Loop C (Color Change): lookAhead=true - Aligns knot with stop event data
+ *
  * @param stitches Array of stitches to analyze
  * @param currentIndex Current stitch index
  * @param lookAhead If true, look forward; if false, look backward
@@ -481,6 +487,8 @@ for i, stitch in enumerate(pattern.stitches):
 
         if (jumpDist > FEED_LENGTH) {
           // Long jump - add finishing lock stitches at previous position
+          // Loop B: End/Cut Vector - Look BACKWARD at previous stitches
+          // This hides the knot inside the embroidery we just finished
           const finishDir = calculateLockDirection(stitches, i - 1, false);
           penStitches.push(...generateLockStitches(prevX, prevY, finishDir.dirX, finishDir.dirY));
 
@@ -498,6 +506,8 @@ for i, stitch in enumerate(pattern.stitches):
           );
 
           // Add starting lock stitches at new position
+          // Loop A: Jump/Entry Vector - Look FORWARD at upcoming stitches
+          // This hides the knot under the stitches we're about to make
           const startDir = calculateLockDirection(stitches, i, true);
           penStitches.push(...generateLockStitches(absX, absY, startDir.dirX, startDir.dirY));
 
@@ -561,7 +571,9 @@ for i, stitch in enumerate(pattern.stitches):
         console.log(`[PEN]   Next stitch: cmd=${nextStitchCmd}, isJump=${nextIsJump}, pos=(${nextStitchX}, ${nextStitchY})`);
 
         // Step 1: Add finishing lock stitches at end of current color
-        const finishDir = calculateLockDirection(stitches, i, false);
+        // Loop C: Color Change Vector - Look FORWARD at the stop event data
+        // This aligns the knot with the stop command's data block for correct tension
+        const finishDir = calculateLockDirection(stitches, i, true);
         penStitches.push(...generateLockStitches(absX, absY, finishDir.dirX, finishDir.dirY));
         console.log(`[PEN]   Added 8 finishing lock stitches at (${absX}, ${absY}) dir=(${finishDir.dirX.toFixed(2)}, ${finishDir.dirY.toFixed(2)})`);
 
@@ -626,7 +638,8 @@ for i, stitch in enumerate(pattern.stitches):
         console.log(`[PEN]   Added COLOR_END marker at (${jumpToX}, ${jumpToY})`);
 
         // Step 5: Add starting lock stitches at the new position
-        // Look ahead from the next stitch (which might be a JUMP we skipped, so use i+1)
+        // Loop A: Jump/Entry Vector - Look FORWARD at upcoming stitches in new color
+        // This hides the knot under the stitches we're about to make
         const nextStitchIdx = nextIsJump ? i + 2 : i + 1;
         const startDir = calculateLockDirection(stitches, nextStitchIdx < stitches.length ? nextStitchIdx : i, true);
         penStitches.push(...generateLockStitches(jumpToX, jumpToY, startDir.dirX, startDir.dirY));
