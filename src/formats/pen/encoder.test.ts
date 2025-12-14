@@ -601,4 +601,43 @@ describe('encodeStitchesToPen', () => {
     expect(result.bounds.maxY).toBe(10);
     // END stitches update bounds (they're not MOVE stitches)
   });
+
+  it('should add DATA_END flag to last stitch even without END flag in input', () => {
+    // Test that the encoder automatically marks the last stitch with DATA_END
+    // even if the input stitches don't have an END flag
+    const stitches = [
+      [0, 0, STITCH, 0],
+      [10, 0, STITCH, 0],
+      [20, 0, STITCH, 0], // Last stitch - NO END flag
+    ];
+
+    const result = encodeStitchesToPen(stitches);
+    const decoded = decodeAllPenStitches(result.penBytes);
+
+    // First two stitches should NOT have DATA_END flag
+    expect(decoded[0].isDataEnd).toBe(false);
+    expect(decoded[1].isDataEnd).toBe(false);
+
+    // Last stitch SHOULD have DATA_END flag automatically added
+    expect(decoded[2].isDataEnd).toBe(true);
+    expect(decoded[2].x).toBe(20);
+    expect(decoded[2].y).toBe(0);
+  });
+
+  it('should add DATA_END flag when input has explicit END flag', () => {
+    // Verify that END flag in input also results in DATA_END flag in output
+    const stitches = [
+      [0, 0, STITCH, 0],
+      [10, 0, STITCH, 0],
+      [20, 0, STITCH | END, 0], // Explicit END flag
+    ];
+
+    const result = encodeStitchesToPen(stitches);
+    const decoded = decodeAllPenStitches(result.penBytes);
+
+    // Last stitch should have DATA_END flag
+    expect(decoded[2].isDataEnd).toBe(true);
+    expect(decoded[2].x).toBe(20);
+    expect(decoded[2].y).toBe(0);
+  });
 });
