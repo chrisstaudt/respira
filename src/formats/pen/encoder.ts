@@ -5,15 +5,13 @@
  * The PEN format uses absolute coordinates shifted left by 3 bits, with flags in the low 3 bits.
  */
 
-import {
-  MOVE,
-  TRIM,
-  END,
-  PEN_FEED_DATA,
-  PEN_CUT_DATA,
-  PEN_COLOR_END,
-  PEN_DATA_END,
-} from './embroideryConstants';
+import { MOVE, TRIM, END } from '../import/constants';
+
+// PEN format flags for Brother machines
+const PEN_FEED_DATA = 0x01; // Bit 0: Jump stitch (move without stitching)
+const PEN_CUT_DATA = 0x02;  // Bit 1: Trim/cut thread command
+const PEN_COLOR_END = 0x03; // Last stitch before color change
+const PEN_DATA_END = 0x05;  // Last stitch of entire pattern
 
 // Constants from PesxToPen.cs
 const FEED_LENGTH = 50; // Long jump threshold requiring lock stitches and cut

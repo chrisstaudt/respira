@@ -1,4 +1,4 @@
-import type { PenData, PenStitch, PenColorBlock } from '../types/machine';
+import type { PenData, PenStitch, PenColorBlock } from '../../types/machine';
 
 // PEN format flags
 const PEN_FEED_DATA = 0x01; // Y-coordinate low byte, bit 0

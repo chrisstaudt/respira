@@ -4,8 +4,8 @@ import {
   MOVE,
   TRIM,
   END,
-} from '../utils/embroideryConstants';
-import { encodeStitchesToPen } from '../utils/penEncoder';
+} from './constants';
+import { encodeStitchesToPen } from '../pen/encoder';
 
 // Message types from main thread
 export type WorkerMessage =

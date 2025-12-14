@@ -4,8 +4,8 @@ import {
   calculateLockDirection,
   generateLockStitches,
   encodeStitchesToPen,
-} from './penEncoder';
-import { STITCH, MOVE, TRIM, END } from './embroideryConstants';
+} from './encoder';
+import { STITCH, MOVE, TRIM, END } from '../import/constants';
 
 // PEN format flag constants for testing
 const PEN_FEED_DATA = 0x01;
