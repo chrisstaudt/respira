@@ -4,6 +4,7 @@ import {
   calculateLockDirection,
   generateLockStitches,
   encodeStitchesToPen,
+  LOCK_STITCH_JUMP_SIZE
 } from './encoder';
 import { decodeAllPenStitches } from './decoder';
 import { STITCH, MOVE, TRIM, END } from '../import/constants';
@@ -258,6 +259,7 @@ describe('encodeStitchesToPen', () => {
     const decoded = decodeAllPenStitches(result.penBytes);
 
     // Expected sequence:
+    // 0. 8 starting lock stitches at (0, 0)
     // 1. Stitch at (0, 0) - color 0
     // 2. Stitch at (10, 0) - color 0 (last before change)
     // 3. 8 finishing lock stitches around (10, 0)
@@ -274,7 +276,12 @@ describe('encodeStitchesToPen', () => {
     expect(decoded[idx].y).toBe(0);
     expect(decoded[idx].isFeed).toBe(false);
     expect(decoded[idx].isCut).toBe(false);
-    idx++;
+
+    // 0. 8 starting lock stitches at (0, 0)
+    for (; idx < 9; idx++) {
+      expect(decoded[idx].x).to.be.closeTo(0, LOCK_STITCH_JUMP_SIZE);
+      expect(decoded[idx].y).to.be.closeTo(0, LOCK_STITCH_JUMP_SIZE);
+    }
 
     // 2. Second stitch (10, 0) - last before color change
     expect(decoded[idx].x).toBe(10);
@@ -284,8 +291,8 @@ describe('encodeStitchesToPen', () => {
     // 3. 8 finishing lock stitches (should be around position 10, 0)
     for (let i = 0; i < 8; i++) {
       const lockStitch = decoded[idx];
-      expect(lockStitch.x).toBeCloseTo(10, 1); // Allow some deviation due to rotation
-      expect(lockStitch.y).toBeCloseTo(0, 1);
+      expect(lockStitch.x).to.be.closeTo(10, LOCK_STITCH_JUMP_SIZE); // Allow some deviation due to rotation
+      expect(lockStitch.y).to.be.closeTo(0, LOCK_STITCH_JUMP_SIZE);
       expect(lockStitch.isFeed).toBe(false);
       expect(lockStitch.isCut).toBe(false);
       idx++;
@@ -308,8 +315,8 @@ describe('encodeStitchesToPen', () => {
     // 6. 8 starting lock stitches for new color
     for (let i = 0; i < 8; i++) {
       const lockStitch = decoded[idx];
-      expect(lockStitch.x).toBeCloseTo(10, 1);
-      expect(lockStitch.y).toBeCloseTo(0, 1);
+      expect(lockStitch.x).to.be.closeTo(10, LOCK_STITCH_JUMP_SIZE);
+      expect(lockStitch.y).to.be.closeTo(0, LOCK_STITCH_JUMP_SIZE);
       idx++;
     }
 
@@ -336,13 +343,13 @@ describe('encodeStitchesToPen', () => {
     const result = encodeStitchesToPen(stitches);
     const decoded = decodeAllPenStitches(result.penBytes);
 
-    let idx = 2; // Skip first two regular stitches
+    let idx = 10; // Skip 8 starting locks + first two regular stitches
 
     // After second stitch, should have:
     // 1. 8 finishing lock stitches at (10, 0)
     for (let i = 0; i < 8; i++) {
-      expect(decoded[idx].x).toBeCloseTo(10, 1);
-      expect(decoded[idx].y).toBeCloseTo(0, 1);
+      expect(decoded[idx].x).to.be.closeTo(10, LOCK_STITCH_JUMP_SIZE);
+      expect(decoded[idx].y).to.be.closeTo(0, LOCK_STITCH_JUMP_SIZE);
       idx++;
     }
 
@@ -365,8 +372,8 @@ describe('encodeStitchesToPen', () => {
 
     // 5. 8 starting lock stitches at (30, 10)
     for (let i = 0; i < 8; i++) {
-      expect(decoded[idx].x).toBeCloseTo(30, 1);
-      expect(decoded[idx].y).toBeCloseTo(10, 1);
+      expect(decoded[idx].x).to.be.closeTo(30, LOCK_STITCH_JUMP_SIZE);
+      expect(decoded[idx].y).to.be.closeTo(10, LOCK_STITCH_JUMP_SIZE);
       idx++;
     }
 
@@ -404,12 +411,13 @@ describe('encodeStitchesToPen', () => {
 
     // 1-2. First two stitches
     expect(decoded[idx++].x).toBe(0);
+    idx = 9; // skip startingLock
     expect(decoded[idx++].x).toBe(10);
 
     // 3. 8 finishing lock stitches at (10, 0)
     for (let i = 0; i < 8; i++) {
-      expect(decoded[idx].x).toBeCloseTo(10, 1);
-      expect(decoded[idx].y).toBeCloseTo(0, 1);
+      expect(decoded[idx].x).to.be.closeTo(10, LOCK_STITCH_JUMP_SIZE);
+      expect(decoded[idx].y).to.be.closeTo(0, LOCK_STITCH_JUMP_SIZE);
       idx++;
     }
 
@@ -433,8 +441,8 @@ describe('encodeStitchesToPen', () => {
 
     // 7. 8 starting lock stitches at (50, 20)
     for (let i = 0; i < 8; i++) {
-      expect(decoded[idx].x).toBeCloseTo(50, 1);
-      expect(decoded[idx].y).toBeCloseTo(20, 1);
+      expect(decoded[idx].x).to.be.closeTo(50, LOCK_STITCH_JUMP_SIZE);
+      expect(decoded[idx].y).to.be.closeTo(20, LOCK_STITCH_JUMP_SIZE);
       idx++;
     }
 
@@ -472,17 +480,18 @@ describe('encodeStitchesToPen', () => {
     // 6. Stitch at (110, 0)
     // 7. Stitch at (120, 0) with END flag
 
-    let idx = 0;
+    let idx = 0; 
 
     // 1-2. First two stitches
     expect(decoded[idx++].x).toBe(0);
+    idx = 9; // Skip 8 starting lock stitches
     expect(decoded[idx++].x).toBe(10);
 
     // 3. 8 finishing lock stitches at (10, 0)
     for (let i = 0; i < 8; i++) {
       const lockStitch = decoded[idx];
-      expect(lockStitch.x).toBeCloseTo(10, 1);
-      expect(lockStitch.y).toBeCloseTo(0, 1);
+      expect(lockStitch.x).to.be.closeTo(10, LOCK_STITCH_JUMP_SIZE);
+      expect(lockStitch.y).to.be.closeTo(0, LOCK_STITCH_JUMP_SIZE);
       expect(lockStitch.isFeed).toBe(false);
       expect(lockStitch.isCut).toBe(false);
       idx++;
@@ -500,8 +509,8 @@ describe('encodeStitchesToPen', () => {
     // 5. 8 starting lock stitches at (100, 0)
     for (let i = 0; i < 8; i++) {
       const lockStitch = decoded[idx];
-      expect(lockStitch.x).toBeCloseTo(100, 1);
-      expect(lockStitch.y).toBeCloseTo(0, 1);
+      expect(lockStitch.x).to.be.closeTo(100, LOCK_STITCH_JUMP_SIZE);
+      expect(lockStitch.y).to.be.closeTo(0, LOCK_STITCH_JUMP_SIZE);
       idx++;
     }
 
@@ -526,7 +535,7 @@ describe('encodeStitchesToPen', () => {
     // Second stitch (jump) should have FEED_DATA flag (0x01) in Y low byte
     // Stitch format: [xLow, xHigh, yLow, yHigh]
     // We need to find the jump stitch - it's the second one encoded
-    const jumpStitchStart = 4; // Skip first stitch
+    const jumpStitchStart = 36; // Skip 8 starting locks (32 bytes) + first stitch (4 bytes)
     const yLow = result.penBytes[jumpStitchStart + 2];
     expect(yLow & 0x01).toBe(0x01); // FEED_DATA flag
   });
@@ -558,21 +567,26 @@ describe('encodeStitchesToPen', () => {
     const result = encodeStitchesToPen(stitches);
     const decoded = decodeAllPenStitches(result.penBytes);
 
+    let idx = 0; 
+
     // Verify sequence:
     // 1. Regular stitch at (0, 0)
-    expect(decoded[0].x).toBe(0);
-    expect(decoded[0].isCut).toBe(false);
+    const firstIdx = idx;
+    expect(decoded[idx++].x).toBe(0);
+    idx = 9; // Skip 8 starting lock stitches
+    expect(decoded[firstIdx].isCut).toBe(false);
 
     // 2. TRIM command at (10, 0) - should have CUT flag
-    expect(decoded[1].x).toBe(10);
-    expect(decoded[1].y).toBe(0);
-    expect(decoded[1].isCut).toBe(true);
-    expect(decoded[1].isFeed).toBe(false); // TRIM doesn't include FEED
-    expect(decoded[1].yFlags).toBe(PEN_CUT_DATA); // Only CUT flag
+    const trimIdx = idx;
+    expect(decoded[idx++].x).toBe(10);
+    expect(decoded[trimIdx].y).toBe(0);
+    expect(decoded[trimIdx].isCut).toBe(true);
+    expect(decoded[trimIdx].isFeed).toBe(false); // TRIM doesn't include FEED
+    expect(decoded[trimIdx].yFlags).toBe(PEN_CUT_DATA); // Only CUT flag
 
     // 3. Final stitch with DATA_END
-    expect(decoded[2].x).toBe(20);
-    expect(decoded[2].isDataEnd).toBe(true);
+    expect(decoded[idx].x).toBe(20);
+    expect(decoded[idx].isDataEnd).toBe(true);
   });
 
   it('should handle empty stitch array', () => {
@@ -594,7 +608,7 @@ describe('encodeStitchesToPen', () => {
 
     const result = encodeStitchesToPen(stitches);
 
-    expect(result.penBytes.length).toBe(4);
+    expect(result.penBytes.length).toBe(36); // 8 starting locks (32 bytes) + 1 stitch (4 bytes)
     expect(result.bounds.minX).toBe(5);
     expect(result.bounds.maxX).toBe(5);
     expect(result.bounds.minY).toBe(10);
@@ -614,14 +628,14 @@ describe('encodeStitchesToPen', () => {
     const result = encodeStitchesToPen(stitches);
     const decoded = decodeAllPenStitches(result.penBytes);
 
-    // First two stitches should NOT have DATA_END flag
-    expect(decoded[0].isDataEnd).toBe(false);
-    expect(decoded[1].isDataEnd).toBe(false);
+    // First two stitches (after 8 starting locks) should NOT have DATA_END flag
+    expect(decoded[8].isDataEnd).toBe(false);
+    expect(decoded[9].isDataEnd).toBe(false);
 
     // Last stitch SHOULD have DATA_END flag automatically added
-    expect(decoded[2].isDataEnd).toBe(true);
-    expect(decoded[2].x).toBe(20);
-    expect(decoded[2].y).toBe(0);
+    expect(decoded[10].isDataEnd).toBe(true);
+    expect(decoded[10].x).toBe(20);
+    expect(decoded[10].y).toBe(0);
   });
 
   it('should add DATA_END flag when input has explicit END flag', () => {
@@ -636,8 +650,46 @@ describe('encodeStitchesToPen', () => {
     const decoded = decodeAllPenStitches(result.penBytes);
 
     // Last stitch should have DATA_END flag
-    expect(decoded[2].isDataEnd).toBe(true);
-    expect(decoded[2].x).toBe(20);
-    expect(decoded[2].y).toBe(0);
+    expect(decoded[10].isDataEnd).toBe(true);
+    expect(decoded[10].x).toBe(20);
+    expect(decoded[10].y).toBe(0);
+  });
+
+  it('should add lock stitches at the very start of the pattern', () => {
+    // Matching C# behavior: Nuihajime_TomeDataPlus is called when counter <= 2
+    // This adds starting lock stitches to secure the thread at pattern start
+    const stitches = [
+      [10, 20, MOVE, 0],
+      [20, 20, STITCH, 0],
+      [30, 20, STITCH | END, 0],
+    ];
+
+    const result = encodeStitchesToPen(stitches);
+    const decoded = decodeAllPenStitches(result.penBytes);
+    console.log(decoded);
+    // Expected sequence:
+    // 0. Feed move to proper location (should always happen here)
+    // 1. 8 starting lock stitches at (10, 20)
+    // 2. First actual stitch at (10, 20)
+    // 3. Second stitch at (20, 20)
+    // 4. Last stitch at (30, 20)
+    expect(decoded[0].x).toBe(10);
+    expect(decoded[0].y).toBe(20);
+    expect(decoded[0].isFeed).toBe(true);
+
+    // First 8 stitches should be lock stitches around the starting position
+    for (let i = 1; i < 1 + 8; i++) {
+      expect(decoded[i].x).to.be.closeTo(10, LOCK_STITCH_JUMP_SIZE);
+      expect(decoded[i].y).to.be.closeTo(20, LOCK_STITCH_JUMP_SIZE);
+      expect(decoded[i].isFeed).toBe(false);
+      expect(decoded[i].isCut).toBe(false);
+    }
+
+    // Then the actual stitches
+    expect(decoded[9].x).toBe(20);
+    expect(decoded[9].y).toBe(20);
+    expect(decoded[10].x).toBe(30);
+    expect(decoded[10].y).toBe(20);
+    expect(decoded[10].isDataEnd).toBe(true);
   });
 });
