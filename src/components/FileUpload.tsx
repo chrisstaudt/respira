@@ -211,7 +211,15 @@ export function FileUpload() {
             <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
               <span className="text-gray-600 dark:text-gray-400 block">Stitches</span>
               <span className="font-semibold text-gray-900 dark:text-gray-100">
-                {pesData.stitchCount.toLocaleString()}
+                {pesData.penStitches?.stitches.length.toLocaleString() || pesData.stitchCount.toLocaleString()}
+                {pesData.penStitches && pesData.penStitches.stitches.length !== pesData.stitchCount && (
+                  <span
+                    className="text-gray-500 dark:text-gray-500 font-normal ml-1"
+                    title="Input stitch count from PES file (lock stitches were added for machine compatibility)"
+                  >
+                    ({pesData.stitchCount.toLocaleString()})
+                  </span>
+                )}
               </span>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
