@@ -8,18 +8,18 @@
   "license": "Apache-2.0",
   "main": ".vite/build/main.js",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
-    "dev:electron": "vite --mode electron",
-    "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "web:dev": "vite --host 0.0.0.0",
+    "web:preview": "vite preview",
+    "web:build": "tsc -b && vite build",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "icons": "electron-icon-builder --input=./public/icons/icon.png --output=./public -f"
+    "electron:dev": "vite --mode electron",
+    "electron:start": "electron-forge start",
+    "electron:package": "electron-forge package",
+    "electron:make": "electron-forge make",
+    "electron:icons": "electron-icon-builder --input=./public/icons/icon.png --output=./public -f"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

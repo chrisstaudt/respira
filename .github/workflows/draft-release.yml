@@ -51,7 +51,7 @@ jobs:
         run: npm ci
 
       - name: Build web app
-        run: npm run build -- --base=/respira/
+        run: npm run web:build -- --base=/respira/
 
       - name: Create web artifact zip
         run: |
@@ -92,7 +92,7 @@ jobs:
         run: npm ci
 
       - name: Package and make
-        run: npm run make
+        run: npm run electron:make
 
       - name: Upload Windows artifacts
         if: matrix.os == 'windows-latest'
