@@ -1,16 +1,19 @@
-import { create } from 'zustand';
-import { BrotherPP1Service, BluetoothPairingError } from '../services/BrotherPP1Service';
+import { create } from "zustand";
+import {
+  BrotherPP1Service,
+  BluetoothPairingError,
+} from "../services/BrotherPP1Service";
 import type {
   MachineInfo,
   PatternInfo,
   SewingProgress,
-} from '../types/machine';
-import { MachineStatus, MachineStatusNames } from '../types/machine';
-import { SewingMachineError } from '../utils/errorCodeHelpers';
-import { uuidToString } from '../services/PatternCacheService';
-import { createStorageService } from '../platform';
-import type { IStorageService } from '../platform/interfaces/IStorageService';
-import type { PesPatternData } from '../formats/import/pesImporter';
+} from "../types/machine";
+import { MachineStatus, MachineStatusNames } from "../types/machine";
+import { SewingMachineError } from "../utils/errorCodeHelpers";
+import { uuidToString } from "../services/PatternCacheService";
+import { createStorageService } from "../platform";
+import type { IStorageService } from "../platform/interfaces/IStorageService";
+import type { PesPatternData } from "../formats/import/pesImporter";
 
 interface MachineState {
   // Service instances
@@ -37,7 +40,10 @@ interface MachineState {
   // Resume state
   resumeAvailable: boolean;
   resumeFileName: string | null;
-  resumedPattern: { pesData: PesPatternData; patternOffset?: { x: number; y: number } } | null;
+  resumedPattern: {
+    pesData: PesPatternData;
+    patternOffset?: { x: number; y: number };
+  } | null;
 
   // Error state
   error: string | null;
@@ -62,14 +68,17 @@ interface MachineState {
     penData: Uint8Array,
     pesData: PesPatternData,
     fileName: string,
-    patternOffset?: { x: number; y: number }
+    patternOffset?: { x: number; y: number },
   ) => Promise<void>;
   startMaskTrace: () => Promise<void>;
   startSewing: () => Promise<void>;
   resumeSewing: () => Promise<void>;
   deletePattern: () => Promise<void>;
   checkResume: () => Promise<PesPatternData | null>;
-  loadCachedPattern: () => Promise<{ pesData: PesPatternData; patternOffset?: { x: number; y: number } } | null>;
+  loadCachedPattern: () => Promise<{
+    pesData: PesPatternData;
+    patternOffset?: { x: number; y: number };
+  } | null>;
 
   // Internal methods
   _setupSubscriptions: () => void;
@@ -84,7 +93,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
   isConnected: false,
   machineInfo: null,
   machineStatus: MachineStatus.None,
-  machineStatusName: MachineStatusNames[MachineStatus.None] || 'Unknown',
+  machineStatusName: MachineStatusNames[MachineStatus.None] || "Unknown",
   machineError: SewingMachineError.None,
   patternInfo: null,
   sewingProgress: null,
@@ -104,16 +113,16 @@ export const useMachineStore = create<MachineState>((set, get) => ({
   checkResume: async (): Promise<PesPatternData | null> => {
     try {
       const { service, storageService } = get();
-      console.log('[Resume] Checking for cached pattern...');
+      console.log("[Resume] Checking for cached pattern...");
 
       const machineUuid = await service.getPatternUUID();
       console.log(
-        '[Resume] Machine UUID:',
-        machineUuid ? uuidToString(machineUuid) : 'none',
+        "[Resume] Machine UUID:",
+        machineUuid ? uuidToString(machineUuid) : "none",
       );
 
       if (!machineUuid) {
-        console.log('[Resume] No pattern loaded on machine');
+        console.log("[Resume] No pattern loaded on machine");
         set({ resumeAvailable: false, resumeFileName: null });
         return null;
       }
@@ -122,31 +131,39 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       const cached = await storageService.getPatternByUUID(uuidStr);
 
       if (cached) {
-        console.log('[Resume] Pattern found in cache:', cached.fileName, 'Offset:', cached.patternOffset);
-        console.log('[Resume] Auto-loading cached pattern...');
+        console.log(
+          "[Resume] Pattern found in cache:",
+          cached.fileName,
+          "Offset:",
+          cached.patternOffset,
+        );
+        console.log("[Resume] Auto-loading cached pattern...");
         set({
           resumeAvailable: true,
           resumeFileName: cached.fileName,
-          resumedPattern: { pesData: cached.pesData, patternOffset: cached.patternOffset },
+          resumedPattern: {
+            pesData: cached.pesData,
+            patternOffset: cached.patternOffset,
+          },
         });
 
         // Fetch pattern info from machine
         try {
           const info = await service.getPatternInfo();
           set({ patternInfo: info });
-          console.log('[Resume] Pattern info loaded from machine');
+          console.log("[Resume] Pattern info loaded from machine");
         } catch (err) {
-          console.error('[Resume] Failed to load pattern info:', err);
+          console.error("[Resume] Failed to load pattern info:", err);
         }
 
         return cached.pesData;
       } else {
-        console.log('[Resume] Pattern on machine not found in cache');
+        console.log("[Resume] Pattern on machine not found in cache");
         set({ resumeAvailable: false, resumeFileName: null });
         return null;
       }
     } catch (err) {
-      console.error('[Resume] Failed to check resume:', err);
+      console.error("[Resume] Failed to check resume:", err);
       set({ resumeAvailable: false, resumeFileName: null });
       return null;
     }
@@ -168,7 +185,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       set({
         machineInfo: info,
         machineStatus: state.status,
-        machineStatusName: MachineStatusNames[state.status] || 'Unknown',
+        machineStatusName: MachineStatusNames[state.status] || "Unknown",
         machineError: state.error,
       });
 
@@ -182,7 +199,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       const isPairing = err instanceof BluetoothPairingError;
       set({
         isPairingError: isPairing,
-        error: err instanceof Error ? err.message : 'Failed to connect',
+        error: err instanceof Error ? err.message : "Failed to connect",
         isConnected: false,
       });
     }
@@ -199,7 +216,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
         isConnected: false,
         machineInfo: null,
         machineStatus: MachineStatus.None,
-        machineStatusName: MachineStatusNames[MachineStatus.None] || 'Unknown',
+        machineStatusName: MachineStatusNames[MachineStatus.None] || "Unknown",
         patternInfo: null,
         sewingProgress: null,
         error: null,
@@ -207,7 +224,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       });
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : 'Failed to disconnect',
+        error: err instanceof Error ? err.message : "Failed to disconnect",
       });
     }
   },
@@ -221,12 +238,12 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       const state = await service.getMachineState();
       set({
         machineStatus: state.status,
-        machineStatusName: MachineStatusNames[state.status] || 'Unknown',
+        machineStatusName: MachineStatusNames[state.status] || "Unknown",
         machineError: state.error,
       });
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : 'Failed to get status',
+        error: err instanceof Error ? err.message : "Failed to get status",
       });
     }
   },
@@ -241,7 +258,8 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       set({ patternInfo: info });
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : 'Failed to get pattern info',
+        error:
+          err instanceof Error ? err.message : "Failed to get pattern info",
       });
     }
   },
@@ -256,7 +274,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       set({ sewingProgress: progress });
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : 'Failed to get progress',
+        error: err instanceof Error ? err.message : "Failed to get progress",
       });
     }
   },
@@ -276,7 +294,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
         },
       });
     } catch (err) {
-      console.warn('Failed to get service count:', err);
+      console.warn("Failed to get service count:", err);
     }
   },
 
@@ -285,11 +303,17 @@ export const useMachineStore = create<MachineState>((set, get) => ({
     penData: Uint8Array,
     pesData: PesPatternData,
     fileName: string,
-    patternOffset?: { x: number; y: number }
+    patternOffset?: { x: number; y: number },
   ) => {
-    const { isConnected, service, storageService, refreshStatus, refreshPatternInfo } = get();
+    const {
+      isConnected,
+      service,
+      storageService,
+      refreshStatus,
+      refreshPatternInfo,
+    } = get();
     if (!isConnected) {
-      set({ error: 'Not connected to machine' });
+      set({ error: "Not connected to machine" });
       return;
     }
 
@@ -310,7 +334,14 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       // Cache the pattern with its UUID and offset
       const uuidStr = uuidToString(uuid);
       storageService.savePattern(uuidStr, pesData, fileName, patternOffset);
-      console.log('[Cache] Saved pattern:', fileName, 'with UUID:', uuidStr, 'Offset:', patternOffset);
+      console.log(
+        "[Cache] Saved pattern:",
+        fileName,
+        "with UUID:",
+        uuidStr,
+        "Offset:",
+        patternOffset,
+      );
 
       // Clear resume state since we just uploaded
       set({
@@ -323,7 +354,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       await refreshPatternInfo();
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : 'Failed to upload pattern',
+        error: err instanceof Error ? err.message : "Failed to upload pattern",
       });
     } finally {
       set({ isUploading: false });
@@ -341,7 +372,8 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       await refreshStatus();
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : 'Failed to start mask trace',
+        error:
+          err instanceof Error ? err.message : "Failed to start mask trace",
       });
     }
   },
@@ -357,7 +389,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       await refreshStatus();
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : 'Failed to start sewing',
+        error: err instanceof Error ? err.message : "Failed to start sewing",
       });
     }
   },
@@ -373,7 +405,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       await refreshStatus();
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : 'Failed to resume sewing',
+        error: err instanceof Error ? err.message : "Failed to resume sewing",
       });
     }
   },
@@ -392,10 +424,10 @@ export const useMachineStore = create<MachineState>((set, get) => ({
         if (machineUuid) {
           const uuidStr = uuidToString(machineUuid);
           await storageService.deletePattern(uuidStr);
-          console.log('[Cache] Deleted pattern with UUID:', uuidStr);
+          console.log("[Cache] Deleted pattern with UUID:", uuidStr);
         }
       } catch (err) {
-        console.warn('[Cache] Failed to get UUID for cache deletion:', err);
+        console.warn("[Cache] Failed to get UUID for cache deletion:", err);
       }
 
       await service.deletePattern();
@@ -412,7 +444,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       await refreshStatus();
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : 'Failed to delete pattern',
+        error: err instanceof Error ? err.message : "Failed to delete pattern",
       });
     } finally {
       set({ isDeleting: false });
@@ -420,8 +452,12 @@ export const useMachineStore = create<MachineState>((set, get) => ({
   },
 
   // Load cached pattern
-  loadCachedPattern: async (): Promise<{ pesData: PesPatternData; patternOffset?: { x: number; y: number } } | null> => {
-    const { resumeAvailable, service, storageService, refreshPatternInfo } = get();
+  loadCachedPattern: async (): Promise<{
+    pesData: PesPatternData;
+    patternOffset?: { x: number; y: number };
+  } | null> => {
+    const { resumeAvailable, service, storageService, refreshPatternInfo } =
+      get();
     if (!resumeAvailable) return null;
 
     try {
@@ -432,7 +468,12 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       const cached = await storageService.getPatternByUUID(uuidStr);
 
       if (cached) {
-        console.log('[Resume] Loading cached pattern:', cached.fileName, 'Offset:', cached.patternOffset);
+        console.log(
+          "[Resume] Loading cached pattern:",
+          cached.fileName,
+          "Offset:",
+          cached.patternOffset,
+        );
         await refreshPatternInfo();
         return { pesData: cached.pesData, patternOffset: cached.patternOffset };
       }
@@ -440,7 +481,8 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       return null;
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : 'Failed to load cached pattern',
+        error:
+          err instanceof Error ? err.message : "Failed to load cached pattern",
       });
       return null;
     }
@@ -457,17 +499,17 @@ export const useMachineStore = create<MachineState>((set, get) => ({
 
     // Subscribe to disconnect events
     service.onDisconnect(() => {
-      console.log('[useMachineStore] Device disconnected');
+      console.log("[useMachineStore] Device disconnected");
       get()._stopPolling();
       set({
         isConnected: false,
         machineInfo: null,
         machineStatus: MachineStatus.None,
-        machineStatusName: MachineStatusNames[MachineStatus.None] || 'Unknown',
+        machineStatusName: MachineStatusNames[MachineStatus.None] || "Unknown",
         machineError: SewingMachineError.None,
         patternInfo: null,
         sewingProgress: null,
-        error: 'Device disconnected',
+        error: "Device disconnected",
         isPairingError: false,
       });
     });
@@ -475,7 +517,13 @@ export const useMachineStore = create<MachineState>((set, get) => ({
 
   // Start polling for status updates
   _startPolling: () => {
-    const { _stopPolling, refreshStatus, refreshProgress, refreshServiceCount } = get();
+    const {
+      _stopPolling,
+      refreshStatus,
+      refreshProgress,
+      refreshServiceCount,
+      refreshPatternInfo,
+    } = get();
 
     // Stop any existing polling
     _stopPolling();
@@ -508,6 +556,11 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       // Refresh progress during sewing
       if (get().machineStatus === MachineStatus.SEWING) {
         await refreshProgress();
+      }
+
+      // follows the apps logic:
+      if (get().resumeAvailable && get().patternInfo?.totalStitches == 0) {
+        await refreshPatternInfo();
       }
 
       // Schedule next poll with updated interval
@@ -546,11 +599,18 @@ export const useMachineStore = create<MachineState>((set, get) => ({
 useMachineStore.getState()._setupSubscriptions();
 
 // Selector hooks for common use cases
-export const useIsConnected = () => useMachineStore((state) => state.isConnected);
-export const useMachineInfo = () => useMachineStore((state) => state.machineInfo);
-export const useMachineStatus = () => useMachineStore((state) => state.machineStatus);
-export const useMachineError = () => useMachineStore((state) => state.machineError);
-export const usePatternInfo = () => useMachineStore((state) => state.patternInfo);
-export const useSewingProgress = () => useMachineStore((state) => state.sewingProgress);
+export const useIsConnected = () =>
+  useMachineStore((state) => state.isConnected);
+export const useMachineInfo = () =>
+  useMachineStore((state) => state.machineInfo);
+export const useMachineStatus = () =>
+  useMachineStore((state) => state.machineStatus);
+export const useMachineError = () =>
+  useMachineStore((state) => state.machineError);
+export const usePatternInfo = () =>
+  useMachineStore((state) => state.patternInfo);
+export const useSewingProgress = () =>
+  useMachineStore((state) => state.sewingProgress);
 // Derived state: pattern is uploaded if machine has pattern info
-export const usePatternUploaded = () => useMachineStore((state) => state.patternInfo !== null);
+export const usePatternUploaded = () =>
+  useMachineStore((state) => state.patternInfo !== null);
