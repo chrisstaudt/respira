@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, useMemo } from "react";
-import { useShallow } from 'zustand/react/shallow';
-import { useMachineStore } from '../stores/useMachineStore';
-import { usePatternStore } from '../stores/usePatternStore';
+import { useShallow } from "zustand/react/shallow";
+import { useMachineStore } from "../stores/useMachineStore";
+import { usePatternStore } from "../stores/usePatternStore";
 import {
   CheckCircleIcon,
   ArrowRightIcon,
@@ -42,7 +42,7 @@ export function ProgressMonitor() {
       startMaskTrace: state.startMaskTrace,
       startSewing: state.startSewing,
       resumeSewing: state.resumeSewing,
-    }))
+    })),
   );
 
   // Pattern store
@@ -59,14 +59,15 @@ export function ProgressMonitor() {
 
   // Use PEN stitch count as fallback when machine reports 0 total stitches
   const totalStitches = patternInfo
-    ? (patternInfo.totalStitches === 0 && pesData?.penStitches
-        ? pesData.penStitches.stitches.length
-        : patternInfo.totalStitches)
+    ? patternInfo.totalStitches === 0 && pesData?.penStitches
+      ? pesData.penStitches.stitches.length
+      : patternInfo.totalStitches
     : 0;
 
-  const progressPercent = totalStitches > 0
-    ? ((sewingProgress?.currentStitch || 0) / totalStitches) * 100
-    : 0;
+  const progressPercent =
+    totalStitches > 0
+      ? ((sewingProgress?.currentStitch || 0) / totalStitches) * 100
+      : 0;
 
   // Calculate color block information from decoded penStitches
   const colorBlocks = useMemo(() => {
@@ -116,7 +117,10 @@ export function ProgressMonitor() {
       return { totalMinutes: 0, elapsedMinutes: 0 };
     }
     const result = calculatePatternTime(colorBlocks, currentStitch);
-    return { totalMinutes: result.totalMinutes, elapsedMinutes: result.elapsedMinutes };
+    return {
+      totalMinutes: result.totalMinutes,
+      elapsedMinutes: result.elapsedMinutes,
+    };
   }, [colorBlocks, currentStitch]);
 
   // Auto-scroll to current block
@@ -132,7 +136,8 @@ export function ProgressMonitor() {
   // Handle scroll to detect if at bottom
   const handleColorBlocksScroll = () => {
     if (colorBlocksScrollRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = colorBlocksScrollRef.current;
+      const { scrollTop, scrollHeight, clientHeight } =
+        colorBlocksScrollRef.current;
       const isAtBottom = scrollTop + clientHeight >= scrollHeight - 5; // 5px threshold
       setShowGradient(!isAtBottom);
     }
@@ -149,8 +154,8 @@ export function ProgressMonitor() {
     };
 
     checkScrollable();
-    window.addEventListener('resize', checkScrollable);
-    return () => window.removeEventListener('resize', checkScrollable);
+    window.addEventListener("resize", checkScrollable);
+    return () => window.removeEventListener("resize", checkScrollable);
   }, [colorBlocks]);
 
   const stateIndicatorColors = {
@@ -300,113 +305,124 @@ export function ProgressMonitor() {
               className="lg:absolute lg:inset-0 flex flex-col gap-2 lg:overflow-y-auto scroll-smooth pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-700 [&::-webkit-scrollbar-thumb]:bg-primary-600 dark:[&::-webkit-scrollbar-thumb]:bg-primary-500 [&::-webkit-scrollbar-thumb]:rounded-full"
             >
               {colorBlocks.map((block, index) => {
-              const isCompleted = currentStitch >= block.endStitch;
-              const isCurrent = index === currentBlockIndex;
+                const isCompleted = currentStitch >= block.endStitch;
+                const isCurrent = index === currentBlockIndex;
 
-              // Calculate progress within current block
-              let blockProgress = 0;
-              if (isCurrent) {
-                blockProgress =
-                  ((currentStitch - block.startStitch) / block.stitchCount) *
-                  100;
-              } else if (isCompleted) {
-                blockProgress = 100;
-              }
+                // Calculate progress within current block
+                let blockProgress = 0;
+                if (isCurrent) {
+                  blockProgress =
+                    ((currentStitch - block.startStitch) / block.stitchCount) *
+                    100;
+                } else if (isCompleted) {
+                  blockProgress = 100;
+                }
 
-              return (
-                <div
-                  key={index}
-                  ref={isCurrent ? currentBlockRef : null}
-                  className={`p-2.5 rounded-lg border-2 transition-all duration-300 ${
-                    isCompleted
-                      ? "border-success-600 bg-success-50 dark:bg-success-900/20"
-                      : isCurrent
-                        ? "border-accent-600 bg-accent-50 dark:bg-accent-900/20 shadow-lg shadow-accent-600/20 animate-pulseGlow"
-                        : "border-gray-200 dark:border-gray-600 bg-gray-300 dark:bg-gray-800/50 opacity-70"
-                  }`}
-                  role="listitem"
-                  aria-label={`Thread ${block.colorIndex + 1}, ${block.stitchCount} stitches, ${isCompleted ? "completed" : isCurrent ? "in progress" : "pending"}`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    {/* Color swatch */}
-                    <div
-                      className="w-7 h-7 rounded-lg border-2 border-gray-300 dark:border-gray-600 shadow-md flex-shrink-0"
-                      style={{
-                        backgroundColor: block.threadHex,
-                        ...(isCurrent && { borderColor: "#9333ea" }),
-                      }}
-                      title={`Thread color: ${block.threadHex}`}
-                      aria-label={`Thread color ${block.threadHex}`}
-                    />
+                return (
+                  <div
+                    key={index}
+                    ref={isCurrent ? currentBlockRef : null}
+                    className={`p-2.5 rounded-lg border-2 transition-all duration-300 ${
+                      isCompleted
+                        ? "border-success-600 bg-success-50 dark:bg-success-900/20"
+                        : isCurrent
+                          ? "border-accent-600 bg-accent-50 dark:bg-accent-900/20 shadow-lg shadow-accent-600/20 animate-pulseGlow"
+                          : "border-gray-200 dark:border-gray-600 bg-gray-300 dark:bg-gray-800/50 opacity-70"
+                    }`}
+                    role="listitem"
+                    aria-label={`Thread ${block.colorIndex + 1}, ${block.stitchCount} stitches, ${isCompleted ? "completed" : isCurrent ? "in progress" : "pending"}`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      {/* Color swatch */}
+                      <div
+                        className="w-7 h-7 rounded-lg border-2 border-gray-300 dark:border-gray-600 shadow-md flex-shrink-0"
+                        style={{
+                          backgroundColor: block.threadHex,
+                          ...(isCurrent && { borderColor: "#9333ea" }),
+                        }}
+                        title={`Thread color: ${block.threadHex}`}
+                        aria-label={`Thread color ${block.threadHex}`}
+                      />
 
-                    {/* Thread info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-xs text-gray-900 dark:text-gray-100">
-                        Thread {block.colorIndex + 1}
-                        {(block.threadBrand || block.threadChart || block.threadDescription || block.threadCatalogNumber) && (
-                          <span className="font-normal text-gray-600 dark:text-gray-400">
-                            {" "}
-                            (
-                            {(() => {
-                              // Primary metadata: brand and catalog number
-                              const primaryMetadata = [
-                                block.threadBrand,
-                                block.threadCatalogNumber ? `#${block.threadCatalogNumber}` : null
-                              ].filter(Boolean).join(" ");
+                      {/* Thread info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-xs text-gray-900 dark:text-gray-100">
+                          Thread {block.colorIndex + 1}
+                          {(block.threadBrand ||
+                            block.threadChart ||
+                            block.threadDescription ||
+                            block.threadCatalogNumber) && (
+                            <span className="font-normal text-gray-600 dark:text-gray-400">
+                              {" "}
+                              (
+                              {(() => {
+                                // Primary metadata: brand and catalog number
+                                const primaryMetadata = [
+                                  block.threadBrand,
+                                  block.threadCatalogNumber
+                                    ? `#${block.threadCatalogNumber}`
+                                    : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ");
 
-                              // Secondary metadata: chart and description
-                              const secondaryMetadata = [
-                                block.threadChart,
-                                block.threadDescription
-                              ].filter(Boolean).join(" ");
+                                // Secondary metadata: chart and description
+                                const secondaryMetadata = [
+                                  block.threadChart,
+                                  block.threadDescription,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ");
 
-                              return [primaryMetadata, secondaryMetadata].filter(Boolean).join(" • ");
-                            })()}
-                            )
-                          </span>
-                        )}
+                                return [primaryMetadata, secondaryMetadata]
+                                  .filter(Boolean)
+                                  .join(" • ");
+                              })()}
+                              )
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                          {block.stitchCount.toLocaleString()} stitches
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                        {block.stitchCount.toLocaleString()} stitches
-                      </div>
+
+                      {/* Status icon */}
+                      {isCompleted ? (
+                        <CheckCircleIcon
+                          className="w-5 h-5 text-success-600 flex-shrink-0"
+                          aria-label="Completed"
+                        />
+                      ) : isCurrent ? (
+                        <ArrowRightIcon
+                          className="w-5 h-5 text-accent-600 flex-shrink-0 animate-pulse"
+                          aria-label="In progress"
+                        />
+                      ) : (
+                        <CircleStackIcon
+                          className="w-5 h-5 text-gray-400 flex-shrink-0"
+                          aria-label="Pending"
+                        />
+                      )}
                     </div>
 
-                    {/* Status icon */}
-                    {isCompleted ? (
-                      <CheckCircleIcon
-                        className="w-5 h-5 text-success-600 flex-shrink-0"
-                        aria-label="Completed"
-                      />
-                    ) : isCurrent ? (
-                      <ArrowRightIcon
-                        className="w-5 h-5 text-accent-600 flex-shrink-0 animate-pulse"
-                        aria-label="In progress"
-                      />
-                    ) : (
-                      <CircleStackIcon
-                        className="w-5 h-5 text-gray-400 flex-shrink-0"
-                        aria-label="Pending"
-                      />
+                    {/* Progress bar for current block */}
+                    {isCurrent && (
+                      <div className="mt-2 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-accent-600 dark:bg-accent-500 transition-all duration-300 rounded-full"
+                          style={{ width: `${blockProgress}%` }}
+                          role="progressbar"
+                          aria-valuenow={Math.round(blockProgress)}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label={`${Math.round(blockProgress)}% complete`}
+                        />
+                      </div>
                     )}
                   </div>
-
-                  {/* Progress bar for current block */}
-                  {isCurrent && (
-                    <div className="mt-2 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-accent-600 dark:bg-accent-500 transition-all duration-300 rounded-full"
-                        style={{ width: `${blockProgress}%` }}
-                        role="progressbar"
-                        aria-valuenow={Math.round(blockProgress)}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-label={`${Math.round(blockProgress)}% complete`}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
             </div>
             {/* Gradient overlay to indicate more content below - only on desktop and when not at bottom */}
             {showGradient && (

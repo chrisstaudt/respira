@@ -20,7 +20,7 @@ export function convertStitchesToMinutes(stitchCount: number): number {
  */
 export function calculatePatternTime(
   colorBlocks: Array<{ stitchCount: number }>,
-  currentStitch: number
+  currentStitch: number,
 ): {
   totalMinutes: number;
   elapsedMinutes: number;
@@ -44,7 +44,8 @@ export function calculatePatternTime(
       break;
     } else {
       // We're partway through this block
-      const stitchesInBlock = currentStitch - (cumulativeStitches - block.stitchCount);
+      const stitchesInBlock =
+        currentStitch - (cumulativeStitches - block.stitchCount);
       elapsedMinutes += convertStitchesToMinutes(stitchesInBlock);
       break;
     }
@@ -63,5 +64,5 @@ export function calculatePatternTime(
 export function formatMinutes(minutes: number): string {
   const mins = Math.floor(minutes);
   const secs = Math.round((minutes - mins) * 60);
-  return `${mins}:${String(secs).padStart(2, '0')}`;
+  return `${mins}:${String(secs).padStart(2, "0")}`;
 }

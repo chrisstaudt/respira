@@ -1,51 +1,51 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import {
   encodeStitchPosition,
   calculateLockDirection,
   generateLockStitches,
   encodeStitchesToPen,
-  LOCK_STITCH_JUMP_SIZE
-} from './encoder';
-import { decodeAllPenStitches } from './decoder';
-import { STITCH, MOVE, TRIM, END } from '../import/constants';
+  LOCK_STITCH_JUMP_SIZE,
+} from "./encoder";
+import { decodeAllPenStitches } from "./decoder";
+import { STITCH, MOVE, TRIM, END } from "../import/constants";
 
 // PEN format flag constants for testing
 const PEN_FEED_DATA = 0x01;
 const PEN_CUT_DATA = 0x02;
 
-describe('encodeStitchPosition', () => {
-  it('should encode position (0, 0) correctly', () => {
+describe("encodeStitchPosition", () => {
+  it("should encode position (0, 0) correctly", () => {
     const result = encodeStitchPosition(0, 0);
     expect(result).toEqual([0x00, 0x00, 0x00, 0x00]);
   });
 
-  it('should shift coordinates left by 3 bits', () => {
+  it("should shift coordinates left by 3 bits", () => {
     // Position (1, 1) should become (8, 8) after shifting
     const result = encodeStitchPosition(1, 1);
     expect(result).toEqual([0x08, 0x00, 0x08, 0x00]);
   });
 
-  it('should handle negative coordinates', () => {
+  it("should handle negative coordinates", () => {
     // -1 in 16-bit signed = 0xFFFF, shifted left 3 = 0xFFF8
     const result = encodeStitchPosition(-1, -1);
-    expect(result).toEqual([0xF8, 0xFF, 0xF8, 0xFF]);
+    expect(result).toEqual([0xf8, 0xff, 0xf8, 0xff]);
   });
 
-  it('should encode multi-byte coordinates correctly', () => {
+  it("should encode multi-byte coordinates correctly", () => {
     // Position (128, 0) -> shifted = 1024 = 0x0400
     const result = encodeStitchPosition(128, 0);
     expect(result).toEqual([0x00, 0x04, 0x00, 0x00]);
   });
 
-  it('should round fractional coordinates', () => {
+  it("should round fractional coordinates", () => {
     const result = encodeStitchPosition(1.5, 2.4);
     // 2 << 3 = 16, 2 << 3 = 16
     expect(result).toEqual([0x10, 0x00, 0x10, 0x00]);
   });
 });
 
-describe('calculateLockDirection', () => {
-  it('should look ahead for forward direction', () => {
+describe("calculateLockDirection", () => {
+  it("should look ahead for forward direction", () => {
     const stitches = [
       [0, 0, STITCH, 0],
       [10, 0, STITCH, 0],
@@ -62,7 +62,7 @@ describe('calculateLockDirection', () => {
     expect(magnitude).toBeCloseTo(8.0, 1);
   });
 
-  it('should look backward for backward direction', () => {
+  it("should look backward for backward direction", () => {
     const stitches = [
       [0, 0, STITCH, 0],
       [10, 0, STITCH, 0],
@@ -79,10 +79,10 @@ describe('calculateLockDirection', () => {
     expect(magnitude).toBeCloseTo(8.0, 1);
   });
 
-  it('should skip MOVE stitches when accumulating', () => {
+  it("should skip MOVE stitches when accumulating", () => {
     const stitches = [
       [0, 0, STITCH, 0],
-      [5, 0, MOVE, 0],   // Should be skipped
+      [5, 0, MOVE, 0], // Should be skipped
       [10, 0, STITCH, 0],
       [15, 0, STITCH, 0],
     ];
@@ -93,10 +93,8 @@ describe('calculateLockDirection', () => {
     expect(result.dirX).toBeGreaterThan(0);
   });
 
-  it('should return fallback diagonal for empty or short stitch sequences', () => {
-    const stitches = [
-      [0, 0, STITCH, 0],
-    ];
+  it("should return fallback diagonal for empty or short stitch sequences", () => {
+    const stitches = [[0, 0, STITCH, 0]];
 
     const result = calculateLockDirection(stitches, 0, true);
 
@@ -106,7 +104,7 @@ describe('calculateLockDirection', () => {
     expect(result.dirY).toBeCloseTo(expectedMag, 1);
   });
 
-  it('should normalize accumulated vector to magnitude 8.0', () => {
+  it("should normalize accumulated vector to magnitude 8.0", () => {
     const stitches = [
       [0, 0, STITCH, 0],
       [3, 4, STITCH, 0], // Distance = 5
@@ -124,7 +122,7 @@ describe('calculateLockDirection', () => {
     expect(magnitude).toBeCloseTo(8.0, 1);
   });
 
-  it('should stop accumulating after reaching target length', () => {
+  it("should stop accumulating after reaching target length", () => {
     // Create a long chain of stitches
     const stitches = [
       [0, 0, STITCH, 0],
@@ -144,13 +142,13 @@ describe('calculateLockDirection', () => {
   });
 });
 
-describe('generateLockStitches', () => {
-  it('should generate 8 lock stitches (32 bytes)', () => {
+describe("generateLockStitches", () => {
+  it("should generate 8 lock stitches (32 bytes)", () => {
     const result = generateLockStitches(0, 0, 8.0, 0);
     expect(result.length).toBe(32); // 8 stitches * 4 bytes each
   });
 
-  it('should alternate between +dir and -dir', () => {
+  it("should alternate between +dir and -dir", () => {
     const result = generateLockStitches(0, 0, 8.0, 0);
     expect(result.length).toBe(32); // 8 stitches * 4 bytes
 
@@ -159,7 +157,7 @@ describe('generateLockStitches', () => {
     expect(result2.length).toBe(32);
   });
 
-  it('should rotate stitches in the given direction', () => {
+  it("should rotate stitches in the given direction", () => {
     // Direction pointing right (8, 0)
     const result = generateLockStitches(0, 0, 8.0, 0);
 
@@ -176,8 +174,8 @@ describe('generateLockStitches', () => {
   });
 });
 
-describe('encodeStitchesToPen', () => {
-  it('should encode a simple stitch sequence', () => {
+describe("encodeStitchesToPen", () => {
+  it("should encode a simple stitch sequence", () => {
     const stitches = [
       [0, 0, STITCH, 0],
       [10, 0, STITCH, 0],
@@ -192,7 +190,7 @@ describe('encodeStitchesToPen', () => {
     expect(result.bounds.maxX).toBe(20);
   });
 
-  it('should track bounds correctly', () => {
+  it("should track bounds correctly", () => {
     const stitches = [
       [10, 20, STITCH, 0],
       [-5, 30, STITCH, 0],
@@ -208,7 +206,7 @@ describe('encodeStitchesToPen', () => {
     expect(result.bounds.maxY).toBe(30);
   });
 
-  it('should mark the last stitch with DATA_END flag', () => {
+  it("should mark the last stitch with DATA_END flag", () => {
     const stitches = [
       [0, 0, STITCH, 0],
       [10, 0, END, 0],
@@ -222,14 +220,14 @@ describe('encodeStitchesToPen', () => {
     expect(xLow & 0x07).toBe(0x05); // DATA_END flag
   });
 
-  it('should handle color changes with lock stitches', () => {
+  it("should handle color changes with lock stitches", () => {
     const stitches = [
-      [0, 0, STITCH, 0],   // Color 0
-      [10, 0, STITCH, 0],  // Color 0
-      [20, 0, STITCH, 0],  // Color 0 - last stitch before color change
-      [20, 0, STITCH, 1],  // Color 1 - first stitch of new color
-      [30, 0, STITCH, 1],  // Color 1
-      [40, 0, END, 1],     // Color 1 - last stitch
+      [0, 0, STITCH, 0], // Color 0
+      [10, 0, STITCH, 0], // Color 0
+      [20, 0, STITCH, 0], // Color 0 - last stitch before color change
+      [20, 0, STITCH, 1], // Color 1 - first stitch of new color
+      [30, 0, STITCH, 1], // Color 1
+      [40, 0, END, 1], // Color 1 - last stitch
     ];
 
     const result = encodeStitchesToPen(stitches);
@@ -246,13 +244,13 @@ describe('encodeStitchesToPen', () => {
     expect(result.penBytes.length).toBeGreaterThan(90); // Should have many bytes from lock stitches
   });
 
-  it('should encode color change sequence in correct order', () => {
+  it("should encode color change sequence in correct order", () => {
     // Test the exact sequence of operations for a color change
     const stitches = [
-      [0, 0, STITCH, 0],   // Color 0
-      [10, 0, STITCH, 0],  // Color 0 - last stitch before color change
-      [10, 0, STITCH, 1],  // Color 1 - first stitch (same position)
-      [20, 0, STITCH | END, 1],  // Color 1 - last stitch
+      [0, 0, STITCH, 0], // Color 0
+      [10, 0, STITCH, 0], // Color 0 - last stitch before color change
+      [10, 0, STITCH, 1], // Color 1 - first stitch (same position)
+      [20, 0, STITCH | END, 1], // Color 1 - last stitch
     ];
 
     const result = encodeStitchesToPen(stitches);
@@ -325,11 +323,11 @@ describe('encodeStitchesToPen', () => {
     expect(decoded[idx].isDataEnd).toBe(true);
   });
 
-  it('should encode color change with jump in correct order', () => {
+  it("should encode color change with jump in correct order", () => {
     // Test color change when next color is at a different position
     const stitches = [
-      [0, 0, STITCH, 0],   // Color 0
-      [10, 0, STITCH, 0],  // Color 0 - last before change
+      [0, 0, STITCH, 0], // Color 0
+      [10, 0, STITCH, 0], // Color 0 - last before change
       [30, 10, STITCH, 1], // Color 1 - different position, requires jump
       [40, 10, STITCH | END, 1],
     ];
@@ -372,13 +370,13 @@ describe('encodeStitchesToPen', () => {
     expect(decoded[idx].y).toBe(10);
   });
 
-  it('should encode color change followed by explicit JUMP in correct order', () => {
+  it("should encode color change followed by explicit JUMP in correct order", () => {
     // Test when PES data has a JUMP stitch immediately after color change
     // This is a common pattern: color change, then jump to new location
     const stitches = [
-      [0, 0, STITCH, 0],   // Color 0
-      [10, 0, STITCH, 0],  // Color 0 - last before change
-      [50, 20, MOVE, 1],   // Color 1 - JUMP to new location (50, 20)
+      [0, 0, STITCH, 0], // Color 0
+      [10, 0, STITCH, 0], // Color 0 - last before change
+      [50, 20, MOVE, 1], // Color 1 - JUMP to new location (50, 20)
       [50, 20, STITCH, 1], // Color 1 - first actual stitch at new location
       [60, 20, STITCH | END, 1],
     ];
@@ -443,12 +441,12 @@ describe('encodeStitchesToPen', () => {
     expect(decoded[idx].isDataEnd).toBe(true);
   });
 
-  it('should handle long jumps with lock stitches and cut in correct order', () => {
+  it("should handle long jumps with lock stitches and cut in correct order", () => {
     // Test the exact sequence for a long jump (distance > 50)
     const stitches = [
       [0, 0, STITCH, 0],
       [10, 0, STITCH, 0],
-      [100, 0, MOVE, 0],  // Long jump (distance = 90 > 50)
+      [100, 0, MOVE, 0], // Long jump (distance = 90 > 50)
       [110, 0, STITCH, 0],
       [120, 0, STITCH | END, 0],
     ];
@@ -465,7 +463,7 @@ describe('encodeStitchesToPen', () => {
     // 6. Stitch at (110, 0)
     // 7. Stitch at (120, 0) with END flag
 
-    let idx = 0; 
+    let idx = 0;
 
     // 1-2. First two stitches
     expect(decoded[idx++].x).toBe(0);
@@ -508,10 +506,10 @@ describe('encodeStitchesToPen', () => {
     expect(decoded[idx].isDataEnd).toBe(true);
   });
 
-  it('should encode MOVE flag for jump stitches', () => {
+  it("should encode MOVE flag for jump stitches", () => {
     const stitches = [
       [0, 0, STITCH, 0],
-      [10, 0, MOVE, 0],  // Short jump (no lock stitches)
+      [10, 0, MOVE, 0], // Short jump (no lock stitches)
       [20, 0, END, 0],
     ];
 
@@ -525,10 +523,10 @@ describe('encodeStitchesToPen', () => {
     expect(yLow & 0x01).toBe(0x01); // FEED_DATA flag
   });
 
-  it('should not include MOVE stitches in bounds calculation', () => {
+  it("should not include MOVE stitches in bounds calculation", () => {
     const stitches = [
       [0, 0, STITCH, 0],
-      [100, 100, MOVE, 0],  // Jump - should not affect bounds
+      [100, 100, MOVE, 0], // Jump - should not affect bounds
       [10, 10, STITCH, 0],
       [20, 20, STITCH | END, 0], // Last stitch with both STITCH and END flags
     ];
@@ -542,7 +540,7 @@ describe('encodeStitchesToPen', () => {
     expect(result.bounds.maxY).toBe(20);
   });
 
-  it('should handle TRIM flag correctly', () => {
+  it("should handle TRIM flag correctly", () => {
     const stitches = [
       [0, 0, STITCH, 0],
       [10, 0, TRIM, 0],
@@ -552,7 +550,7 @@ describe('encodeStitchesToPen', () => {
     const result = encodeStitchesToPen(stitches);
     const decoded = decodeAllPenStitches(result.penBytes);
 
-    let idx = 0; 
+    let idx = 0;
 
     // Verify sequence:
     // 1. Regular stitch at (0, 0)
@@ -574,7 +572,7 @@ describe('encodeStitchesToPen', () => {
     expect(decoded[idx].isDataEnd).toBe(true);
   });
 
-  it('should handle empty stitch array', () => {
+  it("should handle empty stitch array", () => {
     const stitches: number[][] = [];
 
     const result = encodeStitchesToPen(stitches);
@@ -586,10 +584,8 @@ describe('encodeStitchesToPen', () => {
     expect(result.bounds.maxY).toBe(0);
   });
 
-  it('should handle single stitch', () => {
-    const stitches = [
-      [5, 10, END, 0],
-    ];
+  it("should handle single stitch", () => {
+    const stitches = [[5, 10, END, 0]];
 
     const result = encodeStitchesToPen(stitches);
 
@@ -601,7 +597,7 @@ describe('encodeStitchesToPen', () => {
     // END stitches update bounds (they're not MOVE stitches)
   });
 
-  it('should add DATA_END flag to last stitch even without END flag in input', () => {
+  it("should add DATA_END flag to last stitch even without END flag in input", () => {
     // Test that the encoder automatically marks the last stitch with DATA_END
     // even if the input stitches don't have an END flag
     const stitches = [
@@ -623,7 +619,7 @@ describe('encodeStitchesToPen', () => {
     expect(decoded[10].y).toBe(0);
   });
 
-  it('should add DATA_END flag when input has explicit END flag', () => {
+  it("should add DATA_END flag when input has explicit END flag", () => {
     // Verify that END flag in input also results in DATA_END flag in output
     const stitches = [
       [0, 0, STITCH, 0],
@@ -640,7 +636,7 @@ describe('encodeStitchesToPen', () => {
     expect(decoded[10].y).toBe(0);
   });
 
-  it('should add lock stitches at the very start of the pattern', () => {
+  it("should add lock stitches at the very start of the pattern", () => {
     // Matching C# behavior: Nuihajime_TomeDataPlus is called when counter <= 2
     // This adds starting lock stitches to secure the thread at pattern start
     const stitches = [

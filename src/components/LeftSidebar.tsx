@@ -1,22 +1,22 @@
-import { useShallow } from 'zustand/react/shallow';
-import { useMachineStore, usePatternUploaded } from '../stores/useMachineStore';
-import { usePatternStore } from '../stores/usePatternStore';
-import { ConnectionPrompt } from './ConnectionPrompt';
-import { FileUpload } from './FileUpload';
-import { PatternSummaryCard } from './PatternSummaryCard';
-import { ProgressMonitor } from './ProgressMonitor';
+import { useShallow } from "zustand/react/shallow";
+import { useMachineStore, usePatternUploaded } from "../stores/useMachineStore";
+import { usePatternStore } from "../stores/usePatternStore";
+import { ConnectionPrompt } from "./ConnectionPrompt";
+import { FileUpload } from "./FileUpload";
+import { PatternSummaryCard } from "./PatternSummaryCard";
+import { ProgressMonitor } from "./ProgressMonitor";
 
 export function LeftSidebar() {
   const { isConnected } = useMachineStore(
     useShallow((state) => ({
       isConnected: state.isConnected,
-    }))
+    })),
   );
 
   const { pesData } = usePatternStore(
     useShallow((state) => ({
       pesData: state.pesData,
-    }))
+    })),
   );
 
   // Derived state: pattern is uploaded if machine has pattern info

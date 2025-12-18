@@ -1,4 +1,4 @@
-import type { PesPatternData } from '../../formats/import/pesImporter';
+import type { PesPatternData } from "../../formats/import/pesImporter";
 
 export interface ICachedPattern {
   uuid: string;
@@ -13,7 +13,7 @@ export interface IStorageService {
     uuid: string,
     pesData: PesPatternData,
     fileName: string,
-    patternOffset?: { x: number; y: number }
+    patternOffset?: { x: number; y: number },
   ): Promise<void>;
 
   getPatternByUUID(uuid: string): Promise<ICachedPattern | null>;
@@ -21,5 +21,10 @@ export interface IStorageService {
   hasPattern(uuid: string): Promise<boolean>;
   deletePattern(uuid: string): Promise<void>;
   clearCache(): Promise<void>;
-  getCacheInfo(): Promise<{ hasCache: boolean; fileName?: string; uuid?: string; age?: number }>;
+  getCacheInfo(): Promise<{
+    hasCache: boolean;
+    fileName?: string;
+    uuid?: string;
+    age?: number;
+  }>;
 }

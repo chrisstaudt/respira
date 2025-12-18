@@ -1,10 +1,10 @@
-import { memo, useMemo } from 'react';
-import { Group, Line, Rect, Text, Circle } from 'react-konva';
-import type { PesPatternData } from '../formats/import/pesImporter';
-import { getThreadColor } from '../formats/import/pesImporter';
-import type { MachineInfo } from '../types/machine';
-import { MOVE } from '../formats/import/constants';
-import { canvasColors } from '../utils/cssVariables';
+import { memo, useMemo } from "react";
+import { Group, Line, Rect, Text, Circle } from "react-konva";
+import type { PesPatternData } from "../formats/import/pesImporter";
+import { getThreadColor } from "../formats/import/pesImporter";
+import type { MachineInfo } from "../types/machine";
+import { MOVE } from "../formats/import/constants";
+import { canvasColors } from "../utils/cssVariables";
 
 interface GridProps {
   gridSize: number;
@@ -23,12 +23,20 @@ export const Grid = memo(({ gridSize, bounds, machineInfo }: GridProps) => {
     const horizontalLines: number[][] = [];
 
     // Vertical lines
-    for (let x = Math.floor(gridMinX / gridSize) * gridSize; x <= gridMaxX; x += gridSize) {
+    for (
+      let x = Math.floor(gridMinX / gridSize) * gridSize;
+      x <= gridMaxX;
+      x += gridSize
+    ) {
       verticalLines.push([x, gridMinY, x, gridMaxY]);
     }
 
     // Horizontal lines
-    for (let y = Math.floor(gridMinY / gridSize) * gridSize; y <= gridMaxY; y += gridSize) {
+    for (
+      let y = Math.floor(gridMinY / gridSize) * gridSize;
+      y <= gridMaxY;
+      y += gridSize
+    ) {
       horizontalLines.push([gridMinX, y, gridMaxX, y]);
     }
 
@@ -59,7 +67,7 @@ export const Grid = memo(({ gridSize, bounds, machineInfo }: GridProps) => {
   );
 });
 
-Grid.displayName = 'Grid';
+Grid.displayName = "Grid";
 
 export const Origin = memo(() => {
   const originColor = canvasColors.origin();
@@ -72,7 +80,7 @@ export const Origin = memo(() => {
   );
 });
 
-Origin.displayName = 'Origin';
+Origin.displayName = "Origin";
 
 interface HoopProps {
   machineInfo: MachineInfo;
@@ -108,7 +116,7 @@ export const Hoop = memo(({ machineInfo }: HoopProps) => {
   );
 });
 
-Hoop.displayName = 'Hoop';
+Hoop.displayName = "Hoop";
 
 interface PatternBoundsProps {
   bounds: { minX: number; maxX: number; minY: number; maxY: number };
@@ -133,7 +141,7 @@ export const PatternBounds = memo(({ bounds }: PatternBoundsProps) => {
   );
 });
 
-PatternBounds.displayName = 'PatternBounds';
+PatternBounds.displayName = "PatternBounds";
 
 interface StitchesProps {
   stitches: number[][];
@@ -142,113 +150,146 @@ interface StitchesProps {
   showProgress?: boolean;
 }
 
-export const Stitches = memo(({ stitches, pesData, currentStitchIndex, showProgress = false }: StitchesProps) => {
-  const stitchGroups = useMemo(() => {
-    interface StitchGroup {
-      color: string;
-      points: number[];
-      completed: boolean;
-      isJump: boolean;
-    }
-
-    const groups: StitchGroup[] = [];
-    let currentGroup: StitchGroup | null = null;
-
-    let prevX = 0;
-    let prevY = 0;
-
-    for (let i = 0; i < stitches.length; i++) {
-      const stitch = stitches[i];
-      const [x, y, cmd, colorIndex] = stitch;
-      const isCompleted = i < currentStitchIndex;
-      const isJump = (cmd & MOVE) !== 0;
-      const color = getThreadColor(pesData, colorIndex);
-
-      // Start new group if color/status/type changes
-      if (
-        !currentGroup ||
-        currentGroup.color !== color ||
-        currentGroup.completed !== isCompleted ||
-        currentGroup.isJump !== isJump
-      ) {
-        // For jump stitches, we need to create a line from previous position to current position
-        // So we include both the previous point and current point
-        if (isJump && i > 0) {
-          currentGroup = {
-            color,
-            points: [prevX, prevY, x, y],
-            completed: isCompleted,
-            isJump,
-          };
-        } else {
-          currentGroup = {
-            color,
-            points: [x, y],
-            completed: isCompleted,
-            isJump,
-          };
-        }
-        groups.push(currentGroup);
-      } else {
-        currentGroup.points.push(x, y);
+export const Stitches = memo(
+  ({
+    stitches,
+    pesData,
+    currentStitchIndex,
+    showProgress = false,
+  }: StitchesProps) => {
+    const stitchGroups = useMemo(() => {
+      interface StitchGroup {
+        color: string;
+        points: number[];
+        completed: boolean;
+        isJump: boolean;
       }
 
-      prevX = x;
-      prevY = y;
-    }
+      const groups: StitchGroup[] = [];
+      let currentGroup: StitchGroup | null = null;
 
-    return groups;
-  }, [stitches, pesData, currentStitchIndex]);
+      let prevX = 0;
+      let prevY = 0;
 
-  return (
-    <Group name="stitches">
-      {stitchGroups.map((group, i) => (
-        <Line
-          key={i}
-          points={group.points}
-          stroke={group.color}
-          strokeWidth={group.isJump ? 1.5 : 1.5}
-          lineCap="round"
-          lineJoin="round"
-          dash={group.isJump ? [8, 4] : undefined}
-          opacity={group.isJump ? (group.completed ? 0.8 : 0.5) : (showProgress && !group.completed ? 0.3 : 1.0)}
-        />
-      ))}
-    </Group>
-  );
-});
+      for (let i = 0; i < stitches.length; i++) {
+        const stitch = stitches[i];
+        const [x, y, cmd, colorIndex] = stitch;
+        const isCompleted = i < currentStitchIndex;
+        const isJump = (cmd & MOVE) !== 0;
+        const color = getThreadColor(pesData, colorIndex);
 
-Stitches.displayName = 'Stitches';
+        // Start new group if color/status/type changes
+        if (
+          !currentGroup ||
+          currentGroup.color !== color ||
+          currentGroup.completed !== isCompleted ||
+          currentGroup.isJump !== isJump
+        ) {
+          // For jump stitches, we need to create a line from previous position to current position
+          // So we include both the previous point and current point
+          if (isJump && i > 0) {
+            currentGroup = {
+              color,
+              points: [prevX, prevY, x, y],
+              completed: isCompleted,
+              isJump,
+            };
+          } else {
+            currentGroup = {
+              color,
+              points: [x, y],
+              completed: isCompleted,
+              isJump,
+            };
+          }
+          groups.push(currentGroup);
+        } else {
+          currentGroup.points.push(x, y);
+        }
+
+        prevX = x;
+        prevY = y;
+      }
+
+      return groups;
+    }, [stitches, pesData, currentStitchIndex]);
+
+    return (
+      <Group name="stitches">
+        {stitchGroups.map((group, i) => (
+          <Line
+            key={i}
+            points={group.points}
+            stroke={group.color}
+            strokeWidth={group.isJump ? 1.5 : 1.5}
+            lineCap="round"
+            lineJoin="round"
+            dash={group.isJump ? [8, 4] : undefined}
+            opacity={
+              group.isJump
+                ? group.completed
+                  ? 0.8
+                  : 0.5
+                : showProgress && !group.completed
+                  ? 0.3
+                  : 1.0
+            }
+          />
+        ))}
+      </Group>
+    );
+  },
+);
+
+Stitches.displayName = "Stitches";
 
 interface CurrentPositionProps {
   currentStitchIndex: number;
   stitches: number[][];
 }
 
-export const CurrentPosition = memo(({ currentStitchIndex, stitches }: CurrentPositionProps) => {
-  if (currentStitchIndex <= 0 || currentStitchIndex >= stitches.length) {
-    return null;
-  }
+export const CurrentPosition = memo(
+  ({ currentStitchIndex, stitches }: CurrentPositionProps) => {
+    if (currentStitchIndex <= 0 || currentStitchIndex >= stitches.length) {
+      return null;
+    }
 
-  const [x, y] = stitches[currentStitchIndex];
-  const positionColor = canvasColors.position();
+    const [x, y] = stitches[currentStitchIndex];
+    const positionColor = canvasColors.position();
 
-  return (
-    <Group name="currentPosition">
-      <Circle
-        x={x}
-        y={y}
-        radius={8}
-        fill={`${positionColor}4d`}
-        stroke={positionColor}
-        strokeWidth={3}
-      />
-      <Line points={[x - 12, y, x - 3, y]} stroke={positionColor} strokeWidth={2} />
-      <Line points={[x + 12, y, x + 3, y]} stroke={positionColor} strokeWidth={2} />
-      <Line points={[x, y - 12, x, y - 3]} stroke={positionColor} strokeWidth={2} />
-      <Line points={[x, y + 12, x, y + 3]} stroke={positionColor} strokeWidth={2} />
-    </Group>
-  );
-});
+    return (
+      <Group name="currentPosition">
+        <Circle
+          x={x}
+          y={y}
+          radius={8}
+          fill={`${positionColor}4d`}
+          stroke={positionColor}
+          strokeWidth={3}
+        />
+        <Line
+          points={[x - 12, y, x - 3, y]}
+          stroke={positionColor}
+          strokeWidth={2}
+        />
+        <Line
+          points={[x + 12, y, x + 3, y]}
+          stroke={positionColor}
+          strokeWidth={2}
+        />
+        <Line
+          points={[x, y - 12, x, y - 3]}
+          stroke={positionColor}
+          strokeWidth={2}
+        />
+        <Line
+          points={[x, y + 12, x, y + 3]}
+          stroke={positionColor}
+          strokeWidth={2}
+        />
+      </Group>
+    );
+  },
+);
 
-CurrentPosition.displayName = 'CurrentPosition';
+CurrentPosition.displayName = "CurrentPosition";

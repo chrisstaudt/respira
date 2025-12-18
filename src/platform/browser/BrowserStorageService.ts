@@ -1,6 +1,9 @@
-import { PatternCacheService } from '../../services/PatternCacheService';
-import type { IStorageService, ICachedPattern } from '../interfaces/IStorageService';
-import type { PesPatternData } from '../../formats/import/pesImporter';
+import { PatternCacheService } from "../../services/PatternCacheService";
+import type {
+  IStorageService,
+  ICachedPattern,
+} from "../interfaces/IStorageService";
+import type { PesPatternData } from "../../formats/import/pesImporter";
 
 /**
  * Browser implementation of storage service using localStorage
@@ -11,7 +14,7 @@ export class BrowserStorageService implements IStorageService {
     uuid: string,
     pesData: PesPatternData,
     fileName: string,
-    patternOffset?: { x: number; y: number }
+    patternOffset?: { x: number; y: number },
   ): Promise<void> {
     PatternCacheService.savePattern(uuid, pesData, fileName, patternOffset);
   }
@@ -36,7 +39,12 @@ export class BrowserStorageService implements IStorageService {
     PatternCacheService.clearCache();
   }
 
-  async getCacheInfo(): Promise<{ hasCache: boolean; fileName?: string; uuid?: string; age?: number }> {
+  async getCacheInfo(): Promise<{
+    hasCache: boolean;
+    fileName?: string;
+    uuid?: string;
+    age?: number;
+  }> {
     return PatternCacheService.getCacheInfo();
   }
 }

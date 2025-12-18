@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import type { BluetoothDevice } from '../types/electron';
+import { useEffect, useState, useCallback } from "react";
+import type { BluetoothDevice } from "../types/electron";
 
 export function BluetoothDevicePicker() {
   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
@@ -10,7 +10,7 @@ export function BluetoothDevicePicker() {
     // Only set up listener in Electron
     if (window.electronAPI?.onBluetoothDeviceList) {
       window.electronAPI.onBluetoothDeviceList((deviceList) => {
-        console.log('[BluetoothPicker] Received device list:', deviceList);
+        console.log("[BluetoothPicker] Received device list:", deviceList);
         setDevices(deviceList);
         // Open the picker when scan starts (even if empty at first)
         if (!isOpen) {
@@ -26,38 +26,44 @@ export function BluetoothDevicePicker() {
   }, [isOpen]);
 
   const handleSelectDevice = useCallback((deviceId: string) => {
-    console.log('[BluetoothPicker] User selected device:', deviceId);
+    console.log("[BluetoothPicker] User selected device:", deviceId);
     window.electronAPI?.selectBluetoothDevice(deviceId);
     setIsOpen(false);
     setDevices([]);
   }, []);
 
   const handleCancel = useCallback(() => {
-    console.log('[BluetoothPicker] User cancelled device selection');
-    window.electronAPI?.selectBluetoothDevice('');
+    console.log("[BluetoothPicker] User cancelled device selection");
+    window.electronAPI?.selectBluetoothDevice("");
     setIsOpen(false);
     setDevices([]);
     setIsScanning(false);
   }, []);
 
   // Handle escape key
-  const handleEscape = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      handleCancel();
-    }
-  }, [handleCancel]);
+  const handleEscape = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleCancel();
+      }
+    },
+    [handleCancel],
+  );
 
   useEffect(() => {
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
     }
   }, [isOpen, handleEscape]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-[1000]" onClick={handleCancel}>
+    <div
+      className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-[1000]"
+      onClick={handleCancel}
+    >
       <div
         className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-lg w-[90%] m-4 border-t-4 border-primary-600 dark:border-primary-500"
         onClick={(e) => e.stopPropagation()}
@@ -66,23 +72,48 @@ export function BluetoothDevicePicker() {
         aria-describedby="bluetooth-picker-message"
       >
         <div className="p-6 border-b border-gray-300 dark:border-gray-600">
-          <h3 id="bluetooth-picker-title" className="m-0 text-base lg:text-lg font-semibold dark:text-white">
+          <h3
+            id="bluetooth-picker-title"
+            className="m-0 text-base lg:text-lg font-semibold dark:text-white"
+          >
             Select Bluetooth Device
           </h3>
         </div>
         <div className="p-6">
           {isScanning && devices.length === 0 ? (
             <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-              <svg className="animate-spin h-5 w-5 text-primary-600 dark:text-primary-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin h-5 w-5 text-primary-600 dark:text-primary-400"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
-              <span id="bluetooth-picker-message">Scanning for Bluetooth devices...</span>
+              <span id="bluetooth-picker-message">
+                Scanning for Bluetooth devices...
+              </span>
             </div>
           ) : (
             <>
-              <p id="bluetooth-picker-message" className="mb-4 leading-relaxed text-gray-900 dark:text-gray-100">
-                {devices.length} device{devices.length !== 1 ? 's' : ''} found. Select a device to connect:
+              <p
+                id="bluetooth-picker-message"
+                className="mb-4 leading-relaxed text-gray-900 dark:text-gray-100"
+              >
+                {devices.length} device{devices.length !== 1 ? "s" : ""} found.
+                Select a device to connect:
               </p>
               <div className="space-y-2">
                 {devices.map((device) => (
@@ -92,8 +123,12 @@ export function BluetoothDevicePicker() {
                     className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-left rounded-lg font-medium text-sm hover:bg-primary-100 dark:hover:bg-primary-900 hover:text-primary-900 dark:hover:text-primary-100 active:bg-primary-200 dark:active:bg-primary-800 transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-300 dark:focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                     aria-label={`Connect to ${device.deviceName}`}
                   >
-                    <div className="font-semibold text-gray-900 dark:text-white">{device.deviceName}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">{device.deviceId}</div>
+                    <div className="font-semibold text-gray-900 dark:text-white">
+                      {device.deviceName}
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      {device.deviceId}
+                    </div>
                   </button>
                 ))}
               </div>

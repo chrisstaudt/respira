@@ -1,12 +1,12 @@
-import type { WorkerMessage, WorkerResponse } from './worker';
-import PatternConverterWorker from './worker?worker';
-import { decodePenData } from '../pen/decoder';
-import type { DecodedPenData } from '../pen/types';
+import type { WorkerMessage, WorkerResponse } from "./worker";
+import PatternConverterWorker from "./worker?worker";
+import { decodePenData } from "../pen/decoder";
+import type { DecodedPenData } from "../pen/types";
 
-export type PyodideState = 'not_loaded' | 'loading' | 'ready' | 'error';
+export type PyodideState = "not_loaded" | "loading" | "ready" | "error";
 
 export interface PesPatternData {
-  stitches: number[][];  // Original PES stitches (for reference)
+  stitches: number[][]; // Original PES stitches (for reference)
   threads: Array<{
     color: number;
     hex: string;
@@ -24,7 +24,7 @@ export interface PesPatternData {
     chart: string | null;
     threadIndices: number[];
   }>;
-  penData: Uint8Array;        // Raw PEN bytes sent to machine
+  penData: Uint8Array; // Raw PEN bytes sent to machine
   penStitches: DecodedPenData; // Decoded PEN stitches (for rendering)
   colorCount: number;
   stitchCount: number;
@@ -40,7 +40,7 @@ export type ProgressCallback = (progress: number, step: string) => void;
 
 class PatternConverterClient {
   private worker: Worker | null = null;
-  private state: PyodideState = 'not_loaded';
+  private state: PyodideState = "not_loaded";
   private error: string | null = null;
   private initPromise: Promise<void> | null = null;
   private progressCallbacks: Set<ProgressCallback> = new Set();
@@ -64,7 +64,7 @@ class PatternConverterClient {
    */
   async initialize(onProgress?: ProgressCallback): Promise<void> {
     // If already ready, return immediately
-    if (this.state === 'ready') {
+    if (this.state === "ready") {
       return;
     }
 
@@ -78,13 +78,13 @@ class PatternConverterClient {
 
     // Create worker if it doesn't exist
     if (!this.worker) {
-      console.log('[PatternConverterClient] Creating worker...');
+      console.log("[PatternConverterClient] Creating worker...");
       try {
         this.worker = new PatternConverterWorker();
-        console.log('[PatternConverterClient] Worker created successfully');
+        console.log("[PatternConverterClient] Worker created successfully");
         this.setupWorkerListeners();
       } catch (err) {
-        console.error('[PatternConverterClient] Failed to create worker:', err);
+        console.error("[PatternConverterClient] Failed to create worker:", err);
         throw err;
       }
     }
@@ -95,7 +95,7 @@ class PatternConverterClient {
     }
 
     // Start initialization
-    this.state = 'loading';
+    this.state = "loading";
     this.error = null;
 
     this.initPromise = new Promise<void>((resolve, reject) => {
@@ -103,44 +103,55 @@ class PatternConverterClient {
         const message = event.data;
 
         switch (message.type) {
-          case 'INIT_PROGRESS':
+          case "INIT_PROGRESS":
             // Notify all progress callbacks
             this.progressCallbacks.forEach((callback) => {
               callback(message.progress, message.step);
             });
             break;
 
-          case 'INIT_COMPLETE':
-            this.state = 'ready';
+          case "INIT_COMPLETE":
+            this.state = "ready";
             this.progressCallbacks.clear();
-            this.worker?.removeEventListener('message', handleMessage);
+            this.worker?.removeEventListener("message", handleMessage);
             resolve();
             break;
 
-          case 'INIT_ERROR':
-            this.state = 'error';
+          case "INIT_ERROR":
+            this.state = "error";
             this.error = message.error;
             this.progressCallbacks.clear();
-            this.worker?.removeEventListener('message', handleMessage);
+            this.worker?.removeEventListener("message", handleMessage);
             reject(new Error(message.error));
             break;
         }
       };
 
-      this.worker?.addEventListener('message', handleMessage);
+      this.worker?.addEventListener("message", handleMessage);
 
       // Send initialization message with asset URLs
       // Resolve URLs relative to the current page location
-      const baseURL = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/');
-      const pyodideIndexURL = new URL('assets/', baseURL).href;
-      const pystitchWheelURL = new URL('pystitch-1.0.0-py3-none-any.whl', baseURL).href;
+      const baseURL =
+        window.location.origin +
+        window.location.pathname.replace(/\/[^/]*$/, "/");
+      const pyodideIndexURL = new URL("assets/", baseURL).href;
+      const pystitchWheelURL = new URL(
+        "pystitch-1.0.0-py3-none-any.whl",
+        baseURL,
+      ).href;
 
-      console.log('[PatternConverterClient] Base URL:', baseURL);
-      console.log('[PatternConverterClient] Pyodide index URL:', pyodideIndexURL);
-      console.log('[PatternConverterClient] Pystitch wheel URL:', pystitchWheelURL);
+      console.log("[PatternConverterClient] Base URL:", baseURL);
+      console.log(
+        "[PatternConverterClient] Pyodide index URL:",
+        pyodideIndexURL,
+      );
+      console.log(
+        "[PatternConverterClient] Pystitch wheel URL:",
+        pystitchWheelURL,
+      );
 
       const initMessage: WorkerMessage = {
-        type: 'INITIALIZE',
+        type: "INITIALIZE",
         pyodideIndexURL,
         pystitchWheelURL,
       };
@@ -155,19 +166,21 @@ class PatternConverterClient {
    */
   async convertPesToPen(file: File): Promise<PesPatternData> {
     // Ensure worker is initialized
-    if (this.state !== 'ready') {
-      throw new Error('Pyodide worker not initialized. Call initialize() first.');
+    if (this.state !== "ready") {
+      throw new Error(
+        "Pyodide worker not initialized. Call initialize() first.",
+      );
     }
 
     if (!this.worker) {
-      throw new Error('Worker not available');
+      throw new Error("Worker not available");
     }
 
     return new Promise<PesPatternData>((resolve, reject) => {
       // Store reference to worker for TypeScript null checking
       const worker = this.worker;
       if (!worker) {
-        reject(new Error('Worker not available'));
+        reject(new Error("Worker not available"));
         return;
       }
 
@@ -175,14 +188,20 @@ class PatternConverterClient {
         const message = event.data;
 
         switch (message.type) {
-          case 'CONVERT_COMPLETE': {
-            worker.removeEventListener('message', handleMessage);
+          case "CONVERT_COMPLETE": {
+            worker.removeEventListener("message", handleMessage);
             // Convert penData array back to Uint8Array
             const penData = new Uint8Array(message.data.penData);
 
             // Decode the PEN data to get stitches for rendering
             const penStitches = decodePenData(penData);
-            console.log('[PatternConverter] Decoded PEN data:', penStitches.stitches.length, 'stitches,', penStitches.colorBlocks.length, 'colors');
+            console.log(
+              "[PatternConverter] Decoded PEN data:",
+              penStitches.stitches.length,
+              "stitches,",
+              penStitches.colorBlocks.length,
+              "colors",
+            );
 
             const result: PesPatternData = {
               ...message.data,
@@ -193,28 +212,28 @@ class PatternConverterClient {
             break;
           }
 
-          case 'CONVERT_ERROR':
-            worker.removeEventListener('message', handleMessage);
+          case "CONVERT_ERROR":
+            worker.removeEventListener("message", handleMessage);
             reject(new Error(message.error));
             break;
         }
       };
 
-      worker.addEventListener('message', handleMessage);
+      worker.addEventListener("message", handleMessage);
 
       // Read file as ArrayBuffer and send to worker
       const reader = new FileReader();
       reader.onload = () => {
         const convertMessage: WorkerMessage = {
-          type: 'CONVERT_PES',
+          type: "CONVERT_PES",
           fileData: reader.result as ArrayBuffer,
           fileName: file.name,
         };
         worker.postMessage(convertMessage);
       };
       reader.onerror = () => {
-        worker.removeEventListener('message', handleMessage);
-        reject(new Error('Failed to read file'));
+        worker.removeEventListener("message", handleMessage);
+        reject(new Error("Failed to read file"));
       };
       reader.readAsArrayBuffer(file);
     });
@@ -226,16 +245,16 @@ class PatternConverterClient {
   private setupWorkerListeners() {
     if (!this.worker) return;
 
-    this.worker.addEventListener('error', (event) => {
-      console.error('[PyodideWorkerClient] Worker error:', event);
-      this.state = 'error';
-      this.error = event.message || 'Worker error';
+    this.worker.addEventListener("error", (event) => {
+      console.error("[PyodideWorkerClient] Worker error:", event);
+      this.state = "error";
+      this.error = event.message || "Worker error";
     });
 
-    this.worker.addEventListener('messageerror', (event) => {
-      console.error('[PyodideWorkerClient] Worker message error:', event);
-      this.state = 'error';
-      this.error = 'Failed to deserialize worker message';
+    this.worker.addEventListener("messageerror", (event) => {
+      console.error("[PyodideWorkerClient] Worker message error:", event);
+      this.state = "error";
+      this.error = "Failed to deserialize worker message";
     });
   }
 
@@ -247,7 +266,7 @@ class PatternConverterClient {
       this.worker.terminate();
       this.worker = null;
     }
-    this.state = 'not_loaded';
+    this.state = "not_loaded";
     this.error = null;
     this.initPromise = null;
     this.progressCallbacks.clear();

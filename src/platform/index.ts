@@ -1,15 +1,19 @@
-import type { IStorageService } from './interfaces/IStorageService';
-import type { IFileService } from './interfaces/IFileService';
-import { BrowserStorageService } from './browser/BrowserStorageService';
-import { BrowserFileService } from './browser/BrowserFileService';
-import { ElectronStorageService } from './electron/ElectronStorageService';
-import { ElectronFileService } from './electron/ElectronFileService';
+import type { IStorageService } from "./interfaces/IStorageService";
+import type { IFileService } from "./interfaces/IFileService";
+import { BrowserStorageService } from "./browser/BrowserStorageService";
+import { BrowserFileService } from "./browser/BrowserFileService";
+import { ElectronStorageService } from "./electron/ElectronStorageService";
+import { ElectronFileService } from "./electron/ElectronFileService";
 
 /**
  * Detect if running in Electron
  */
 export function isElectron(): boolean {
-  return !!(typeof window !== 'undefined' && window.process && window.process.type === 'renderer');
+  return !!(
+    typeof window !== "undefined" &&
+    window.process &&
+    window.process.type === "renderer"
+  );
 }
 
 /**

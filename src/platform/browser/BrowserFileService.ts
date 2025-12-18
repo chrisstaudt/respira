@@ -1,4 +1,4 @@
-import type { IFileService } from '../interfaces/IFileService';
+import type { IFileService } from "../interfaces/IFileService";
 
 /**
  * Browser implementation of file service using HTML input elements
@@ -6,8 +6,8 @@ import type { IFileService } from '../interfaces/IFileService';
 export class BrowserFileService implements IFileService {
   async openFileDialog(options: { accept: string }): Promise<File | null> {
     return new Promise((resolve) => {
-      const input = document.createElement('input');
-      input.type = 'file';
+      const input = document.createElement("input");
+      input.type = "file";
       input.accept = options.accept;
 
       input.onchange = (e) => {
@@ -25,7 +25,7 @@ export class BrowserFileService implements IFileService {
 
   async saveFileDialog(): Promise<void> {
     // No-op in browser - could implement download if needed in the future
-    console.warn('saveFileDialog not implemented in browser');
+    console.warn("saveFileDialog not implemented in browser");
   }
 
   hasNativeDialogs(): boolean {

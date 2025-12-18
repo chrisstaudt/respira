@@ -5,13 +5,13 @@
  * The PEN format uses absolute coordinates shifted left by 3 bits, with flags in the low 3 bits.
  */
 
-import type { DecodedPenStitch, DecodedPenData, PenColorBlock } from './types';
+import type { DecodedPenStitch, DecodedPenData, PenColorBlock } from "./types";
 
 // PEN format flags
 const PEN_FEED_DATA = 0x01; // Bit 0: Jump stitch (move without stitching)
-const PEN_CUT_DATA = 0x02;  // Bit 1: Trim/cut thread command
+const PEN_CUT_DATA = 0x02; // Bit 1: Trim/cut thread command
 const PEN_COLOR_END = 0x03; // Last stitch before color change
-const PEN_DATA_END = 0x05;  // Last stitch of entire pattern
+const PEN_DATA_END = 0x05; // Last stitch of entire pattern
 
 /**
  * Decode a single PEN stitch (4 bytes) into coordinates and flags
@@ -22,7 +22,7 @@ const PEN_DATA_END = 0x05;  // Last stitch of entire pattern
  */
 export function decodePenStitch(
   bytes: Uint8Array | number[],
-  offset: number
+  offset: number,
 ): DecodedPenStitch {
   const xLow = bytes[offset];
   const xHigh = bytes[offset + 1];
@@ -37,14 +37,14 @@ export function decodePenStitch(
   const yFlags = yRaw & 0x07;
 
   // Clear flags and shift right to get actual coordinates
-  const xClean = xRaw & 0xFFF8;
-  const yClean = yRaw & 0xFFF8;
+  const xClean = xRaw & 0xfff8;
+  const yClean = yRaw & 0xfff8;
 
   // Convert to signed 16-bit
   let xSigned = xClean;
   let ySigned = yClean;
-  if (xSigned > 0x7FFF) xSigned = xSigned - 0x10000;
-  if (ySigned > 0x7FFF) ySigned = ySigned - 0x10000;
+  if (xSigned > 0x7fff) xSigned = xSigned - 0x10000;
+  if (ySigned > 0x7fff) ySigned = ySigned - 0x10000;
 
   // Shift right by 3 to get actual coordinates
   const x = xSigned >> 3;
@@ -76,9 +76,13 @@ export function decodePenStitch(
  * @param bytes PEN format byte array
  * @returns Array of decoded stitches
  */
-export function decodeAllPenStitches(bytes: Uint8Array | number[]): DecodedPenStitch[] {
+export function decodeAllPenStitches(
+  bytes: Uint8Array | number[],
+): DecodedPenStitch[] {
   if (bytes.length < 4 || bytes.length % 4 !== 0) {
-    throw new Error(`Invalid PEN data size: ${bytes.length} bytes (must be multiple of 4)`);
+    throw new Error(
+      `Invalid PEN data size: ${bytes.length} bytes (must be multiple of 4)`,
+    );
   }
 
   const stitches: DecodedPenStitch[] = [];
@@ -169,9 +173,15 @@ export function decodePenData(data: Uint8Array): DecodedPenData {
  * @param stitchIndex Index of the stitch
  * @returns Color index, or -1 if not found
  */
-export function getStitchColor(penData: DecodedPenData, stitchIndex: number): number {
+export function getStitchColor(
+  penData: DecodedPenData,
+  stitchIndex: number,
+): number {
   for (const block of penData.colorBlocks) {
-    if (stitchIndex >= block.startStitchIndex && stitchIndex <= block.endStitchIndex) {
+    if (
+      stitchIndex >= block.startStitchIndex &&
+      stitchIndex <= block.endStitchIndex
+    ) {
       return block.colorIndex;
     }
   }

@@ -11,9 +11,9 @@ export function getCSSVariable(name: string): string {
  * Canvas color helpers
  */
 export const canvasColors = {
-  grid: () => getCSSVariable('--color-canvas-grid'),
-  origin: () => getCSSVariable('--color-canvas-origin'),
-  hoop: () => getCSSVariable('--color-canvas-hoop'),
-  bounds: () => getCSSVariable('--color-canvas-bounds'),
-  position: () => getCSSVariable('--color-canvas-position'),
+  grid: () => getCSSVariable("--color-canvas-grid"),
+  origin: () => getCSSVariable("--color-canvas-origin"),
+  hoop: () => getCSSVariable("--color-canvas-hoop"),
+  bounds: () => getCSSVariable("--color-canvas-bounds"),
+  position: () => getCSSVariable("--color-canvas-position"),
 };

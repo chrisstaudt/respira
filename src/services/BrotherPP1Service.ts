@@ -9,7 +9,7 @@ import { MachineStatus } from "../types/machine";
 export class BluetoothPairingError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'BluetoothPairingError';
+    this.name = "BluetoothPairingError";
   }
 }
 
@@ -57,7 +57,8 @@ export class BrotherPP1Service {
   private isProcessingQueue = false;
   private isCommunicating = false;
   private isInitialConnection = false;
-  private communicationCallbacks: Set<(isCommunicating: boolean) => void> = new Set();
+  private communicationCallbacks: Set<(isCommunicating: boolean) => void> =
+    new Set();
   private disconnectCallbacks: Set<() => void> = new Set();
 
   /**
@@ -65,7 +66,9 @@ export class BrotherPP1Service {
    * @param callback Function called when communication state changes
    * @returns Unsubscribe function
    */
-  onCommunicationChange(callback: (isCommunicating: boolean) => void): () => void {
+  onCommunicationChange(
+    callback: (isCommunicating: boolean) => void,
+  ): () => void {
     this.communicationCallbacks.add(callback);
     // Immediately call with current state
     callback(this.isCommunicating);
@@ -89,19 +92,19 @@ export class BrotherPP1Service {
   private setCommunicating(value: boolean) {
     if (this.isCommunicating !== value) {
       this.isCommunicating = value;
-      this.communicationCallbacks.forEach(callback => callback(value));
+      this.communicationCallbacks.forEach((callback) => callback(value));
     }
   }
 
   private handleDisconnect() {
-    console.log('[BrotherPP1Service] Device disconnected');
+    console.log("[BrotherPP1Service] Device disconnected");
     this.server = null;
     this.writeCharacteristic = null;
     this.readCharacteristic = null;
     this.commandQueue = [];
     this.isProcessingQueue = false;
     this.setCommunicating(false);
-    this.disconnectCallbacks.forEach(callback => callback());
+    this.disconnectCallbacks.forEach((callback) => callback());
   }
 
   async connect(): Promise<void> {
@@ -116,7 +119,7 @@ export class BrotherPP1Service {
       }
 
       // Listen for disconnection events
-      this.device.addEventListener('gattserverdisconnected', () => {
+      this.device.addEventListener("gattserverdisconnected", () => {
         this.handleDisconnect();
       });
 
@@ -126,7 +129,8 @@ export class BrotherPP1Service {
       const service = await this.server.getPrimaryService(SERVICE_UUID);
       console.log("Got primary service");
 
-      this.writeCharacteristic = await service.getCharacteristic(WRITE_CHAR_UUID);
+      this.writeCharacteristic =
+        await service.getCharacteristic(WRITE_CHAR_UUID);
       this.readCharacteristic = await service.getCharacteristic(READ_CHAR_UUID);
 
       console.log("Connected to Brother PP1 machine");
@@ -136,7 +140,9 @@ export class BrotherPP1Service {
       console.log("Validating connection with test command...");
       try {
         await this.getMachineState();
-        console.log("Connection validation successful - device is properly paired");
+        console.log(
+          "Connection validation successful - device is properly paired",
+        );
       } catch (e) {
         console.log("Connection validation failed:", e);
         // Disconnect to clean up
@@ -289,16 +295,21 @@ export class BrotherPP1Service {
         // Detect pairing issues during initial connection - empty or invalid response
         if (this.isInitialConnection) {
           if (response.length === 0) {
-            console.log('[BrotherPP1] Empty response received - device likely not paired');
+            console.log(
+              "[BrotherPP1] Empty response received - device likely not paired",
+            );
             throw new BluetoothPairingError(
-              'Device not paired. To pair: long-press the Bluetooth button on the machine, then pair it using your operating system\'s Bluetooth settings. After pairing, try connecting again.'
+              "Device not paired. To pair: long-press the Bluetooth button on the machine, then pair it using your operating system's Bluetooth settings. After pairing, try connecting again.",
             );
           }
           // Check for invalid response (less than 3 bytes means no proper command response)
           if (response.length < 3) {
-            console.log('[BrotherPP1] Invalid response length:', response.length);
+            console.log(
+              "[BrotherPP1] Invalid response length:",
+              response.length,
+            );
             throw new BluetoothPairingError(
-              'Device not paired. To pair: long-press the Bluetooth button on the machine, then pair it using your operating system\'s Bluetooth settings. After pairing, try connecting again.'
+              "Device not paired. To pair: long-press the Bluetooth button on the machine, then pair it using your operating system's Bluetooth settings. After pairing, try connecting again.",
             );
           }
         }
@@ -322,11 +333,12 @@ export class BrotherPP1Service {
         if (this.isInitialConnection && error instanceof Error) {
           const errorMsg = error.message.toLowerCase();
           if (
-            errorMsg.includes('gatt server is disconnected') ||
-            (errorMsg.includes('writevaluewithresponse') && errorMsg.includes('gatt server is disconnected'))
+            errorMsg.includes("gatt server is disconnected") ||
+            (errorMsg.includes("writevaluewithresponse") &&
+              errorMsg.includes("gatt server is disconnected"))
           ) {
             throw new BluetoothPairingError(
-              'Device not paired. To pair: long-press the Bluetooth button on the machine, then pair it using your operating system\'s Bluetooth settings. After pairing, try connecting again.'
+              "Device not paired. To pair: long-press the Bluetooth button on the machine, then pair it using your operating system's Bluetooth settings. After pairing, try connecting again.",
             );
           }
         }
@@ -369,7 +381,7 @@ export class BrotherPP1Service {
       serviceCount = serviceData.serviceCount;
       totalCount = serviceData.totalCount;
     } catch (err) {
-      console.warn('[BrotherPP1] Failed to fetch service count:', err);
+      console.warn("[BrotherPP1] Failed to fetch service count:", err);
     }
 
     return {
@@ -385,17 +397,23 @@ export class BrotherPP1Service {
     };
   }
 
-  async getServiceCount(): Promise<{ serviceCount: number; totalCount: number }> {
+  async getServiceCount(): Promise<{
+    serviceCount: number;
+    totalCount: number;
+  }> {
     const response = await this.sendCommand(Commands.SERVICE_COUNT);
     const data = response.slice(2);
 
     // Read uint32 values in little-endian format
     const readUInt32LE = (offset: number) =>
-      data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24);
+      data[offset] |
+      (data[offset + 1] << 8) |
+      (data[offset + 2] << 16) |
+      (data[offset + 3] << 24);
 
     return {
       serviceCount: readUInt32LE(0), // Bytes 0-3
-      totalCount: readUInt32LE(4),   // Bytes 4-7
+      totalCount: readUInt32LE(4), // Bytes 4-7
     };
   }
 
@@ -427,8 +445,10 @@ export class BrotherPP1Service {
       speed: readUInt16LE(12),
     };
 
-    console.log('[BrotherPP1] Pattern Info Response:', {
-      rawData: Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' '),
+    console.log("[BrotherPP1] Pattern Info Response:", {
+      rawData: Array.from(data)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join(" "),
       parsed: patternInfo,
     });
 
@@ -580,7 +600,7 @@ export class BrotherPP1Service {
     payload[24] = flip;
     payload[25] = frame;
 
-    console.log('[DEBUG] Layout bounds:', {
+    console.log("[DEBUG] Layout bounds:", {
       boundLeft,
       boundTop,
       boundRight,
@@ -675,7 +695,7 @@ export class BrotherPP1Service {
       moveX = patternOffset.x - patternCenterX;
       moveY = patternOffset.y - patternCenterY;
 
-      console.log('[LAYOUT] Using user-defined offset:', {
+      console.log("[LAYOUT] Using user-defined offset:", {
         patternOffset,
         patternCenter: { x: patternCenterX, y: patternCenterY },
         moveX,
@@ -688,7 +708,7 @@ export class BrotherPP1Service {
       moveX = -patternCenterX;
       moveY = -patternCenterY;
 
-      console.log('[LAYOUT] Auto-centering pattern:', { moveX, moveY });
+      console.log("[LAYOUT] Auto-centering pattern:", { moveX, moveY });
     }
 
     // Send layout with actual pattern bounds

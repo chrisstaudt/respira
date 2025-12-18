@@ -1,14 +1,14 @@
-import { useEffect } from 'react';
-import { useShallow } from 'zustand/react/shallow';
-import { useMachineStore } from './stores/useMachineStore';
-import { usePatternStore } from './stores/usePatternStore';
-import { useUIStore } from './stores/useUIStore';
-import { AppHeader } from './components/AppHeader';
-import { LeftSidebar } from './components/LeftSidebar';
-import { PatternCanvas } from './components/PatternCanvas';
-import { PatternPreviewPlaceholder } from './components/PatternPreviewPlaceholder';
-import { BluetoothDevicePicker } from './components/BluetoothDevicePicker';
-import './App.css';
+import { useEffect } from "react";
+import { useShallow } from "zustand/react/shallow";
+import { useMachineStore } from "./stores/useMachineStore";
+import { usePatternStore } from "./stores/usePatternStore";
+import { useUIStore } from "./stores/useUIStore";
+import { AppHeader } from "./components/AppHeader";
+import { LeftSidebar } from "./components/LeftSidebar";
+import { PatternCanvas } from "./components/PatternCanvas";
+import { PatternPreviewPlaceholder } from "./components/PatternPreviewPlaceholder";
+import { BluetoothDevicePicker } from "./components/BluetoothDevicePicker";
+import "./App.css";
 
 function App() {
   // Set page title with version
@@ -17,36 +17,27 @@ function App() {
   }, []);
 
   // Machine store - for auto-loading cached pattern
-  const {
-    resumedPattern,
-    resumeFileName,
-  } = useMachineStore(
+  const { resumedPattern, resumeFileName } = useMachineStore(
     useShallow((state) => ({
       resumedPattern: state.resumedPattern,
       resumeFileName: state.resumeFileName,
-    }))
+    })),
   );
 
   // Pattern store - for auto-loading cached pattern
-  const {
-    pesData,
-    setPattern,
-    setPatternOffset,
-  } = usePatternStore(
+  const { pesData, setPattern, setPatternOffset } = usePatternStore(
     useShallow((state) => ({
       pesData: state.pesData,
       setPattern: state.setPattern,
       setPatternOffset: state.setPatternOffset,
-    }))
+    })),
   );
 
   // UI store - for Pyodide initialization
-  const {
-    initializePyodide,
-  } = useUIStore(
+  const { initializePyodide } = useUIStore(
     useShallow((state) => ({
       initializePyodide: state.initializePyodide,
-    }))
+    })),
   );
 
   // Initialize Pyodide in background on mount (non-blocking thanks to worker)
@@ -57,11 +48,19 @@ function App() {
   // Auto-load cached pattern when available
   useEffect(() => {
     if (resumedPattern && !pesData) {
-      console.log('[App] Loading resumed pattern:', resumeFileName, 'Offset:', resumedPattern.patternOffset);
-      setPattern(resumedPattern.pesData, resumeFileName || '');
+      console.log(
+        "[App] Loading resumed pattern:",
+        resumeFileName,
+        "Offset:",
+        resumedPattern.patternOffset,
+      );
+      setPattern(resumedPattern.pesData, resumeFileName || "");
       // Restore the cached pattern offset
       if (resumedPattern.patternOffset) {
-        setPatternOffset(resumedPattern.patternOffset.x, resumedPattern.patternOffset.y);
+        setPatternOffset(
+          resumedPattern.patternOffset.x,
+          resumedPattern.patternOffset.y,
+        );
       }
     }
   }, [resumedPattern, resumeFileName, pesData, setPattern, setPatternOffset]);

@@ -1,8 +1,8 @@
-import Konva from 'konva';
-import type { PesPatternData } from '../formats/import/pesImporter';
-import { getThreadColor } from '../formats/import/pesImporter';
-import type { MachineInfo } from '../types/machine';
-import { MOVE } from '../formats/import/constants';
+import Konva from "konva";
+import type { PesPatternData } from "../formats/import/pesImporter";
+import { getThreadColor } from "../formats/import/pesImporter";
+import type { MachineInfo } from "../types/machine";
+import { MOVE } from "../formats/import/constants";
 
 /**
  * Renders a grid with specified spacing
@@ -11,9 +11,9 @@ export function renderGrid(
   layer: Konva.Layer,
   gridSize: number,
   bounds: { minX: number; maxX: number; minY: number; maxY: number },
-  machineInfo: MachineInfo | null
+  machineInfo: MachineInfo | null,
 ): void {
-  const gridGroup = new Konva.Group({ name: 'grid' });
+  const gridGroup = new Konva.Group({ name: "grid" });
 
   // Determine grid bounds based on hoop or pattern
   const gridMinX = machineInfo ? -machineInfo.maxWidth / 2 : bounds.minX;
@@ -22,20 +22,28 @@ export function renderGrid(
   const gridMaxY = machineInfo ? machineInfo.maxHeight / 2 : bounds.maxY;
 
   // Vertical lines
-  for (let x = Math.floor(gridMinX / gridSize) * gridSize; x <= gridMaxX; x += gridSize) {
+  for (
+    let x = Math.floor(gridMinX / gridSize) * gridSize;
+    x <= gridMaxX;
+    x += gridSize
+  ) {
     const line = new Konva.Line({
       points: [x, gridMinY, x, gridMaxY],
-      stroke: '#e0e0e0',
+      stroke: "#e0e0e0",
       strokeWidth: 1,
     });
     gridGroup.add(line);
   }
 
   // Horizontal lines
-  for (let y = Math.floor(gridMinY / gridSize) * gridSize; y <= gridMaxY; y += gridSize) {
+  for (
+    let y = Math.floor(gridMinY / gridSize) * gridSize;
+    y <= gridMaxY;
+    y += gridSize
+  ) {
     const line = new Konva.Line({
       points: [gridMinX, y, gridMaxX, y],
-      stroke: '#e0e0e0',
+      stroke: "#e0e0e0",
       strokeWidth: 1,
     });
     gridGroup.add(line);
@@ -48,19 +56,19 @@ export function renderGrid(
  * Renders the origin crosshair at (0,0)
  */
 export function renderOrigin(layer: Konva.Layer): void {
-  const originGroup = new Konva.Group({ name: 'origin' });
+  const originGroup = new Konva.Group({ name: "origin" });
 
   // Horizontal line
   const hLine = new Konva.Line({
     points: [-10, 0, 10, 0],
-    stroke: '#888',
+    stroke: "#888",
     strokeWidth: 2,
   });
 
   // Vertical line
   const vLine = new Konva.Line({
     points: [0, -10, 0, 10],
-    stroke: '#888',
+    stroke: "#888",
     strokeWidth: 2,
   });
 
@@ -72,7 +80,7 @@ export function renderOrigin(layer: Konva.Layer): void {
  * Renders the hoop boundary and label
  */
 export function renderHoop(layer: Konva.Layer, machineInfo: MachineInfo): void {
-  const hoopGroup = new Konva.Group({ name: 'hoop' });
+  const hoopGroup = new Konva.Group({ name: "hoop" });
 
   const hoopWidth = machineInfo.maxWidth;
   const hoopHeight = machineInfo.maxHeight;
@@ -87,7 +95,7 @@ export function renderHoop(layer: Konva.Layer, machineInfo: MachineInfo): void {
     y: hoopTop,
     width: hoopWidth,
     height: hoopHeight,
-    stroke: '#2196F3',
+    stroke: "#2196F3",
     strokeWidth: 3,
     dash: [10, 5],
   });
@@ -98,9 +106,9 @@ export function renderHoop(layer: Konva.Layer, machineInfo: MachineInfo): void {
     y: hoopTop + 10,
     text: `Hoop: ${(hoopWidth / 10).toFixed(0)} x ${(hoopHeight / 10).toFixed(0)} mm`,
     fontSize: 14,
-    fontFamily: 'sans-serif',
-    fontStyle: 'bold',
-    fill: '#2196F3',
+    fontFamily: "sans-serif",
+    fontStyle: "bold",
+    fill: "#2196F3",
   });
 
   hoopGroup.add(rect, label);
@@ -114,9 +122,9 @@ export function renderStitches(
   container: Konva.Layer | Konva.Group,
   stitches: number[][],
   pesData: PesPatternData,
-  currentStitchIndex: number
+  currentStitchIndex: number,
 ): void {
-  const stitchesGroup = new Konva.Group({ name: 'stitches' });
+  const stitchesGroup = new Konva.Group({ name: "stitches" });
 
   // Group stitches by color, completion status, and type (stitch vs jump)
   interface StitchGroup {
@@ -164,8 +172,8 @@ export function renderStitches(
         points: group.points,
         stroke: group.color,
         strokeWidth: 1.0,
-        lineCap: 'round',
-        lineJoin: 'round',
+        lineCap: "round",
+        lineJoin: "round",
         dash: [5, 5],
         opacity: group.completed ? 0.6 : 0.25,
       });
@@ -176,8 +184,8 @@ export function renderStitches(
         points: group.points,
         stroke: group.color,
         strokeWidth: 1.5,
-        lineCap: 'round',
-        lineJoin: 'round',
+        lineCap: "round",
+        lineJoin: "round",
         opacity: group.completed ? 1.0 : 0.3,
       });
       stitchesGroup.add(line);
@@ -192,7 +200,7 @@ export function renderStitches(
  */
 export function renderPatternBounds(
   container: Konva.Layer | Konva.Group,
-  bounds: { minX: number; maxX: number; minY: number; maxY: number }
+  bounds: { minX: number; maxX: number; minY: number; maxY: number },
 ): void {
   const { minX, maxX, minY, maxY } = bounds;
   const patternWidth = maxX - minX;
@@ -203,7 +211,7 @@ export function renderPatternBounds(
     y: minY,
     width: patternWidth,
     height: patternHeight,
-    stroke: '#ff0000',
+    stroke: "#ff0000",
     strokeWidth: 2,
     dash: [5, 5],
   });
@@ -217,47 +225,47 @@ export function renderPatternBounds(
 export function renderCurrentPosition(
   container: Konva.Layer | Konva.Group,
   currentStitchIndex: number,
-  stitches: number[][]
+  stitches: number[][],
 ): void {
   if (currentStitchIndex <= 0 || currentStitchIndex >= stitches.length) return;
 
   const stitch = stitches[currentStitchIndex];
   const [x, y] = stitch;
 
-  const posGroup = new Konva.Group({ name: 'currentPosition' });
+  const posGroup = new Konva.Group({ name: "currentPosition" });
 
   // Circle with fill
   const circle = new Konva.Circle({
     x,
     y,
     radius: 8,
-    fill: 'rgba(255, 0, 0, 0.3)',
-    stroke: '#ff0000',
+    fill: "rgba(255, 0, 0, 0.3)",
+    stroke: "#ff0000",
     strokeWidth: 3,
   });
 
   // Crosshair lines
   const hLine1 = new Konva.Line({
     points: [x - 12, y, x - 3, y],
-    stroke: '#ff0000',
+    stroke: "#ff0000",
     strokeWidth: 2,
   });
 
   const hLine2 = new Konva.Line({
     points: [x + 12, y, x + 3, y],
-    stroke: '#ff0000',
+    stroke: "#ff0000",
     strokeWidth: 2,
   });
 
   const vLine1 = new Konva.Line({
     points: [x, y - 12, x, y - 3],
-    stroke: '#ff0000',
+    stroke: "#ff0000",
     strokeWidth: 2,
   });
 
   const vLine2 = new Konva.Line({
     points: [x, y + 12, x, y + 3],
-    stroke: '#ff0000',
+    stroke: "#ff0000",
     strokeWidth: 2,
   });
 
@@ -270,9 +278,9 @@ export function renderCurrentPosition(
  */
 export function renderLegend(
   layer: Konva.Layer,
-  pesData: PesPatternData
+  pesData: PesPatternData,
 ): void {
-  const legendGroup = new Konva.Group({ name: 'legend' });
+  const legendGroup = new Konva.Group({ name: "legend" });
 
   // Semi-transparent background for better readability
   const bgPadding = 8;
@@ -284,9 +292,9 @@ export function renderLegend(
     y: 10,
     width: 100,
     height: legendHeight,
-    fill: 'rgba(255, 255, 255, 0.9)',
+    fill: "rgba(255, 255, 255, 0.9)",
     cornerRadius: 4,
-    shadowColor: 'rgba(0, 0, 0, 0.2)',
+    shadowColor: "rgba(0, 0, 0, 0.2)",
     shadowBlur: 4,
     shadowOffset: { x: 0, y: 2 },
   });
@@ -305,7 +313,7 @@ export function renderLegend(
       width: 20,
       height: 20,
       fill: color,
-      stroke: '#000',
+      stroke: "#000",
       strokeWidth: 1,
     });
 
@@ -315,8 +323,8 @@ export function renderLegend(
       y: legendY + 5,
       text: `Thread ${i + 1}`,
       fontSize: 12,
-      fontFamily: 'sans-serif',
-      fill: '#000',
+      fontFamily: "sans-serif",
+      fill: "#000",
     });
 
     legendGroup.add(swatch, label);
@@ -334,7 +342,7 @@ export function renderDimensions(
   patternWidth: number,
   patternHeight: number,
   stageWidth: number,
-  stageHeight: number
+  stageHeight: number,
 ): void {
   const dimensionText = `${(patternWidth / 10).toFixed(1)} x ${(patternHeight / 10).toFixed(1)} mm`;
 
@@ -348,9 +356,9 @@ export function renderDimensions(
     y: stageHeight - textHeight - padding - 80, // Above zoom controls
     width: textWidth,
     height: textHeight,
-    fill: 'rgba(255, 255, 255, 0.9)',
+    fill: "rgba(255, 255, 255, 0.9)",
     cornerRadius: 4,
-    shadowColor: 'rgba(0, 0, 0, 0.2)',
+    shadowColor: "rgba(0, 0, 0, 0.2)",
     shadowBlur: 4,
     shadowOffset: { x: 0, y: 2 },
   });
@@ -362,10 +370,10 @@ export function renderDimensions(
     height: textHeight,
     text: dimensionText,
     fontSize: 14,
-    fontFamily: 'sans-serif',
-    fill: '#000',
-    align: 'center',
-    verticalAlign: 'middle',
+    fontFamily: "sans-serif",
+    fill: "#000",
+    align: "center",
+    verticalAlign: "middle",
   });
 
   layer.add(background, text);
@@ -379,7 +387,7 @@ export function calculateInitialScale(
   stageHeight: number,
   viewWidth: number,
   viewHeight: number,
-  padding: number = 40
+  padding: number = 40,
 ): number {
   const scaleX = (stageWidth - 2 * padding) / viewWidth;
   const scaleY = (stageHeight - 2 * padding) / viewHeight;

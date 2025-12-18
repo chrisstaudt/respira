@@ -5,7 +5,9 @@ export interface BluetoothDevice {
 
 export interface ElectronAPI {
   invoke<T = unknown>(channel: string, ...args: unknown[]): Promise<T>;
-  onBluetoothDeviceList: (callback: (devices: BluetoothDevice[]) => void) => void;
+  onBluetoothDeviceList: (
+    callback: (devices: BluetoothDevice[]) => void,
+  ) => void;
   selectBluetoothDevice: (deviceId: string) => void;
 }
 

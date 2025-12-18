@@ -1,23 +1,26 @@
-import { MachineStatus } from '../types/machine';
+import { MachineStatus } from "../types/machine";
 
 /**
  * Machine state categories for safety logic
  */
 export const MachineStateCategory = {
-  IDLE: 'idle',
-  ACTIVE: 'active',
-  WAITING: 'waiting',
-  COMPLETE: 'complete',
-  INTERRUPTED: 'interrupted',
-  ERROR: 'error',
+  IDLE: "idle",
+  ACTIVE: "active",
+  WAITING: "waiting",
+  COMPLETE: "complete",
+  INTERRUPTED: "interrupted",
+  ERROR: "error",
 } as const;
 
-export type MachineStateCategoryType = typeof MachineStateCategory[keyof typeof MachineStateCategory];
+export type MachineStateCategoryType =
+  (typeof MachineStateCategory)[keyof typeof MachineStateCategory];
 
 /**
  * Categorize a machine status into a semantic safety category
  */
-export function getMachineStateCategory(status: MachineStatus): MachineStateCategoryType {
+export function getMachineStateCategory(
+  status: MachineStatus,
+): MachineStateCategoryType {
   switch (status) {
     // IDLE states - safe to perform any action
     case MachineStatus.IDLE:
@@ -67,9 +70,11 @@ export function getMachineStateCategory(status: MachineStatus): MachineStateCate
 export function canDeletePattern(status: MachineStatus): boolean {
   const category = getMachineStateCategory(status);
   // Can delete in IDLE, WAITING, or COMPLETE states, never during ACTIVE operations
-  return category === MachineStateCategory.IDLE ||
-         category === MachineStateCategory.WAITING ||
-         category === MachineStateCategory.COMPLETE;
+  return (
+    category === MachineStateCategory.IDLE ||
+    category === MachineStateCategory.WAITING ||
+    category === MachineStateCategory.COMPLETE
+  );
 }
 
 /**
@@ -79,8 +84,10 @@ export function canDeletePattern(status: MachineStatus): boolean {
 export function canUploadPattern(status: MachineStatus): boolean {
   const category = getMachineStateCategory(status);
   // Can upload in IDLE or COMPLETE states (includes MASK_TRACE_COMPLETE)
-  return category === MachineStateCategory.IDLE ||
-         category === MachineStateCategory.COMPLETE;
+  return (
+    category === MachineStateCategory.IDLE ||
+    category === MachineStateCategory.COMPLETE
+  );
 }
 
 /**
@@ -89,11 +96,13 @@ export function canUploadPattern(status: MachineStatus): boolean {
  */
 export function canStartSewing(status: MachineStatus): boolean {
   // Only in specific ready states
-  return status === MachineStatus.SEWING_WAIT ||
-         status === MachineStatus.MASK_TRACE_COMPLETE ||
-         status === MachineStatus.PAUSE ||
-         status === MachineStatus.STOP ||
-         status === MachineStatus.SEWING_INTERRUPTION;
+  return (
+    status === MachineStatus.SEWING_WAIT ||
+    status === MachineStatus.MASK_TRACE_COMPLETE ||
+    status === MachineStatus.PAUSE ||
+    status === MachineStatus.STOP ||
+    status === MachineStatus.SEWING_INTERRUPTION
+  );
 }
 
 /**
@@ -101,9 +110,11 @@ export function canStartSewing(status: MachineStatus): boolean {
  */
 export function canStartMaskTrace(status: MachineStatus): boolean {
   // Can start mask trace when IDLE (after upload), SEWING_WAIT, or after previous trace
-  return status === MachineStatus.IDLE ||
-         status === MachineStatus.SEWING_WAIT ||
-         status === MachineStatus.MASK_TRACE_COMPLETE;
+  return (
+    status === MachineStatus.IDLE ||
+    status === MachineStatus.SEWING_WAIT ||
+    status === MachineStatus.MASK_TRACE_COMPLETE
+  );
 }
 
 /**
@@ -123,8 +134,10 @@ export function canResumeSewing(status: MachineStatus): boolean {
 export function shouldConfirmDisconnect(status: MachineStatus): boolean {
   const category = getMachineStateCategory(status);
   // Confirm if disconnecting during active operation or waiting for action
-  return category === MachineStateCategory.ACTIVE ||
-         category === MachineStateCategory.WAITING;
+  return (
+    category === MachineStateCategory.ACTIVE ||
+    category === MachineStateCategory.WAITING
+  );
 }
 
 /**
@@ -132,7 +145,13 @@ export function shouldConfirmDisconnect(status: MachineStatus): boolean {
  */
 export interface StateVisualInfo {
   color: string;
-  iconName: 'ready' | 'active' | 'waiting' | 'complete' | 'interrupted' | 'error';
+  iconName:
+    | "ready"
+    | "active"
+    | "waiting"
+    | "complete"
+    | "interrupted"
+    | "error";
   label: string;
   description: string;
 }
@@ -147,41 +166,41 @@ export function getStateVisualInfo(status: MachineStatus): StateVisualInfo {
   // Map state category to visual properties
   const visualMap: Record<MachineStateCategoryType, StateVisualInfo> = {
     [MachineStateCategory.IDLE]: {
-      color: 'info',
-      iconName: 'ready',
-      label: 'Ready',
-      description: 'Machine is idle and ready for operations'
+      color: "info",
+      iconName: "ready",
+      label: "Ready",
+      description: "Machine is idle and ready for operations",
     },
     [MachineStateCategory.ACTIVE]: {
-      color: 'warning',
-      iconName: 'active',
-      label: 'Active',
-      description: 'Operation in progress - do not interrupt'
+      color: "warning",
+      iconName: "active",
+      label: "Active",
+      description: "Operation in progress - do not interrupt",
     },
     [MachineStateCategory.WAITING]: {
-      color: 'warning',
-      iconName: 'waiting',
-      label: 'Waiting',
-      description: 'Waiting for user or machine action'
+      color: "warning",
+      iconName: "waiting",
+      label: "Waiting",
+      description: "Waiting for user or machine action",
     },
     [MachineStateCategory.COMPLETE]: {
-      color: 'success',
-      iconName: 'complete',
-      label: 'Complete',
-      description: 'Operation completed successfully'
+      color: "success",
+      iconName: "complete",
+      label: "Complete",
+      description: "Operation completed successfully",
     },
     [MachineStateCategory.INTERRUPTED]: {
-      color: 'danger',
-      iconName: 'interrupted',
-      label: 'Interrupted',
-      description: 'Operation paused or stopped'
+      color: "danger",
+      iconName: "interrupted",
+      label: "Interrupted",
+      description: "Operation paused or stopped",
     },
     [MachineStateCategory.ERROR]: {
-      color: 'danger',
-      iconName: 'error',
-      label: 'Error',
-      description: 'Machine in error or unknown state'
-    }
+      color: "danger",
+      iconName: "error",
+      label: "Error",
+      description: "Machine in error or unknown state",
+    },
   };
 
   return visualMap[category];

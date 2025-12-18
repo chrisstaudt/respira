@@ -11,7 +11,6 @@ export async function convertPesToPen(file: File): Promise<PesPatternData> {
   return await patternConverterClient.convertPesToPen(file);
 }
 
-
 /**
  * Get thread color from pattern data
  */

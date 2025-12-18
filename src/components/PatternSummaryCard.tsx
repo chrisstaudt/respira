@@ -1,33 +1,26 @@
-import { useShallow } from 'zustand/react/shallow';
-import { useMachineStore } from '../stores/useMachineStore';
-import { usePatternStore } from '../stores/usePatternStore';
-import { canDeletePattern } from '../utils/machineStateHelpers';
-import { PatternInfo } from './PatternInfo';
-import { DocumentTextIcon, TrashIcon } from '@heroicons/react/24/solid';
+import { useShallow } from "zustand/react/shallow";
+import { useMachineStore } from "../stores/useMachineStore";
+import { usePatternStore } from "../stores/usePatternStore";
+import { canDeletePattern } from "../utils/machineStateHelpers";
+import { PatternInfo } from "./PatternInfo";
+import { DocumentTextIcon, TrashIcon } from "@heroicons/react/24/solid";
 
 export function PatternSummaryCard() {
   // Machine store
-  const {
-    machineStatus,
-    isDeleting,
-    deletePattern,
-  } = useMachineStore(
+  const { machineStatus, isDeleting, deletePattern } = useMachineStore(
     useShallow((state) => ({
       machineStatus: state.machineStatus,
       isDeleting: state.isDeleting,
       deletePattern: state.deletePattern,
-    }))
+    })),
   );
 
   // Pattern store
-  const {
-    pesData,
-    currentFileName,
-  } = usePatternStore(
+  const { pesData, currentFileName } = usePatternStore(
     useShallow((state) => ({
       pesData: state.pesData,
       currentFileName: state.currentFileName,
-    }))
+    })),
   );
 
   if (!pesData) return null;
@@ -38,8 +31,13 @@ export function PatternSummaryCard() {
       <div className="flex items-start gap-3 mb-3">
         <DocumentTextIcon className="w-6 h-6 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Active Pattern</h3>
-          <p className="text-xs text-gray-600 dark:text-gray-400 truncate" title={currentFileName}>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+            Active Pattern
+          </h3>
+          <p
+            className="text-xs text-gray-600 dark:text-gray-400 truncate"
+            title={currentFileName}
+          >
             {currentFileName}
           </p>
         </div>
@@ -55,9 +53,24 @@ export function PatternSummaryCard() {
         >
           {isDeleting ? (
             <>
-              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="w-3 h-3 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
               Deleting...
             </>

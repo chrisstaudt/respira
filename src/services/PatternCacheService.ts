@@ -1,4 +1,4 @@
-import type { PesPatternData } from '../formats/import/pesImporter';
+import type { PesPatternData } from "../formats/import/pesImporter";
 
 interface CachedPattern {
   uuid: string;
@@ -8,13 +8,15 @@ interface CachedPattern {
   patternOffset?: { x: number; y: number };
 }
 
-const CACHE_KEY = 'brother_pattern_cache';
+const CACHE_KEY = "brother_pattern_cache";
 
 /**
  * Convert UUID Uint8Array to hex string
  */
 export function uuidToString(uuid: Uint8Array): string {
-  return Array.from(uuid).map(b => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(uuid)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 /**
@@ -36,7 +38,7 @@ export class PatternCacheService {
     uuid: string,
     pesData: PesPatternData,
     fileName: string,
-    patternOffset?: { x: number; y: number }
+    patternOffset?: { x: number; y: number },
   ): void {
     try {
       // Convert penData Uint8Array to array for JSON serialization
@@ -54,11 +56,18 @@ export class PatternCacheService {
       };
 
       localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
-      console.log('[PatternCache] Saved pattern:', fileName, 'UUID:', uuid, 'Offset:', patternOffset);
+      console.log(
+        "[PatternCache] Saved pattern:",
+        fileName,
+        "UUID:",
+        uuid,
+        "Offset:",
+        patternOffset,
+      );
     } catch (err) {
-      console.error('[PatternCache] Failed to save pattern:', err);
+      console.error("[PatternCache] Failed to save pattern:", err);
       // If quota exceeded, clear and try again
-      if (err instanceof Error && err.name === 'QuotaExceededError') {
+      if (err instanceof Error && err.name === "QuotaExceededError") {
         this.clearCache();
       }
     }
@@ -78,7 +87,12 @@ export class PatternCacheService {
 
       // Check if UUID matches
       if (pattern.uuid !== uuid) {
-        console.log('[PatternCache] UUID mismatch. Cached:', pattern.uuid, 'Requested:', uuid);
+        console.log(
+          "[PatternCache] UUID mismatch. Cached:",
+          pattern.uuid,
+          "Requested:",
+          uuid,
+        );
         return null;
       }
 
@@ -87,10 +101,15 @@ export class PatternCacheService {
         pattern.pesData.penData = new Uint8Array(pattern.pesData.penData);
       }
 
-      console.log('[PatternCache] Found cached pattern:', pattern.fileName, 'UUID:', uuid);
+      console.log(
+        "[PatternCache] Found cached pattern:",
+        pattern.fileName,
+        "UUID:",
+        uuid,
+      );
       return pattern;
     } catch (err) {
-      console.error('[PatternCache] Failed to retrieve pattern:', err);
+      console.error("[PatternCache] Failed to retrieve pattern:", err);
       return null;
     }
   }
@@ -114,7 +133,7 @@ export class PatternCacheService {
 
       return pattern;
     } catch (err) {
-      console.error('[PatternCache] Failed to retrieve pattern:', err);
+      console.error("[PatternCache] Failed to retrieve pattern:", err);
       return null;
     }
   }
@@ -135,10 +154,10 @@ export class PatternCacheService {
       const cached = this.getPatternByUUID(uuid);
       if (cached) {
         localStorage.removeItem(CACHE_KEY);
-        console.log('[PatternCache] Deleted pattern with UUID:', uuid);
+        console.log("[PatternCache] Deleted pattern with UUID:", uuid);
       }
     } catch (err) {
-      console.error('[PatternCache] Failed to delete pattern:', err);
+      console.error("[PatternCache] Failed to delete pattern:", err);
     }
   }
 
@@ -148,16 +167,21 @@ export class PatternCacheService {
   static clearCache(): void {
     try {
       localStorage.removeItem(CACHE_KEY);
-      console.log('[PatternCache] Cache cleared');
+      console.log("[PatternCache] Cache cleared");
     } catch (err) {
-      console.error('[PatternCache] Failed to clear cache:', err);
+      console.error("[PatternCache] Failed to clear cache:", err);
     }
   }
 
   /**
    * Get cache info for debugging
    */
-  static getCacheInfo(): { hasCache: boolean; fileName?: string; uuid?: string; age?: number } {
+  static getCacheInfo(): {
+    hasCache: boolean;
+    fileName?: string;
+    uuid?: string;
+    age?: number;
+  } {
     const pattern = this.getMostRecentPattern();
     if (!pattern) {
       return { hasCache: false };
