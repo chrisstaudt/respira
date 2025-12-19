@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, protocol } from "electron";
 import { join } from "path";
 import { promises as fs } from "fs";
 import Store from "electron-store";
@@ -22,7 +22,72 @@ updateElectronApp({
 app.commandLine.appendSwitch("enable-web-bluetooth", "true");
 app.commandLine.appendSwitch("enable-experimental-web-platform-features");
 
+// Register custom protocol for serving app files with proper COOP/COEP headers
+// This is required for SharedArrayBuffer support in production builds
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "app",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: false,
+      bypassCSP: false,
+    },
+  },
+]);
+
 const store = new Store();
+
+// Setup custom protocol handler for production builds
+async function setupCustomProtocol() {
+  protocol.handle("app", async (request) => {
+    // Parse the URL to get the file path
+    const url = new URL(request.url);
+    let filePath = decodeURIComponent(url.pathname);
+
+    // Handle Windows paths (remove leading slash)
+    if (process.platform === "win32" && filePath.startsWith("/")) {
+      filePath = filePath.slice(1);
+    }
+
+    // Resolve relative to app resources
+    const resourcePath = join(__dirname, "..", "renderer", MAIN_WINDOW_VITE_NAME, filePath);
+
+    try {
+      const data = await fs.readFile(resourcePath);
+
+      // Determine content type from extension
+      const ext = filePath.split(".").pop()?.toLowerCase();
+      const contentTypes: Record<string, string> = {
+        html: "text/html",
+        js: "application/javascript",
+        css: "text/css",
+        json: "application/json",
+        png: "image/png",
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        svg: "image/svg+xml",
+        wasm: "application/wasm",
+        whl: "application/zip",
+      };
+      const contentType = contentTypes[ext || ""] || "application/octet-stream";
+
+      // Return response with proper COOP/COEP/CORP headers
+      return new Response(data, {
+        headers: {
+          "Content-Type": contentType,
+          "Cross-Origin-Opener-Policy": "same-origin",
+          "Cross-Origin-Embedder-Policy": "require-corp",
+          "Cross-Origin-Resource-Policy": "same-origin",
+        },
+      });
+    } catch (err) {
+      console.error("[CustomProtocol] Failed to load:", resourcePath, err);
+      return new Response("Not Found", { status: 404 });
+    }
+  });
+}
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -38,8 +103,7 @@ function createWindow() {
       contextIsolation: true,
       sandbox: true,
       webSecurity: true,
-      // Enable SharedArrayBuffer for Pyodide
-      additionalArguments: ["--enable-features=SharedArrayBuffer"],
+      // SharedArrayBuffer enabled via proper COOP/COEP headers below
     },
   });
 
@@ -106,20 +170,15 @@ function createWindow() {
   // Set COOP/COEP headers for Pyodide SharedArrayBuffer support
   mainWindow.webContents.session.webRequest.onHeadersReceived(
     (details, callback) => {
-      // Apply headers to ALL resources including workers
+      // Apply security headers to enable cross-origin isolation (needed for SharedArrayBuffer)
       const headers: Record<string, string[]> = {
         ...details.responseHeaders,
-        "Cross-Origin-Opener-Policy": ["unsafe-none"],
-        "Cross-Origin-Embedder-Policy": ["unsafe-none"],
+        "Cross-Origin-Opener-Policy": ["same-origin"],
+        "Cross-Origin-Embedder-Policy": ["require-corp"],
+        // Add CORP to ALL resources since this is a local-only app
+        // This allows workers, Pyodide assets, and all other resources to load
+        "Cross-Origin-Resource-Policy": ["same-origin"],
       };
-
-      // For same-origin resources (including workers), add CORP header
-      if (
-        details.url.startsWith("http://localhost") ||
-        details.url.startsWith("file://")
-      ) {
-        headers["Cross-Origin-Resource-Policy"] = ["same-origin"];
-      }
 
       callback({ responseHeaders: headers });
     },
@@ -131,14 +190,18 @@ function createWindow() {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools();
   } else {
-    // MAIN_WINDOW_VITE_NAME is the renderer name from forge.config.js
-    mainWindow.loadFile(
-      join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
-    );
+    // Production: Use custom protocol to serve files with proper COOP/COEP/CORP headers
+    // This enables SharedArrayBuffer support for Pyodide
+    mainWindow.loadURL("app://./index.html");
   }
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+  // Setup custom protocol for production builds
+  await setupCustomProtocol();
+
+  createWindow();
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
