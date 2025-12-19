@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain, dialog, protocol } from "electron";
-import { join } from "path";
+import { join, resolve, normalize, isAbsolute } from "path";
 import { promises as fs } from "fs";
 import Store from "electron-store";
 import { updateElectronApp, UpdateSourceType } from "update-electron-app";
@@ -52,7 +52,13 @@ async function setupCustomProtocol() {
     }
 
     // Resolve relative to app resources
-    const resourcePath = join(__dirname, "..", "renderer", MAIN_WINDOW_VITE_NAME, filePath);
+    const resourcePath = join(
+      __dirname,
+      "..",
+      "renderer",
+      MAIN_WINDOW_VITE_NAME,
+      filePath,
+    );
 
     try {
       const data = await fs.readFile(resourcePath);
@@ -298,6 +304,9 @@ ipcMain.handle("dialog:openFile", async (_event, options) => {
     const filePath = result.filePaths[0];
     const fileName = filePath.split(/[\\/]/).pop() || "";
 
+    // Approve path for file operations since user explicitly selected it
+    approvePath(filePath);
+
     console.log("[Dialog] File selected:", fileName);
     return { filePath, fileName };
   } catch (err) {
@@ -317,6 +326,9 @@ ipcMain.handle("dialog:saveFile", async (_event, options) => {
       return null;
     }
 
+    // Approve path for file operations since user explicitly selected it
+    approvePath(result.filePath);
+
     console.log("[Dialog] Save file selected:", result.filePath);
     return result.filePath;
   } catch (err) {
@@ -325,8 +337,67 @@ ipcMain.handle("dialog:saveFile", async (_event, options) => {
   }
 });
 
-// File system handlers
-ipcMain.handle("fs:readFile", async (_event, filePath) => {
+// File system handlers with dialog-based path validation
+// Track paths approved by user through OS file dialogs
+// This prevents arbitrary file access while allowing users full freedom
+const userApprovedPaths = new Set<string>();
+
+/**
+ * Validates that a file path was approved by the user through a dialog
+ * Also performs basic sanitization to prevent obvious attacks
+ */
+function isPathApproved(filePath: string): boolean {
+  // Reject empty, null, or undefined paths
+  if (!filePath) {
+    console.warn("[FS Security] Rejected empty path");
+    return false;
+  }
+
+  // Reject relative paths - must be absolute
+  if (!isAbsolute(filePath)) {
+    console.warn("[FS Security] Rejected relative path:", filePath);
+    return false;
+  }
+
+  // Reject paths with null bytes (security vulnerability)
+  if (filePath.includes("\0")) {
+    console.warn("[FS Security] Rejected path with null byte:", filePath);
+    return false;
+  }
+
+  // Normalize the path to prevent traversal tricks
+  const normalizedPath = normalize(resolve(filePath));
+
+  // Check if path was approved through a dialog
+  const isApproved = userApprovedPaths.has(normalizedPath);
+
+  if (!isApproved) {
+    console.warn(
+      "[FS Security] Rejected path - not approved through file dialog:",
+      filePath,
+    );
+  }
+
+  return isApproved;
+}
+
+/**
+ * Approves a path for file operations after user selection via dialog
+ */
+function approvePath(filePath: string): void {
+  const normalizedPath = normalize(resolve(filePath));
+  userApprovedPaths.add(normalizedPath);
+  console.log("[FS Security] Approved path:", normalizedPath);
+}
+
+ipcMain.handle("fs:readFile", async (_event, filePath: string) => {
+  // Validate path was approved by user
+  if (!isPathApproved(filePath)) {
+    throw new Error(
+      "Access denied: File path not approved. Please select the file through the file dialog.",
+    );
+  }
+
   try {
     const buffer = await fs.readFile(filePath);
     console.log("[FS] Read file:", filePath, "Size:", buffer.length);
@@ -337,13 +408,23 @@ ipcMain.handle("fs:readFile", async (_event, filePath) => {
   }
 });
 
-ipcMain.handle("fs:writeFile", async (_event, filePath, data) => {
-  try {
-    await fs.writeFile(filePath, Buffer.from(data));
-    console.log("[FS] Wrote file:", filePath);
-    return true;
-  } catch (err) {
-    console.error("[FS] Failed to write file:", err);
-    throw err;
-  }
-});
+ipcMain.handle(
+  "fs:writeFile",
+  async (_event, filePath: string, data: number[]) => {
+    // Validate path was approved by user
+    if (!isPathApproved(filePath)) {
+      throw new Error(
+        "Access denied: File path not approved. Please select the file through the save dialog.",
+      );
+    }
+
+    try {
+      await fs.writeFile(filePath, Buffer.from(data));
+      console.log("[FS] Wrote file:", filePath);
+      return true;
+    } catch (err) {
+      console.error("[FS] Failed to write file:", err);
+      throw err;
+    }
+  },
+);
