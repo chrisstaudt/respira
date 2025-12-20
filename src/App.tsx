@@ -6,7 +6,7 @@ import { useUIStore } from "./stores/useUIStore";
 import { AppHeader } from "./components/AppHeader";
 import { LeftSidebar } from "./components/LeftSidebar";
 import { PatternCanvas } from "./components/PatternCanvas";
-import { PatternPreviewPlaceholder } from "./components/PatternPreviewPlaceholder";
+import { PatternCanvasPlaceholder } from "./components/PatternCanvasPlaceholder";
 import { BluetoothDevicePicker } from "./components/BluetoothDevicePicker";
 import "./App.css";
 
@@ -76,7 +76,7 @@ function App() {
 
           {/* Right Column - Pattern Preview */}
           <div className="flex flex-col lg:overflow-hidden lg:h-full">
-            {pesData ? <PatternCanvas /> : <PatternPreviewPlaceholder />}
+            {pesData ? <PatternCanvas /> : <PatternCanvasPlaceholder />}
           </div>
         </div>
 
