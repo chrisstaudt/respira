@@ -15,7 +15,7 @@ export function ConnectionPrompt() {
 
   if (isBluetoothSupported()) {
     return (
-      <Card className="p-0 border-l-4 border-gray-400 dark:border-gray-600">
+      <Card className="p-0 gap-0 border-l-4 border-gray-400 dark:border-gray-600">
         <CardContent className="p-4 rounded-lg">
           <div className="flex items-start gap-3 mb-3">
             <div className="w-6 h-6 text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5">

@@ -5,7 +5,13 @@ import { canDeletePattern } from "../utils/machineStateHelpers";
 import { PatternInfo } from "./PatternInfo";
 import { DocumentTextIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
 export function PatternSummaryCard() {
@@ -30,23 +36,22 @@ export function PatternSummaryCard() {
 
   const canDelete = canDeletePattern(machineStatus);
   return (
-    <Card className="p-0 border-l-4 border-primary-600 dark:border-primary-500">
-      <CardContent className="p-4 rounded-lg">
-        <div className="flex items-start gap-3 mb-3">
+    <Card className="p-0 gap-0 border-l-4 border-primary-600 dark:border-primary-500">
+      <CardHeader className="p-4 pb-3">
+        <div className="flex items-start gap-3">
           <DocumentTextIcon className="w-6 h-6 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-              Active Pattern
-            </h3>
-            <p
-              className="text-xs text-gray-600 dark:text-gray-400 truncate"
+            <CardTitle className="text-sm">Active Pattern</CardTitle>
+            <CardDescription
+              className="text-xs truncate"
               title={currentFileName}
             >
               {currentFileName}
-            </p>
+            </CardDescription>
           </div>
         </div>
-
+      </CardHeader>
+      <CardContent className="px-4 pt-0 pb-4">
         <PatternInfo pesData={pesData} />
 
         {canDelete && (

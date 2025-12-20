@@ -208,7 +208,7 @@ export function FileUpload() {
     : "text-gray-600 dark:text-gray-400";
 
   return (
-    <Card className={cn("p-0 border-l-4", borderColor)}>
+    <Card className={cn("p-0 gap-0 border-l-4", borderColor)}>
       <CardContent className="p-4 rounded-lg">
         <div className="flex items-start gap-3 mb-3">
           <DocumentTextIcon
