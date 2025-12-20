@@ -30,8 +30,8 @@ export function PatternSummaryCard() {
 
   const canDelete = canDeletePattern(machineStatus);
   return (
-    <Card className="border-l-4 border-primary-600 dark:border-primary-500">
-      <CardContent className="p-4">
+    <Card className="p-0 border-l-4 border-primary-600 dark:border-primary-500">
+      <CardContent className="p-4 rounded-lg">
         <div className="flex items-start gap-3 mb-3">
           <DocumentTextIcon className="w-6 h-6 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
