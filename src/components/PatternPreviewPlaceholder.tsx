@@ -1,10 +1,13 @@
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
 export function PatternPreviewPlaceholder() {
   return (
-    <div className="lg:h-full bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md animate-fadeIn flex flex-col">
-      <h2 className="text-base lg:text-lg font-semibold mb-4 pb-2 border-b-2 border-gray-300 dark:border-gray-600 dark:text-white flex-shrink-0">
-        Pattern Preview
-      </h2>
-      <div className="h-[400px] sm:h-[500px] lg:flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 relative overflow-hidden">
+    <Card className="p-0 gap-0 lg:h-full animate-fadeIn flex flex-col">
+      <CardHeader className="p-6 pb-4 border-b-2 border-gray-300 dark:border-gray-600">
+        <CardTitle className="text-base lg:text-lg">Pattern Preview</CardTitle>
+      </CardHeader>
+      <CardContent className="p-6 flex-1 flex flex-col">
+        <div className="h-[400px] sm:h-[500px] lg:flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 relative overflow-hidden">
         {/* Decorative background pattern */}
         <div className="absolute inset-0 opacity-5 dark:opacity-10">
           <div className="absolute top-10 left-10 w-32 h-32 border-4 border-gray-400 dark:border-gray-500 rounded-full"></div>
@@ -66,6 +69,7 @@ export function PatternPreviewPlaceholder() {
           </div>
         </div>
       </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
