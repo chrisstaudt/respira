@@ -239,44 +239,63 @@ export function getAllBrotherThreads(): ThreadColorInfo[] {
  * Enhance thread data with Brother color mapping
  *
  * Takes thread data from a PES file and enhances it with Brother color information
- * if the catalogNumber matches a Brother thread code.
+ * using exact matching by catalog number or RGB values.
  *
- * This follows the logic from EmbroideryUtil.GetThreadColorListFromPesx:
- * - If catalogNumber matches a Brother color code, use Brother data
- * - Otherwise, preserve the original thread data
+ * This follows the logic from BrotherColor.FromColor and EmbroideryUtil.GetThreadColorListFromPesx:
+ * 1. If catalogNumber matches a Brother color code, use Brother data
+ * 2. Optionally, try exact RGB color matching
+ * 3. If no match, preserve the original thread data
  *
  * @param thread - Thread data from PES file
+ * @param options - Enhancement options
+ * @param options.matchByRGB - Enable exact RGB color matching (default: true)
  * @returns Enhanced thread data with Brother mapping if applicable
  */
-export function enhanceThreadWithBrotherColor(thread: {
-  color: number;
-  hex: string;
-  brand: string | null;
-  catalogNumber: string | null;
-  description: string | null;
-  chart: string | null;
-}): ThreadColorInfo {
-  // If we have a catalog number, try to map it to a Brother color
+export function enhanceThreadWithBrotherColor(
+  thread: {
+    color: number;
+    hex: string;
+    brand: string | null;
+    catalogNumber: string | null;
+    description: string | null;
+    chart: string | null;
+  },
+  options: {
+    matchByRGB?: boolean;
+  } = {},
+): ThreadColorInfo {
+  const { matchByRGB = true } = options;
+
+  // First, try to match by catalog number
   if (thread.catalogNumber) {
     const brotherInfo = mapThreadCode(thread.catalogNumber);
     if (brotherInfo) {
-      // Found a Brother color match - use Brother data
+      // Found a Brother color match by catalog number - use Brother data
       return brotherInfo;
     }
   }
 
-  // No Brother match - return thread data as-is
+  // Second, try exact RGB matching if enabled (replicates BrotherColor.FromColor logic)
   const cleanHex = thread.hex.replace("#", "");
+  const r = parseInt(cleanHex.slice(0, 2), 16);
+  const g = parseInt(cleanHex.slice(2, 4), 16);
+  const b = parseInt(cleanHex.slice(4, 6), 16);
+
+  if (matchByRGB) {
+    const brotherColor = findBrotherColorByRGB(r, g, b);
+    if (brotherColor) {
+      // Found exact RGB match - use Brother data
+      return brotherColorToThreadInfo(brotherColor);
+    }
+  }
+
+  // No Brother match - return thread data as-is
   return {
     hex: thread.hex,
     brand: thread.brand,
     catalogNumber: thread.catalogNumber,
     description: thread.description,
     chart: thread.chart,
-    rgb: {
-      r: parseInt(cleanHex.slice(0, 2), 16),
-      g: parseInt(cleanHex.slice(2, 4), 16),
-      b: parseInt(cleanHex.slice(4, 6), 16),
-    },
+    rgb: { r, g, b },
   };
 }
