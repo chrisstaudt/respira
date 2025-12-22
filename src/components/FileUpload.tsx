@@ -386,11 +386,8 @@ export function FileUpload() {
           )}
 
           {pesData && boundsCheck.error && (
-            <Alert
-              variant="destructive"
-              className="bg-danger-100 dark:bg-danger-900/20 border-danger-200 dark:border-danger-800"
-            >
-              <AlertDescription className="text-danger-900 dark:text-danger-100 text-sm">
+            <Alert variant="destructive">
+              <AlertDescription>
                 <strong>Pattern too large:</strong> {boundsCheck.error}
               </AlertDescription>
             </Alert>
