@@ -87,8 +87,8 @@
       --accent: hsl(263.4 70% 50.4%); /* purple-600 for dark */
       --accent-foreground: hsl(210 40% 98%);
 
-      --destructive: hsl(210 40% 98%);
-      --destructive-foreground: hsl(0 62.8% 30.6%); /* red-900 */
+      --destructive: hsl(0 62.8% 30.6%); /* red-900 */
+      --destructive-foreground: hsl(210 40% 98%);
 
       --success: hsl(142.1 70.6% 45.3%); /* green-500 for dark */
       --success-foreground: hsl(210 40% 98%);
