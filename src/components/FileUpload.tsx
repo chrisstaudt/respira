@@ -256,16 +256,34 @@ export function FileUpload() {
             onChange={handleFileChange}
             id="file-input"
             className="hidden"
-            disabled={isLoading || patternUploaded || isUploading}
+            disabled={
+              isLoading ||
+              patternUploaded ||
+              isUploading ||
+              (uploadProgress > 0 && !patternUploaded)
+            }
           />
           <Button
-            asChild={!fileService.hasNativeDialogs()}
+            asChild={
+              !fileService.hasNativeDialogs() &&
+              !(
+                isLoading ||
+                patternUploaded ||
+                isUploading ||
+                (uploadProgress > 0 && !patternUploaded)
+              )
+            }
             onClick={
               fileService.hasNativeDialogs()
                 ? () => handleFileChange()
                 : undefined
             }
-            disabled={isLoading || patternUploaded || isUploading}
+            disabled={
+              isLoading ||
+              patternUploaded ||
+              isUploading ||
+              (uploadProgress > 0 && !patternUploaded)
+            }
             variant="outline"
             className="flex-[2]"
           >
@@ -289,7 +307,7 @@ export function FileUpload() {
                 )}
               </>
             ) : (
-              <label htmlFor="file-input" className="flex items-center gap-2">
+              <label htmlFor="file-input" className="flex items-center gap-2 cursor-pointer">
                 {isLoading ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
