@@ -284,7 +284,8 @@ export function ProgressMonitor() {
                                   // Only show chart if it's different from catalogNumber
                                   const secondaryMetadata = [
                                     block.threadChart &&
-                                    block.threadChart !== block.threadCatalogNumber
+                                    block.threadChart !==
+                                      block.threadCatalogNumber
                                       ? block.threadChart
                                       : null,
                                     block.threadDescription,

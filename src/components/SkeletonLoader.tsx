@@ -69,10 +69,7 @@ export function PatternInfoSkeleton() {
       {/* Three column grid matching PatternInfo stats */}
       <div className="grid grid-cols-3 gap-2 text-xs mb-2">
         {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="bg-gray-200 dark:bg-gray-700/50 p-2 rounded"
-          >
+          <div key={i} className="bg-gray-200 dark:bg-gray-700/50 p-2 rounded">
             <SkeletonLoader className="h-3 w-12 mb-1" variant="text" />
             <SkeletonLoader className="h-4 w-16" variant="text" />
           </div>

@@ -307,7 +307,10 @@ export function FileUpload() {
                 )}
               </>
             ) : (
-              <label htmlFor="file-input" className="flex items-center gap-2 cursor-pointer">
+              <label
+                htmlFor="file-input"
+                className="flex items-center gap-2 cursor-pointer"
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
