@@ -2,8 +2,9 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useMachineStore, usePatternUploaded } from "../stores/useMachineStore";
 import { usePatternStore } from "../stores/usePatternStore";
-import { Stage, Layer, Group } from "react-konva";
+import { Stage, Layer, Group, Transformer } from "react-konva";
 import Konva from "konva";
+import type { KonvaEventObject } from "konva/lib/Node";
 import {
   PlusIcon,
   MinusIcon,
@@ -45,12 +46,20 @@ export function PatternCanvas() {
   const {
     pesData,
     patternOffset: initialPatternOffset,
+    patternRotation: initialPatternRotation,
+    uploadedPesData,
+    uploadedPatternOffset: initialUploadedPatternOffset,
     setPatternOffset,
+    setPatternRotation,
   } = usePatternStore(
     useShallow((state) => ({
       pesData: state.pesData,
       patternOffset: state.patternOffset,
+      patternRotation: state.patternRotation,
+      uploadedPesData: state.uploadedPesData,
+      uploadedPatternOffset: state.uploadedPatternOffset,
       setPatternOffset: state.setPatternOffset,
+      setPatternRotation: state.setPatternRotation,
     })),
   );
 
@@ -58,11 +67,16 @@ export function PatternCanvas() {
   const patternUploaded = usePatternUploaded();
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage | null>(null);
+  const patternGroupRef = useRef<Konva.Group | null>(null);
+  const transformerRef = useRef<Konva.Transformer | null>(null);
 
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [stageScale, setStageScale] = useState(1);
   const [localPatternOffset, setLocalPatternOffset] = useState(
     initialPatternOffset || { x: 0, y: 0 },
+  );
+  const [localPatternRotation, setLocalPatternRotation] = useState(
+    initialPatternRotation || 0,
   );
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const initialScaleRef = useRef<number>(1);
@@ -79,6 +93,14 @@ export function PatternCanvas() {
       "[PatternCanvas] Restored pattern offset:",
       initialPatternOffset,
     );
+  }
+
+  // Update pattern rotation when initialPatternRotation changes
+  if (
+    initialPatternRotation !== undefined &&
+    localPatternRotation !== initialPatternRotation
+  ) {
+    setLocalPatternRotation(initialPatternRotation);
   }
 
   // Track container size
@@ -105,16 +127,18 @@ export function PatternCanvas() {
 
   // Calculate and store initial scale when pattern or hoop changes
   useEffect(() => {
-    if (!pesData || containerSize.width === 0) {
+    // Use whichever pattern is available (uploaded or original)
+    const currentPattern = uploadedPesData || pesData;
+    if (!currentPattern || containerSize.width === 0) {
       prevPesDataRef.current = null;
       return;
     }
 
     // Only recalculate if pattern changed
-    if (prevPesDataRef.current !== pesData) {
-      prevPesDataRef.current = pesData;
+    if (prevPesDataRef.current !== currentPattern) {
+      prevPesDataRef.current = currentPattern;
 
-      const { bounds } = pesData;
+      const { bounds } = currentPattern;
       const viewWidth = machineInfo
         ? machineInfo.maxWidth
         : bounds.maxX - bounds.minX;
@@ -135,7 +159,7 @@ export function PatternCanvas() {
       setStageScale(initialScale);
       setStagePos({ x: containerSize.width / 2, y: containerSize.height / 2 });
     }
-  }, [pesData, machineInfo, containerSize]);
+  }, [pesData, uploadedPesData, machineInfo, containerSize]);
 
   // Wheel zoom handler
   const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
@@ -252,10 +276,79 @@ export function PatternCanvas() {
     [setPatternOffset],
   );
 
-  const borderColor = pesData
+  // Attach/detach transformer based on state
+  const attachTransformer = useCallback(() => {
+    if (!transformerRef.current || !patternGroupRef.current) {
+      console.log(
+        "[PatternCanvas] Cannot attach transformer - refs not ready",
+        {
+          hasTransformer: !!transformerRef.current,
+          hasPatternGroup: !!patternGroupRef.current,
+        },
+      );
+      return;
+    }
+
+    if (!patternUploaded && !isUploading) {
+      console.log("[PatternCanvas] Attaching transformer");
+      transformerRef.current.nodes([patternGroupRef.current]);
+      transformerRef.current.getLayer()?.batchDraw();
+    } else {
+      console.log("[PatternCanvas] Detaching transformer");
+      transformerRef.current.nodes([]);
+    }
+  }, [patternUploaded, isUploading]);
+
+  // Call attachTransformer when conditions change
+  useEffect(() => {
+    attachTransformer();
+  }, [attachTransformer, pesData]);
+
+  // Sync node rotation with state (important for when rotation is reset to 0 after upload)
+  useEffect(() => {
+    if (patternGroupRef.current) {
+      patternGroupRef.current.rotation(localPatternRotation);
+    }
+  }, [localPatternRotation]);
+
+  // Handle transformer rotation - just store the angle, apply at upload time
+  const handleTransformEnd = useCallback(
+    (e: KonvaEventObject<Event>) => {
+      if (!pesData) return;
+
+      const node = e.target;
+      // Read rotation from the node
+      const totalRotation = node.rotation();
+      const normalizedRotation = ((totalRotation % 360) + 360) % 360;
+
+      setLocalPatternRotation(normalizedRotation);
+
+      // Also read position in case the Transformer affected it
+      const newOffset = {
+        x: node.x(),
+        y: node.y(),
+      };
+      setLocalPatternOffset(newOffset);
+
+      // Store rotation angle and position
+      setPatternRotation(normalizedRotation);
+      setPatternOffset(newOffset.x, newOffset.y);
+
+      console.log(
+        "[Canvas] Transform end - rotation:",
+        normalizedRotation,
+        "degrees, position:",
+        newOffset,
+      );
+    },
+    [setPatternRotation, setPatternOffset, pesData],
+  );
+
+  const hasPattern = pesData || uploadedPesData;
+  const borderColor = hasPattern
     ? "border-tertiary-600 dark:border-tertiary-500"
     : "border-gray-400 dark:border-gray-600";
-  const iconColor = pesData
+  const iconColor = hasPattern
     ? "text-tertiary-600 dark:text-tertiary-400"
     : "text-gray-600 dark:text-gray-400";
 
@@ -268,12 +361,27 @@ export function PatternCanvas() {
           <PhotoIcon className={`w-6 h-6 ${iconColor} flex-shrink-0 mt-0.5`} />
           <div className="flex-1 min-w-0">
             <CardTitle className="text-sm">Pattern Preview</CardTitle>
-            {pesData ? (
+            {hasPattern ? (
               <CardDescription className="text-xs">
-                {((pesData.bounds.maxX - pesData.bounds.minX) / 10).toFixed(1)}{" "}
-                ×{" "}
-                {((pesData.bounds.maxY - pesData.bounds.minY) / 10).toFixed(1)}{" "}
-                mm
+                {(() => {
+                  const displayPattern = uploadedPesData || pesData;
+                  return displayPattern ? (
+                    <>
+                      {(
+                        (displayPattern.bounds.maxX -
+                          displayPattern.bounds.minX) /
+                        10
+                      ).toFixed(1)}{" "}
+                      ×{" "}
+                      {(
+                        (displayPattern.bounds.maxY -
+                          displayPattern.bounds.minY) /
+                        10
+                      ).toFixed(1)}{" "}
+                      mm
+                    </>
+                  ) : null;
+                })()}
               </CardDescription>
             ) : (
               <CardDescription className="text-xs">
@@ -317,11 +425,11 @@ export function PatternCanvas() {
             >
               {/* Background layer: grid, origin, hoop */}
               <Layer>
-                {pesData && (
+                {hasPattern && (
                   <>
                     <Grid
                       gridSize={100}
-                      bounds={pesData.bounds}
+                      bounds={(uploadedPesData || pesData)!.bounds}
                       machineInfo={machineInfo}
                     />
                     <Origin />
@@ -330,61 +438,166 @@ export function PatternCanvas() {
                 )}
               </Layer>
 
-              {/* Pattern layer: draggable stitches and bounds */}
-              <Layer>
-                {pesData && (
-                  <Group
-                    name="pattern-group"
-                    draggable={!patternUploaded && !isUploading}
-                    x={localPatternOffset.x}
-                    y={localPatternOffset.y}
-                    onDragEnd={handlePatternDragEnd}
-                    onMouseEnter={(e) => {
-                      const stage = e.target.getStage();
-                      if (stage && !patternUploaded && !isUploading)
-                        stage.container().style.cursor = "move";
-                    }}
-                    onMouseLeave={(e) => {
-                      const stage = e.target.getStage();
-                      if (stage && !patternUploaded && !isUploading)
-                        stage.container().style.cursor = "grab";
-                    }}
-                  >
-                    <Stitches
-                      stitches={pesData.penStitches.stitches.map(
-                        (s, i): [number, number, number, number] => {
-                          // Convert PEN stitch format {x, y, flags, isJump} to PES format [x, y, cmd, colorIndex]
-                          const cmd = s.isJump ? 0x10 : 0; // MOVE flag if jump
-                          const colorIndex =
-                            pesData.penStitches.colorBlocks.find(
-                              (b) => i >= b.startStitch && i <= b.endStitch,
-                            )?.colorIndex ?? 0;
-                          return [s.x, s.y, cmd, colorIndex];
-                        },
-                      )}
-                      pesData={pesData}
-                      currentStitchIndex={sewingProgress?.currentStitch || 0}
-                      showProgress={patternUploaded || isUploading}
-                    />
-                    <PatternBounds bounds={pesData.bounds} />
-                  </Group>
-                )}
+              {/* Original pattern layer: draggable with transformer (shown before upload starts) */}
+              <Layer visible={!isUploading && !patternUploaded}>
+                {pesData &&
+                  (() => {
+                    const originalCenterX =
+                      (pesData.bounds.minX + pesData.bounds.maxX) / 2;
+                    const originalCenterY =
+                      (pesData.bounds.minY + pesData.bounds.maxY) / 2;
+                    console.log("[Canvas] Rendering original pattern:", {
+                      position: localPatternOffset,
+                      rotation: localPatternRotation,
+                      center: { x: originalCenterX, y: originalCenterY },
+                      bounds: pesData.bounds,
+                    });
+                    return (
+                      <>
+                        <Group
+                          name="pattern-group"
+                          ref={(node) => {
+                            patternGroupRef.current = node;
+                            // Set initial rotation from state
+                            if (node) {
+                              node.rotation(localPatternRotation);
+                              // Try to attach transformer when group is mounted
+                              attachTransformer();
+                            }
+                          }}
+                          draggable={!isUploading}
+                          x={localPatternOffset.x}
+                          y={localPatternOffset.y}
+                          offsetX={originalCenterX}
+                          offsetY={originalCenterY}
+                          onDragEnd={handlePatternDragEnd}
+                          onTransformEnd={handleTransformEnd}
+                          onMouseEnter={(e) => {
+                            const stage = e.target.getStage();
+                            if (stage && !isUploading)
+                              stage.container().style.cursor = "move";
+                          }}
+                          onMouseLeave={(e) => {
+                            const stage = e.target.getStage();
+                            if (stage && !isUploading)
+                              stage.container().style.cursor = "grab";
+                          }}
+                        >
+                          <Stitches
+                            stitches={pesData.penStitches.stitches.map(
+                              (s, i): [number, number, number, number] => {
+                                // Convert PEN stitch format {x, y, flags, isJump} to PES format [x, y, cmd, colorIndex]
+                                const cmd = s.isJump ? 0x10 : 0; // MOVE flag if jump
+                                const colorIndex =
+                                  pesData.penStitches.colorBlocks.find(
+                                    (b) =>
+                                      i >= b.startStitch && i <= b.endStitch,
+                                  )?.colorIndex ?? 0;
+                                return [s.x, s.y, cmd, colorIndex];
+                              },
+                            )}
+                            pesData={pesData}
+                            currentStitchIndex={0}
+                            showProgress={false}
+                          />
+                          <PatternBounds bounds={pesData.bounds} />
+                        </Group>
+                        <Transformer
+                          ref={(node) => {
+                            transformerRef.current = node;
+                            // Try to attach transformer when transformer is mounted
+                            if (node) {
+                              attachTransformer();
+                            }
+                          }}
+                          enabledAnchors={[]}
+                          rotateEnabled={true}
+                          borderEnabled={true}
+                          borderStroke="#FF6B6B"
+                          borderStrokeWidth={2}
+                          rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
+                          ignoreStroke={true}
+                          rotateAnchorOffset={20}
+                        />
+                      </>
+                    );
+                  })()}
               </Layer>
 
-              {/* Current position layer */}
-              <Layer>
-                {pesData &&
-                  pesData.penStitches &&
+              {/* Uploaded pattern layer: locked, rotation baked in (shown during and after upload) */}
+              <Layer visible={isUploading || patternUploaded}>
+                {uploadedPesData &&
+                  (() => {
+                    const uploadedCenterX =
+                      (uploadedPesData.bounds.minX +
+                        uploadedPesData.bounds.maxX) /
+                      2;
+                    const uploadedCenterY =
+                      (uploadedPesData.bounds.minY +
+                        uploadedPesData.bounds.maxY) /
+                      2;
+                    console.log("[Canvas] Rendering uploaded pattern:", {
+                      position: initialUploadedPatternOffset,
+                      center: { x: uploadedCenterX, y: uploadedCenterY },
+                      bounds: uploadedPesData.bounds,
+                    });
+                    return (
+                      <Group
+                        name="uploaded-pattern-group"
+                        x={initialUploadedPatternOffset.x}
+                        y={initialUploadedPatternOffset.y}
+                        offsetX={uploadedCenterX}
+                        offsetY={uploadedCenterY}
+                      >
+                        <Stitches
+                          stitches={uploadedPesData.penStitches.stitches.map(
+                            (s, i): [number, number, number, number] => {
+                              const cmd = s.isJump ? 0x10 : 0;
+                              const colorIndex =
+                                uploadedPesData.penStitches.colorBlocks.find(
+                                  (b) => i >= b.startStitch && i <= b.endStitch,
+                                )?.colorIndex ?? 0;
+                              return [s.x, s.y, cmd, colorIndex];
+                            },
+                          )}
+                          pesData={uploadedPesData}
+                          currentStitchIndex={
+                            sewingProgress?.currentStitch || 0
+                          }
+                          showProgress={true}
+                        />
+                        <PatternBounds bounds={uploadedPesData.bounds} />
+                      </Group>
+                    );
+                  })()}
+              </Layer>
+
+              {/* Current position layer (for uploaded pattern during sewing) */}
+              <Layer visible={isUploading || patternUploaded}>
+                {uploadedPesData &&
                   sewingProgress &&
                   sewingProgress.currentStitch > 0 && (
-                    <Group x={localPatternOffset.x} y={localPatternOffset.y}>
+                    <Group
+                      x={initialUploadedPatternOffset.x}
+                      y={initialUploadedPatternOffset.y}
+                      offsetX={
+                        (uploadedPesData.bounds.minX +
+                          uploadedPesData.bounds.maxX) /
+                        2
+                      }
+                      offsetY={
+                        (uploadedPesData.bounds.minY +
+                          uploadedPesData.bounds.maxY) /
+                        2
+                      }
+                    >
                       <CurrentPosition
                         currentStitchIndex={sewingProgress.currentStitch}
-                        stitches={pesData.penStitches.stitches.map(
+                        stitches={uploadedPesData.penStitches.stitches.map(
                           (s, i): [number, number, number, number] => {
                             const cmd = s.isJump ? 0x10 : 0;
                             const colorIndex =
-                              pesData.penStitches.colorBlocks.find(
+                              uploadedPesData.penStitches.colorBlocks.find(
                                 (b) => i >= b.startStitch && i <= b.endStitch,
                               )?.colorIndex ?? 0;
                             return [s.x, s.y, cmd, colorIndex];
@@ -398,143 +611,173 @@ export function PatternCanvas() {
           )}
 
           {/* Placeholder overlay when no pattern is loaded */}
-          {!pesData && (
+          {!hasPattern && (
             <div className="flex items-center justify-center h-full text-gray-600 dark:text-gray-400 italic">
               Load a PES file to preview the pattern
             </div>
           )}
 
           {/* Pattern info overlays */}
-          {pesData && (
-            <>
-              {/* Thread Legend Overlay */}
-              <div className="absolute top-2 sm:top-2.5 left-2 sm:left-2.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-2 sm:p-2.5 rounded-lg shadow-lg z-10 max-w-[150px] sm:max-w-[180px] lg:max-w-[200px]">
-                <h4 className="m-0 mb-1.5 sm:mb-2 text-xs font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-300 dark:border-gray-600 pb-1 sm:pb-1.5">
-                  Colors
-                </h4>
-                {pesData.uniqueColors.map((color, idx) => {
-                  // Primary metadata: brand and catalog number
-                  const primaryMetadata = [
-                    color.brand,
-                    color.catalogNumber ? `#${color.catalogNumber}` : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" ");
+          {hasPattern &&
+            (() => {
+              const displayPattern = uploadedPesData || pesData;
+              return (
+                displayPattern && (
+                  <>
+                    {/* Thread Legend Overlay */}
+                    <div className="absolute top-2 sm:top-2.5 left-2 sm:left-2.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-2 sm:p-2.5 rounded-lg shadow-lg z-10 max-w-[150px] sm:max-w-[180px] lg:max-w-[200px]">
+                      <h4 className="m-0 mb-1.5 sm:mb-2 text-xs font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-300 dark:border-gray-600 pb-1 sm:pb-1.5">
+                        Colors
+                      </h4>
+                      {displayPattern.uniqueColors.map((color, idx) => {
+                        // Primary metadata: brand and catalog number
+                        const primaryMetadata = [
+                          color.brand,
+                          color.catalogNumber
+                            ? `#${color.catalogNumber}`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" ");
 
-                  // Secondary metadata: chart and description
-                  // Only show chart if it's different from catalogNumber
-                  const secondaryMetadata = [
-                    color.chart && color.chart !== color.catalogNumber
-                      ? color.chart
-                      : null,
-                    color.description,
-                  ]
-                    .filter(Boolean)
-                    .join(" ");
+                        // Secondary metadata: chart and description
+                        // Only show chart if it's different from catalogNumber
+                        const secondaryMetadata = [
+                          color.chart && color.chart !== color.catalogNumber
+                            ? color.chart
+                            : null,
+                          color.description,
+                        ]
+                          .filter(Boolean)
+                          .join(" ");
 
-                  return (
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-start gap-1.5 sm:gap-2 mb-1 sm:mb-1.5 last:mb-0"
+                          >
+                            <div
+                              className="w-3 h-3 sm:w-4 sm:h-4 rounded border border-black dark:border-gray-300 flex-shrink-0 mt-0.5"
+                              style={{ backgroundColor: color.hex }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                                Color {idx + 1}
+                              </div>
+                              {(primaryMetadata || secondaryMetadata) && (
+                                <div className="text-xs text-gray-600 dark:text-gray-400 leading-tight mt-0.5 break-words">
+                                  {primaryMetadata}
+                                  {primaryMetadata && secondaryMetadata && (
+                                    <span className="mx-1">•</span>
+                                  )}
+                                  {secondaryMetadata}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Pattern Offset Indicator */}
                     <div
-                      key={idx}
-                      className="flex items-start gap-1.5 sm:gap-2 mb-1 sm:mb-1.5 last:mb-0"
+                      className={`absolute bottom-16 sm:bottom-20 right-2 sm:right-5 backdrop-blur-sm p-2 sm:p-2.5 px-2.5 sm:px-3.5 rounded-lg shadow-lg z-[11] min-w-[160px] sm:min-w-[180px] transition-colors ${
+                        isUploading || patternUploaded
+                          ? "bg-amber-50/95 dark:bg-amber-900/80 border-2 border-amber-300 dark:border-amber-600"
+                          : "bg-white/95 dark:bg-gray-800/95"
+                      }`}
                     >
-                      <div
-                        className="w-3 h-3 sm:w-4 sm:h-4 rounded border border-black dark:border-gray-300 flex-shrink-0 mt-0.5"
-                        style={{ backgroundColor: color.hex }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-semibold text-gray-900 dark:text-gray-100">
-                          Color {idx + 1}
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                          Pattern Position:
                         </div>
-                        {(primaryMetadata || secondaryMetadata) && (
-                          <div className="text-xs text-gray-600 dark:text-gray-400 leading-tight mt-0.5 break-words">
-                            {primaryMetadata}
-                            {primaryMetadata && secondaryMetadata && (
-                              <span className="mx-1">•</span>
-                            )}
-                            {secondaryMetadata}
+                        {(isUploading || patternUploaded) && (
+                          <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                            <LockClosedIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            <span className="text-xs font-bold">
+                              {isUploading ? "UPLOADING" : "LOCKED"}
+                            </span>
                           </div>
                         )}
                       </div>
+                      <div className="text-sm font-semibold text-primary-600 dark:text-primary-400 mb-1">
+                        {isUploading || patternUploaded ? (
+                          <>
+                            X:{" "}
+                            {(initialUploadedPatternOffset.x / 10).toFixed(1)}
+                            mm, Y:{" "}
+                            {(initialUploadedPatternOffset.y / 10).toFixed(1)}mm
+                          </>
+                        ) : (
+                          <>
+                            X: {(localPatternOffset.x / 10).toFixed(1)}mm, Y:{" "}
+                            {(localPatternOffset.y / 10).toFixed(1)}mm
+                          </>
+                        )}
+                      </div>
+                      {!isUploading &&
+                        !patternUploaded &&
+                        localPatternRotation !== 0 && (
+                          <div className="text-sm font-semibold text-primary-600 dark:text-primary-400 mb-1">
+                            Rotation: {localPatternRotation.toFixed(1)}°
+                          </div>
+                        )}
+                      <div className="text-xs text-gray-600 dark:text-gray-400 italic">
+                        {isUploading
+                          ? "Uploading pattern..."
+                          : patternUploaded
+                            ? "Pattern locked • Drag background to pan"
+                            : "Drag pattern to move • Drag background to pan"}
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
 
-              {/* Pattern Offset Indicator */}
-              <div
-                className={`absolute bottom-16 sm:bottom-20 right-2 sm:right-5 backdrop-blur-sm p-2 sm:p-2.5 px-2.5 sm:px-3.5 rounded-lg shadow-lg z-[11] min-w-[160px] sm:min-w-[180px] transition-colors ${
-                  patternUploaded
-                    ? "bg-amber-50/95 dark:bg-amber-900/80 border-2 border-amber-300 dark:border-amber-600"
-                    : "bg-white/95 dark:bg-gray-800/95"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                    Pattern Position:
-                  </div>
-                  {patternUploaded && (
-                    <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                      <LockClosedIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      <span className="text-xs font-bold">LOCKED</span>
+                    {/* Zoom Controls Overlay */}
+                    <div className="absolute bottom-2 sm:bottom-5 right-2 sm:right-5 flex gap-1.5 sm:gap-2 items-center bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg shadow-lg z-10">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="w-7 h-7 sm:w-8 sm:h-8"
+                        onClick={handleCenterPattern}
+                        disabled={!pesData || patternUploaded || isUploading}
+                        title="Center Pattern in Hoop"
+                      >
+                        <ArrowsPointingInIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="w-7 h-7 sm:w-8 sm:h-8"
+                        onClick={handleZoomIn}
+                        title="Zoom In"
+                      >
+                        <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </Button>
+                      <span className="min-w-[40px] sm:min-w-[50px] text-center text-sm font-semibold text-gray-900 dark:text-gray-100 select-none">
+                        {Math.round(stageScale * 100)}%
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="w-7 h-7 sm:w-8 sm:h-8"
+                        onClick={handleZoomOut}
+                        title="Zoom Out"
+                      >
+                        <MinusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="w-7 h-7 sm:w-8 sm:h-8 ml-1"
+                        onClick={handleZoomReset}
+                        title="Reset Zoom"
+                      >
+                        <ArrowPathIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </Button>
                     </div>
-                  )}
-                </div>
-                <div className="text-sm font-semibold text-primary-600 dark:text-primary-400 mb-1">
-                  X: {(localPatternOffset.x / 10).toFixed(1)}mm, Y:{" "}
-                  {(localPatternOffset.y / 10).toFixed(1)}mm
-                </div>
-                <div className="text-xs text-gray-600 dark:text-gray-400 italic">
-                  {patternUploaded
-                    ? "Pattern locked • Drag background to pan"
-                    : "Drag pattern to move • Drag background to pan"}
-                </div>
-              </div>
-
-              {/* Zoom Controls Overlay */}
-              <div className="absolute bottom-2 sm:bottom-5 right-2 sm:right-5 flex gap-1.5 sm:gap-2 items-center bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg shadow-lg z-10">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="w-7 h-7 sm:w-8 sm:h-8"
-                  onClick={handleCenterPattern}
-                  disabled={!pesData || patternUploaded || isUploading}
-                  title="Center Pattern in Hoop"
-                >
-                  <ArrowsPointingInIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="w-7 h-7 sm:w-8 sm:h-8"
-                  onClick={handleZoomIn}
-                  title="Zoom In"
-                >
-                  <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                </Button>
-                <span className="min-w-[40px] sm:min-w-[50px] text-center text-sm font-semibold text-gray-900 dark:text-gray-100 select-none">
-                  {Math.round(stageScale * 100)}%
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="w-7 h-7 sm:w-8 sm:h-8"
-                  onClick={handleZoomOut}
-                  title="Zoom Out"
-                >
-                  <MinusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="w-7 h-7 sm:w-8 sm:h-8 ml-1"
-                  onClick={handleZoomReset}
-                  title="Reset Zoom"
-                >
-                  <ArrowPathIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                </Button>
-              </div>
-            </>
-          )}
+                  </>
+                )
+              );
+            })()}
         </div>
       </CardContent>
     </Card>
