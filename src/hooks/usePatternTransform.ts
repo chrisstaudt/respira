@@ -46,10 +46,6 @@ export function usePatternTransform({
       localPatternOffset.y !== initialPatternOffset.y)
   ) {
     setLocalPatternOffset(initialPatternOffset);
-    console.log(
-      "[PatternTransform] Restored pattern offset:",
-      initialPatternOffset,
-    );
   }
 
   // Update pattern rotation when initialPatternRotation changes
@@ -63,22 +59,13 @@ export function usePatternTransform({
   // Attach/detach transformer based on state
   const attachTransformer = useCallback(() => {
     if (!transformerRef.current || !patternGroupRef.current) {
-      console.log(
-        "[PatternTransform] Cannot attach transformer - refs not ready",
-        {
-          hasTransformer: !!transformerRef.current,
-          hasPatternGroup: !!patternGroupRef.current,
-        },
-      );
       return;
     }
 
     if (!patternUploaded && !isUploading) {
-      console.log("[PatternTransform] Attaching transformer");
       transformerRef.current.nodes([patternGroupRef.current]);
       transformerRef.current.getLayer()?.batchDraw();
     } else {
-      console.log("[PatternTransform] Detaching transformer");
       transformerRef.current.nodes([]);
     }
   }, [patternUploaded, isUploading]);
@@ -99,12 +86,12 @@ export function usePatternTransform({
   const handleCenterPattern = useCallback(() => {
     if (!pesData) return;
 
-    const { bounds } = pesData;
-    const centerOffsetX = -(bounds.minX + bounds.maxX) / 2;
-    const centerOffsetY = -(bounds.minY + bounds.maxY) / 2;
+    // Since the pattern Group uses offsetX/offsetY to set its pivot point at the pattern center,
+    // we just need to position it at the origin (0, 0) to center it in the hoop
+    const centerOffset = { x: 0, y: 0 };
 
-    setLocalPatternOffset({ x: centerOffsetX, y: centerOffsetY });
-    setPatternOffset(centerOffsetX, centerOffsetY);
+    setLocalPatternOffset(centerOffset);
+    setPatternOffset(centerOffset.x, centerOffset.y);
   }, [pesData, setPatternOffset]);
 
   // Pattern drag handlers
@@ -142,13 +129,6 @@ export function usePatternTransform({
       // Store rotation angle and position
       setPatternRotation(normalizedRotation);
       setPatternOffset(newOffset.x, newOffset.y);
-
-      console.log(
-        "[PatternTransform] Transform end - rotation:",
-        normalizedRotation,
-        "degrees, position:",
-        newOffset,
-      );
     },
     [setPatternRotation, setPatternOffset, pesData],
   );
