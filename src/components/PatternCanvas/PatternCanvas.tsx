@@ -8,7 +8,7 @@ import { usePatternStore } from "../../stores/usePatternStore";
 import { Stage, Layer } from "react-konva";
 import Konva from "konva";
 import { PhotoIcon } from "@heroicons/react/24/solid";
-import { Grid, Origin, Hoop } from "../KonvaComponents";
+import { Grid, Origin, Hoop } from "./KonvaComponents";
 import {
   Card,
   CardHeader,

@@ -14,7 +14,7 @@ import {
   calculatePatternCenter,
   convertPenStitchesToPesFormat,
 } from "./patternCanvasHelpers";
-import { Stitches, PatternBounds, CurrentPosition } from "../KonvaComponents";
+import { Stitches, PatternBounds, CurrentPosition } from "./KonvaComponents";
 
 interface PatternLayerProps {
   pesData: PesPatternData;
