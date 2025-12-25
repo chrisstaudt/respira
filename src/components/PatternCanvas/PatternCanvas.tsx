@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
   useMachineStore,
@@ -7,10 +7,7 @@ import {
 import { usePatternStore } from "../../stores/usePatternStore";
 import { Stage, Layer, Group, Transformer } from "react-konva";
 import Konva from "konva";
-import type { KonvaEventObject } from "konva/lib/Node";
 import { PhotoIcon } from "@heroicons/react/24/solid";
-import type { PesPatternData } from "../../formats/import/pesImporter";
-import { calculateInitialScale } from "../../utils/konvaRenderers";
 import {
   Grid,
   Origin,
@@ -29,11 +26,12 @@ import {
 import {
   calculatePatternCenter,
   convertPenStitchesToPesFormat,
-  calculateZoomToPoint,
 } from "./patternCanvasHelpers";
 import { ThreadLegend } from "./ThreadLegend";
 import { PatternPositionIndicator } from "./PatternPositionIndicator";
 import { ZoomControls } from "./ZoomControls";
+import { useCanvasViewport } from "../../hooks/useCanvasViewport";
+import { usePatternTransform } from "../../hooks/usePatternTransform";
 
 export function PatternCanvas() {
   // Machine store
@@ -70,260 +68,42 @@ export function PatternCanvas() {
   const patternUploaded = usePatternUploaded();
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage | null>(null);
-  const patternGroupRef = useRef<Konva.Group | null>(null);
-  const transformerRef = useRef<Konva.Transformer | null>(null);
 
-  const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
-  const [stageScale, setStageScale] = useState(1);
-  const [localPatternOffset, setLocalPatternOffset] = useState(
-    initialPatternOffset || { x: 0, y: 0 },
-  );
-  const [localPatternRotation, setLocalPatternRotation] = useState(
-    initialPatternRotation || 0,
-  );
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const initialScaleRef = useRef<number>(1);
-  const prevPesDataRef = useRef<PesPatternData | null>(null);
+  // Canvas viewport (zoom, pan, container size)
+  const {
+    stagePos,
+    stageScale,
+    containerSize,
+    handleWheel,
+    handleZoomIn,
+    handleZoomOut,
+    handleZoomReset,
+  } = useCanvasViewport({
+    containerRef,
+    pesData,
+    uploadedPesData,
+    machineInfo,
+  });
 
-  // Update pattern offset when initialPatternOffset changes
-  if (
-    initialPatternOffset &&
-    (localPatternOffset.x !== initialPatternOffset.x ||
-      localPatternOffset.y !== initialPatternOffset.y)
-  ) {
-    setLocalPatternOffset(initialPatternOffset);
-    console.log(
-      "[PatternCanvas] Restored pattern offset:",
-      initialPatternOffset,
-    );
-  }
-
-  // Update pattern rotation when initialPatternRotation changes
-  if (
-    initialPatternRotation !== undefined &&
-    localPatternRotation !== initialPatternRotation
-  ) {
-    setLocalPatternRotation(initialPatternRotation);
-  }
-
-  // Track container size
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const updateSize = () => {
-      if (containerRef.current) {
-        const width = containerRef.current.clientWidth;
-        const height = containerRef.current.clientHeight;
-        setContainerSize({ width, height });
-      }
-    };
-
-    // Initial size
-    updateSize();
-
-    // Watch for resize
-    const resizeObserver = new ResizeObserver(updateSize);
-    resizeObserver.observe(containerRef.current);
-
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  // Calculate and store initial scale when pattern or hoop changes
-  useEffect(() => {
-    // Use whichever pattern is available (uploaded or original)
-    const currentPattern = uploadedPesData || pesData;
-    if (!currentPattern || containerSize.width === 0) {
-      prevPesDataRef.current = null;
-      return;
-    }
-
-    // Only recalculate if pattern changed
-    if (prevPesDataRef.current !== currentPattern) {
-      prevPesDataRef.current = currentPattern;
-
-      const { bounds } = currentPattern;
-      const viewWidth = machineInfo
-        ? machineInfo.maxWidth
-        : bounds.maxX - bounds.minX;
-      const viewHeight = machineInfo
-        ? machineInfo.maxHeight
-        : bounds.maxY - bounds.minY;
-
-      const initialScale = calculateInitialScale(
-        containerSize.width,
-        containerSize.height,
-        viewWidth,
-        viewHeight,
-      );
-      initialScaleRef.current = initialScale;
-
-      // Reset view when pattern changes
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setStageScale(initialScale);
-      setStagePos({ x: containerSize.width / 2, y: containerSize.height / 2 });
-    }
-  }, [pesData, uploadedPesData, machineInfo, containerSize]);
-
-  // Wheel zoom handler
-  const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
-    e.evt.preventDefault();
-
-    const stage = e.target.getStage();
-    if (!stage) return;
-
-    const pointer = stage.getPointerPosition();
-    if (!pointer) return;
-
-    const scaleBy = 1.1;
-    const direction = e.evt.deltaY > 0 ? -1 : 1;
-
-    setStageScale((oldScale) => {
-      const newScale = Math.max(
-        0.1,
-        Math.min(direction > 0 ? oldScale * scaleBy : oldScale / scaleBy, 2),
-      );
-
-      // Zoom towards pointer
-      setStagePos((prevPos) =>
-        calculateZoomToPoint(oldScale, newScale, pointer, prevPos),
-      );
-
-      return newScale;
-    });
-  }, []);
-
-  // Zoom control handlers
-  const handleZoomIn = useCallback(() => {
-    setStageScale((oldScale) => {
-      const newScale = Math.max(0.1, Math.min(oldScale * 1.2, 2));
-
-      // Zoom towards center of viewport
-      const center = {
-        x: containerSize.width / 2,
-        y: containerSize.height / 2,
-      };
-      setStagePos((prevPos) =>
-        calculateZoomToPoint(oldScale, newScale, center, prevPos),
-      );
-
-      return newScale;
-    });
-  }, [containerSize]);
-
-  const handleZoomOut = useCallback(() => {
-    setStageScale((oldScale) => {
-      const newScale = Math.max(0.1, Math.min(oldScale / 1.2, 2));
-
-      // Zoom towards center of viewport
-      const center = {
-        x: containerSize.width / 2,
-        y: containerSize.height / 2,
-      };
-      setStagePos((prevPos) =>
-        calculateZoomToPoint(oldScale, newScale, center, prevPos),
-      );
-
-      return newScale;
-    });
-  }, [containerSize]);
-
-  const handleZoomReset = useCallback(() => {
-    const initialScale = initialScaleRef.current;
-    setStageScale(initialScale);
-    setStagePos({ x: containerSize.width / 2, y: containerSize.height / 2 });
-  }, [containerSize]);
-
-  const handleCenterPattern = useCallback(() => {
-    if (!pesData) return;
-
-    const { bounds } = pesData;
-    const centerOffsetX = -(bounds.minX + bounds.maxX) / 2;
-    const centerOffsetY = -(bounds.minY + bounds.maxY) / 2;
-
-    setLocalPatternOffset({ x: centerOffsetX, y: centerOffsetY });
-    setPatternOffset(centerOffsetX, centerOffsetY);
-  }, [pesData, setPatternOffset]);
-
-  // Pattern drag handlers
-  const handlePatternDragEnd = useCallback(
-    (e: Konva.KonvaEventObject<DragEvent>) => {
-      const newOffset = {
-        x: e.target.x(),
-        y: e.target.y(),
-      };
-      setLocalPatternOffset(newOffset);
-      setPatternOffset(newOffset.x, newOffset.y);
-    },
-    [setPatternOffset],
-  );
-
-  // Attach/detach transformer based on state
-  const attachTransformer = useCallback(() => {
-    if (!transformerRef.current || !patternGroupRef.current) {
-      console.log(
-        "[PatternCanvas] Cannot attach transformer - refs not ready",
-        {
-          hasTransformer: !!transformerRef.current,
-          hasPatternGroup: !!patternGroupRef.current,
-        },
-      );
-      return;
-    }
-
-    if (!patternUploaded && !isUploading) {
-      console.log("[PatternCanvas] Attaching transformer");
-      transformerRef.current.nodes([patternGroupRef.current]);
-      transformerRef.current.getLayer()?.batchDraw();
-    } else {
-      console.log("[PatternCanvas] Detaching transformer");
-      transformerRef.current.nodes([]);
-    }
-  }, [patternUploaded, isUploading]);
-
-  // Call attachTransformer when conditions change
-  useEffect(() => {
-    attachTransformer();
-  }, [attachTransformer, pesData]);
-
-  // Sync node rotation with state (important for when rotation is reset to 0 after upload)
-  useEffect(() => {
-    if (patternGroupRef.current) {
-      patternGroupRef.current.rotation(localPatternRotation);
-    }
-  }, [localPatternRotation]);
-
-  // Handle transformer rotation - just store the angle, apply at upload time
-  const handleTransformEnd = useCallback(
-    (e: KonvaEventObject<Event>) => {
-      if (!pesData) return;
-
-      const node = e.target;
-      // Read rotation from the node
-      const totalRotation = node.rotation();
-      const normalizedRotation = ((totalRotation % 360) + 360) % 360;
-
-      setLocalPatternRotation(normalizedRotation);
-
-      // Also read position in case the Transformer affected it
-      const newOffset = {
-        x: node.x(),
-        y: node.y(),
-      };
-      setLocalPatternOffset(newOffset);
-
-      // Store rotation angle and position
-      setPatternRotation(normalizedRotation);
-      setPatternOffset(newOffset.x, newOffset.y);
-
-      console.log(
-        "[Canvas] Transform end - rotation:",
-        normalizedRotation,
-        "degrees, position:",
-        newOffset,
-      );
-    },
-    [setPatternRotation, setPatternOffset, pesData],
-  );
+  // Pattern transform (position, rotation, drag/transform)
+  const {
+    localPatternOffset,
+    localPatternRotation,
+    patternGroupRef,
+    transformerRef,
+    attachTransformer,
+    handleCenterPattern,
+    handlePatternDragEnd,
+    handleTransformEnd,
+  } = usePatternTransform({
+    pesData,
+    initialPatternOffset,
+    initialPatternRotation,
+    setPatternOffset,
+    setPatternRotation,
+    patternUploaded,
+    isUploading,
+  });
 
   const hasPattern = pesData || uploadedPesData;
   const borderColor = hasPattern
