@@ -1,3 +1,5 @@
+import { calculatePatternCenter } from "../components/PatternCanvas/patternCanvasHelpers";
+
 /**
  * Rotate a single point around a center
  */
@@ -31,11 +33,10 @@ export function transformStitchesRotation(
 ): number[][] {
   if (angleDegrees === 0 || angleDegrees === 360) return stitches;
 
-  const centerX = (bounds.minX + bounds.maxX) / 2;
-  const centerY = (bounds.minY + bounds.maxY) / 2;
+  const center = calculatePatternCenter(bounds);
 
   return stitches.map(([x, y, cmd, colorIndex]) => {
-    const rotated = rotatePoint(x, y, centerX, centerY, angleDegrees);
+    const rotated = rotatePoint(x, y, center.x, center.y, angleDegrees);
     return [Math.round(rotated.x), Math.round(rotated.y), cmd, colorIndex];
   });
 }
@@ -49,8 +50,7 @@ export function calculateRotatedBounds(
 ): { minX: number; maxX: number; minY: number; maxY: number } {
   if (angleDegrees === 0 || angleDegrees === 360) return bounds;
 
-  const centerX = (bounds.minX + bounds.maxX) / 2;
-  const centerY = (bounds.minY + bounds.maxY) / 2;
+  const center = calculatePatternCenter(bounds);
 
   // Rotate all four corners
   const corners = [
@@ -61,7 +61,7 @@ export function calculateRotatedBounds(
   ];
 
   const rotatedCorners = corners.map(([x, y]) =>
-    rotatePoint(x, y, centerX, centerY, angleDegrees),
+    rotatePoint(x, y, center.x, center.y, angleDegrees),
   );
 
   return {

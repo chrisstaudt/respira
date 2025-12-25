@@ -17,6 +17,10 @@ import {
 } from "../utils/rotationUtils";
 import { encodeStitchesToPen } from "../formats/pen/encoder";
 import { decodePenData } from "../formats/pen/decoder";
+import {
+  calculatePatternCenter,
+  calculateBoundsFromDecodedStitches,
+} from "./PatternCanvas/patternCanvasHelpers";
 import { PatternInfoSkeleton } from "./SkeletonLoader";
 import { PatternInfo } from "./PatternInfo";
 import {
@@ -154,11 +158,6 @@ export function FileUpload() {
 
       // Apply rotation if needed
       if (patternRotation && patternRotation !== 0) {
-        console.log(
-          "[FileUpload] Applying rotation before upload:",
-          patternRotation,
-        );
-
         // Transform stitches
         const rotatedStitches = transformStitchesRotation(
           pesData.stitches,
@@ -174,56 +173,24 @@ export function FileUpload() {
         const decoded = decodePenData(penDataToUpload);
 
         // Calculate bounds from the DECODED stitches (the actual data that will be rendered)
-        let decodedMinX = Infinity,
-          decodedMaxX = -Infinity;
-        let decodedMinY = Infinity,
-          decodedMaxY = -Infinity;
-        for (const stitch of decoded.stitches) {
-          if (stitch.x < decodedMinX) decodedMinX = stitch.x;
-          if (stitch.x > decodedMaxX) decodedMaxX = stitch.x;
-          if (stitch.y < decodedMinY) decodedMinY = stitch.y;
-          if (stitch.y > decodedMaxY) decodedMaxY = stitch.y;
-        }
-        const rotatedBounds = {
-          minX: decodedMinX,
-          maxX: decodedMaxX,
-          minY: decodedMinY,
-          maxY: decodedMaxY,
-        };
+        const rotatedBounds = calculateBoundsFromDecodedStitches(decoded);
 
         // Calculate the center of the rotated pattern
-        const originalCenterX = (pesData.bounds.minX + pesData.bounds.maxX) / 2;
-        const originalCenterY = (pesData.bounds.minY + pesData.bounds.maxY) / 2;
-        const rotatedCenterX = (rotatedBounds.minX + rotatedBounds.maxX) / 2;
-        const rotatedCenterY = (rotatedBounds.minY + rotatedBounds.maxY) / 2;
-        const centerShiftX = rotatedCenterX - originalCenterX;
-        const centerShiftY = rotatedCenterY - originalCenterY;
-
-        console.log("[FileUpload] Pattern centers:", {
-          originalCenter: { x: originalCenterX, y: originalCenterY },
-          rotatedCenter: { x: rotatedCenterX, y: rotatedCenterY },
-          centerShift: { x: centerShiftX, y: centerShiftY },
-        });
+        const originalCenter = calculatePatternCenter(pesData.bounds);
+        const rotatedCenter = calculatePatternCenter(rotatedBounds);
+        const centerShiftX = rotatedCenter.x - originalCenter.x;
+        const centerShiftY = rotatedCenter.y - originalCenter.y;
 
         // CRITICAL: Adjust position to compensate for the center shift!
         // In Konva, visual position = (x - offsetX, y - offsetY).
-        // Original visual pos: (x - originalCenterX, y - originalCenterY)
-        // New visual pos: (newX - rotatedCenterX, newY - rotatedCenterY)
-        // For same visual position: newX = x + (rotatedCenterX - originalCenterX)
+        // Original visual pos: (x - originalCenter.x, y - originalCenter.y)
+        // New visual pos: (newX - rotatedCenter.x, newY - rotatedCenter.y)
+        // For same visual position: newX = x + (rotatedCenter.x - originalCenter.x)
         // So we need to add (rotatedCenter - originalCenter) to the position.
         const adjustedOffset = {
           x: patternOffset.x + centerShiftX,
           y: patternOffset.y + centerShiftY,
         };
-
-        console.log(
-          "[FileUpload] Adjusting position to compensate for center shift:",
-          {
-            originalPosition: patternOffset,
-            adjustedPosition: adjustedOffset,
-            shift: { x: centerShiftX, y: centerShiftY },
-          },
-        );
 
         // Create rotated PesPatternData for upload
         pesDataForUpload = {
@@ -236,7 +203,6 @@ export function FileUpload() {
 
         // Save uploaded pattern to store for preview BEFORE starting upload
         // This allows the preview to show immediately when isUploading becomes true
-        console.log("[FileUpload] Saving uploaded pattern for preview");
         setUploadedPattern(pesDataForUpload, adjustedOffset);
 
         // Upload the pattern with offset
@@ -287,29 +253,13 @@ export function FileUpload() {
 
     // The patternOffset represents the pattern's CENTER position (due to offsetX/offsetY in canvas)
     // So we need to calculate bounds relative to the center
-    const centerX = (bounds.minX + bounds.maxX) / 2;
-    const centerY = (bounds.minY + bounds.maxY) / 2;
+    const center = calculatePatternCenter(bounds);
 
     // Calculate actual bounds in world coordinates
-    const patternMinX = patternOffset.x - centerX + bounds.minX;
-    const patternMaxX = patternOffset.x - centerX + bounds.maxX;
-    const patternMinY = patternOffset.y - centerY + bounds.minY;
-    const patternMaxY = patternOffset.y - centerY + bounds.maxY;
-
-    console.log("[Bounds Check] Pattern center:", { centerX, centerY });
-    console.log("[Bounds Check] Offset (center position):", patternOffset);
-    console.log("[Bounds Check] Pattern bounds with offset:", {
-      minX: patternMinX,
-      maxX: patternMaxX,
-      minY: patternMinY,
-      maxY: patternMaxY,
-    });
-    console.log("[Bounds Check] Hoop bounds:", {
-      minX: -maxWidth / 2,
-      maxX: maxWidth / 2,
-      minY: -maxHeight / 2,
-      maxY: maxHeight / 2,
-    });
+    const patternMinX = patternOffset.x - center.x + bounds.minX;
+    const patternMaxX = patternOffset.x - center.x + bounds.maxX;
+    const patternMinY = patternOffset.y - center.y + bounds.minY;
+    const patternMaxY = patternOffset.y - center.y + bounds.maxY;
 
     // Hoop bounds (centered at origin)
     const hoopMinX = -maxWidth / 2;

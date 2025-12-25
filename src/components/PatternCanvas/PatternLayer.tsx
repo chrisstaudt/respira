@@ -55,16 +55,6 @@ export function PatternLayer({
 
   const groupName = isInteractive ? "pattern-group" : "uploaded-pattern-group";
 
-  console.log(
-    `[PatternLayer] Rendering ${isInteractive ? "original" : "uploaded"} pattern:`,
-    {
-      position: offset,
-      rotation: isInteractive ? rotation : "n/a",
-      center,
-      bounds: pesData.bounds,
-    },
-  );
-
   return (
     <>
       <Group

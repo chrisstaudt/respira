@@ -38,6 +38,30 @@ export function convertPenStitchesToPesFormat(
 }
 
 /**
+ * Calculate axis-aligned bounding box from decoded PEN stitches
+ */
+export function calculateBoundsFromDecodedStitches(decoded: DecodedPenData): {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+} {
+  let minX = Infinity,
+    maxX = -Infinity;
+  let minY = Infinity,
+    maxY = -Infinity;
+
+  for (const stitch of decoded.stitches) {
+    if (stitch.x < minX) minX = stitch.x;
+    if (stitch.x > maxX) maxX = stitch.x;
+    if (stitch.y < minY) minY = stitch.y;
+    if (stitch.y > maxY) maxY = stitch.y;
+  }
+
+  return { minX, maxX, minY, maxY };
+}
+
+/**
  * Calculate new stage position for zooming towards a specific point
  * Used for both wheel zoom and button zoom operations
  */
