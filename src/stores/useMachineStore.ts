@@ -57,6 +57,9 @@ interface MachineState {
   resumeSewing: () => Promise<void>;
   deletePattern: () => Promise<void>;
 
+  // Initialization
+  initialize: () => void;
+
   // Internal methods
   _setupSubscriptions: () => void;
   _startPolling: () => void;
@@ -309,6 +312,11 @@ export const useMachineStore = create<MachineState>((set, get) => ({
     }
   },
 
+  // Initialize the store (call once from App component)
+  initialize: () => {
+    get()._setupSubscriptions();
+  },
+
   // Setup service subscriptions
   _setupSubscriptions: () => {
     const { service } = get();
@@ -420,9 +428,6 @@ export const useMachineStore = create<MachineState>((set, get) => ({
     }
   },
 }));
-
-// Initialize subscriptions when store is created
-useMachineStore.getState()._setupSubscriptions();
 
 // Selector hooks for common use cases
 export const useIsConnected = () =>

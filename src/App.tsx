@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { useMachineStore } from "./stores/useMachineStore";
 import { useMachineCacheStore } from "./stores/useMachineCacheStore";
 import { usePatternStore } from "./stores/usePatternStore";
 import { useUIStore } from "./stores/useUIStore";
@@ -21,6 +22,11 @@ function App() {
   // Set page title with version
   useEffect(() => {
     document.title = `Respira v${__APP_VERSION__}`;
+  }, []);
+
+  // Initialize machine store subscriptions (once on mount)
+  useEffect(() => {
+    useMachineStore.getState().initialize();
   }, []);
 
   // Machine cache store - for auto-loading cached pattern
