@@ -25,6 +25,7 @@ const createMockPesData = (
   penStitches: {
     stitches: [],
     colorBlocks: [],
+    bounds: { minX: 0, maxX: 0, minY: 0, maxY: 0 },
   },
   colorCount: 1,
   stitchCount: 1,
