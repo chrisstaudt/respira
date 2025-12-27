@@ -7,7 +7,10 @@
 import { useState, useRef } from "react";
 import { useClickOutside } from "@/hooks";
 import { useShallow } from "zustand/react/shallow";
-import { useMachineStore, usePatternUploaded } from "../../stores/useMachineStore";
+import {
+  useMachineStore,
+  usePatternUploaded,
+} from "../../stores/useMachineStore";
 import { usePatternStore } from "../../stores/usePatternStore";
 import { WORKFLOW_STEPS } from "../../constants/workflowSteps";
 import { getCurrentStep } from "../../utils/workflowStepCalculation";
