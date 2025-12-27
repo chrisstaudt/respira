@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
-import type { BluetoothDevice } from "../types/electron";
+import { useState, useCallback, useEffect } from "react";
+import { useBluetoothDeviceListener } from "@/hooks";
 import {
   Dialog,
   DialogContent,
@@ -11,42 +11,41 @@ import {
 import { Button } from "@/components/ui/button";
 
 export function BluetoothDevicePicker() {
-  const [devices, setDevices] = useState<BluetoothDevice[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
 
+  // Use Bluetooth device listener hook
+  const { devices, isScanning } = useBluetoothDeviceListener((deviceList) => {
+    console.log("[BluetoothPicker] Received device list:", deviceList);
+    // Open the picker when devices are received
+    // Use functional setState to avoid stale closure
+    setIsOpen((prevIsOpen) => {
+      if (!prevIsOpen && deviceList.length >= 0) {
+        return true;
+      }
+      return prevIsOpen;
+    });
+  });
+
+  // Close modal and reset when scan completes with no selection
   useEffect(() => {
-    // Only set up listener in Electron
-    if (window.electronAPI?.onBluetoothDeviceList) {
-      window.electronAPI.onBluetoothDeviceList((deviceList) => {
-        console.log("[BluetoothPicker] Received device list:", deviceList);
-        setDevices(deviceList);
-        // Open the picker when scan starts (even if empty at first)
-        if (!isOpen) {
-          setIsOpen(true);
-          setIsScanning(true);
-        }
-        // Stop showing scanning state once we have devices
-        if (deviceList.length > 0) {
-          setIsScanning(false);
-        }
-      });
+    if (isOpen && !isScanning && devices.length === 0) {
+      const timer = setTimeout(() => {
+        setIsOpen(false);
+      }, 2000);
+      return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, isScanning, devices]);
 
   const handleSelectDevice = useCallback((deviceId: string) => {
     console.log("[BluetoothPicker] User selected device:", deviceId);
     window.electronAPI?.selectBluetoothDevice(deviceId);
     setIsOpen(false);
-    setDevices([]);
   }, []);
 
   const handleCancel = useCallback(() => {
     console.log("[BluetoothPicker] User cancelled device selection");
     window.electronAPI?.selectBluetoothDevice("");
     setIsOpen(false);
-    setDevices([]);
-    setIsScanning(false);
   }, []);
 
   return (

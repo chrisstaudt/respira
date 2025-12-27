@@ -9,7 +9,9 @@
       "Bash(npm test:*)",
       "Bash(npm run:*)",
       "Bash(gh issue create:*)",
-      "Bash(gh label create:*)"
+      "Bash(gh label create:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh pr view:*)"
     ],
     "deny": [],
     "ask": []
