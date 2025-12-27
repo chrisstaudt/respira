@@ -5,7 +5,7 @@
  * Handles both interactive (draggable/rotatable) and locked states
  */
 
-import { useMemo, type RefObject } from "react";
+import { useMemo, memo, type RefObject } from "react";
 import { Group, Transformer } from "react-konva";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
@@ -30,7 +30,7 @@ interface PatternLayerProps {
   attachTransformer?: () => void;
 }
 
-export function PatternLayer({
+export const PatternLayer = memo(function PatternLayer({
   pesData,
   offset,
   rotation = 0,
@@ -143,4 +143,4 @@ export function PatternLayer({
       )}
     </>
   );
-}
+});
