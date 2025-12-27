@@ -17,9 +17,13 @@ export function BluetoothDevicePicker() {
   const { devices, isScanning } = useBluetoothDeviceListener((deviceList) => {
     console.log("[BluetoothPicker] Received device list:", deviceList);
     // Open the picker when devices are received
-    if (!isOpen && deviceList.length >= 0) {
-      setIsOpen(true);
-    }
+    // Use functional setState to avoid stale closure
+    setIsOpen((prevIsOpen) => {
+      if (!prevIsOpen && deviceList.length >= 0) {
+        return true;
+      }
+      return prevIsOpen;
+    });
   });
 
   // Close modal and reset when scan completes with no selection

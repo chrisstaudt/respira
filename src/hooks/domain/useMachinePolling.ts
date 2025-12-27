@@ -78,6 +78,26 @@ export function useMachinePolling(
   const serviceCountIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const pollFunctionRef = useRef<(() => Promise<void>) | undefined>(undefined);
 
+  // Store callbacks in refs to avoid unnecessary re-renders
+  const callbacksRef = useRef({
+    onStatusRefresh,
+    onProgressRefresh,
+    onServiceCountRefresh,
+    onPatternInfoRefresh,
+    shouldCheckResumablePattern,
+  });
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    callbacksRef.current = {
+      onStatusRefresh,
+      onProgressRefresh,
+      onServiceCountRefresh,
+      onPatternInfoRefresh,
+      shouldCheckResumablePattern,
+    };
+  });
+
   // Function to determine polling interval based on machine status
   const getPollInterval = useCallback((status: MachineStatus) => {
     // Fast polling for active states
@@ -99,17 +119,20 @@ export function useMachinePolling(
 
   // Main polling function
   const poll = useCallback(async () => {
-    await onStatusRefresh();
+    await callbacksRef.current.onStatusRefresh();
 
     // Refresh progress during sewing
     if (machineStatus === MachineStatus.SEWING) {
-      await onProgressRefresh();
+      await callbacksRef.current.onProgressRefresh();
     }
 
     // Check if we have a cached pattern and pattern info needs refreshing
     // This follows the app's logic for resumable patterns
-    if (shouldCheckResumablePattern() && patternInfo?.totalStitches === 0) {
-      await onPatternInfoRefresh();
+    if (
+      callbacksRef.current.shouldCheckResumablePattern() &&
+      patternInfo?.totalStitches === 0
+    ) {
+      await callbacksRef.current.onPatternInfoRefresh();
     }
 
     // Schedule next poll with updated interval
@@ -117,15 +140,7 @@ export function useMachinePolling(
     if (pollFunctionRef.current) {
       pollTimeoutRef.current = setTimeout(pollFunctionRef.current, newInterval);
     }
-  }, [
-    machineStatus,
-    patternInfo,
-    onStatusRefresh,
-    onProgressRefresh,
-    onPatternInfoRefresh,
-    shouldCheckResumablePattern,
-    getPollInterval,
-  ]);
+  }, [machineStatus, patternInfo, getPollInterval]);
 
   // Store poll function in ref for recursive setTimeout
   useEffect(() => {
@@ -155,16 +170,13 @@ export function useMachinePolling(
     pollTimeoutRef.current = setTimeout(poll, initialInterval);
 
     // Start service count polling (every 10 seconds)
-    serviceCountIntervalRef.current = setInterval(onServiceCountRefresh, 10000);
+    serviceCountIntervalRef.current = setInterval(
+      callbacksRef.current.onServiceCountRefresh,
+      10000,
+    );
 
     setIsPolling(true);
-  }, [
-    machineStatus,
-    poll,
-    stopPolling,
-    getPollInterval,
-    onServiceCountRefresh,
-  ]);
+  }, [machineStatus, poll, stopPolling, getPollInterval]);
 
   return {
     startPolling,

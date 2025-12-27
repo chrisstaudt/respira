@@ -67,6 +67,9 @@ export function useErrorPopoverState(
   const prevPyodideError = usePrevious(pyodideError);
 
   // Auto-open/close logic
+  // Note: This effect intentionally calls setState to synchronize popover state with error state.
+  // This is a valid use case for setState in an effect as we're synchronizing external state
+  // (error codes) with internal UI state (popover visibility).
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     // Check if there's any error now

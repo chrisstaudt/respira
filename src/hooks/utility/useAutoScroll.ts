@@ -23,7 +23,7 @@
  * ```
  */
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, useMemo, type RefObject } from "react";
 
 export interface UseAutoScrollOptions {
   behavior?: ScrollBehavior;
@@ -37,15 +37,21 @@ export function useAutoScroll<T extends HTMLElement = HTMLElement>(
 ): RefObject<T | null> {
   const ref = useRef<T>(null);
 
+  // Stabilize options to avoid unnecessary re-renders when passed as inline object
+  const stableOptions = useMemo(
+    () => ({
+      behavior: options?.behavior || "smooth",
+      block: options?.block || "nearest",
+      inline: options?.inline,
+    }),
+    [options?.behavior, options?.block, options?.inline],
+  );
+
   useEffect(() => {
     if (ref.current) {
-      ref.current.scrollIntoView({
-        behavior: options?.behavior || "smooth",
-        block: options?.block || "nearest",
-        inline: options?.inline,
-      });
+      ref.current.scrollIntoView(stableOptions);
     }
-  }, [dependency, options?.behavior, options?.block, options?.inline]);
+  }, [dependency, stableOptions]);
 
   return ref;
 }

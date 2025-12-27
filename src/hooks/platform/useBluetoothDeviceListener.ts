@@ -33,7 +33,7 @@
  * ```
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { BluetoothDevice } from "../../types/electron";
 
 export interface UseBluetoothDeviceListenerReturn {
@@ -47,6 +47,14 @@ export function useBluetoothDeviceListener(
 ): UseBluetoothDeviceListenerReturn {
   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
   const [isScanning, setIsScanning] = useState(false);
+
+  // Store callback in ref to avoid re-registering listener
+  const callbackRef = useRef(onDevicesChanged);
+
+  // Update ref when callback changes
+  useEffect(() => {
+    callbackRef.current = onDevicesChanged;
+  });
 
   // Check if Electron API is available
   const isSupported =
@@ -70,17 +78,17 @@ export function useBluetoothDeviceListener(
         setIsScanning(false);
       }
 
-      // Call optional callback
-      onDevicesChanged?.(deviceList);
+      // Call optional callback using ref to get latest version
+      callbackRef.current?.(deviceList);
     };
 
-    // Register listener
+    // Register listener only once
     window.electronAPI!.onBluetoothDeviceList(handleDeviceList);
 
     // Note: Electron IPC listeners are typically not cleaned up individually
     // as they're meant to persist. If cleanup is needed, the Electron main
     // process should handle it.
-  }, [isSupported, onDevicesChanged]);
+  }, [isSupported]);
 
   return {
     devices,
