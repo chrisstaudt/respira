@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { useBluetoothDeviceListener } from "./useBluetoothDeviceListener";
 import type { BluetoothDevice } from "../../types/electron";
 
@@ -23,7 +23,11 @@ describe("useBluetoothDeviceListener", () => {
 
   it("should return isSupported=true when Electron API is available", () => {
     // Mock Electron API
-    (window as { electronAPI: { onBluetoothDeviceList: () => void } }).electronAPI = {
+    (
+      window as unknown as {
+        electronAPI: { onBluetoothDeviceList: () => void };
+      }
+    ).electronAPI = {
       onBluetoothDeviceList: vi.fn(),
     };
 
@@ -34,7 +38,11 @@ describe("useBluetoothDeviceListener", () => {
 
   it("should register IPC listener when Electron API is available", () => {
     const mockListener = vi.fn();
-    (window as { electronAPI: { onBluetoothDeviceList: typeof mockListener } }).electronAPI = {
+    (
+      window as unknown as {
+        electronAPI: { onBluetoothDeviceList: typeof mockListener };
+      }
+    ).electronAPI = {
       onBluetoothDeviceList: mockListener,
     };
 
@@ -45,13 +53,20 @@ describe("useBluetoothDeviceListener", () => {
   });
 
   it("should update devices when listener receives data", async () => {
-    let deviceListCallback: ((devices: BluetoothDevice[]) => void) | null = null;
+    let deviceListCallback: ((devices: BluetoothDevice[]) => void) | null =
+      null;
 
-    const mockListener = vi.fn((callback: (devices: BluetoothDevice[]) => void) => {
-      deviceListCallback = callback;
-    });
+    const mockListener = vi.fn(
+      (callback: (devices: BluetoothDevice[]) => void) => {
+        deviceListCallback = callback;
+      },
+    );
 
-    (window as { electronAPI: { onBluetoothDeviceList: typeof mockListener } }).electronAPI = {
+    (
+      window as unknown as {
+        electronAPI: { onBluetoothDeviceList: typeof mockListener };
+      }
+    ).electronAPI = {
       onBluetoothDeviceList: mockListener,
     };
 
@@ -61,11 +76,14 @@ describe("useBluetoothDeviceListener", () => {
 
     // Simulate device list update
     const mockDevices: BluetoothDevice[] = [
-      { id: "device1", name: "Device 1", address: "00:11:22:33:44:55", paired: false },
-      { id: "device2", name: "Device 2", address: "AA:BB:CC:DD:EE:FF", paired: true },
+      { deviceId: "device1", deviceName: "Device 1" },
+      { deviceId: "device2", deviceName: "Device 2" },
     ];
 
-    deviceListCallback?.(mockDevices);
+    // Trigger the callback
+    act(() => {
+      deviceListCallback!(mockDevices);
+    });
 
     await waitFor(() => {
       expect(result.current.devices).toEqual(mockDevices);
@@ -73,20 +91,29 @@ describe("useBluetoothDeviceListener", () => {
   });
 
   it("should set isScanning=true when empty device list received", async () => {
-    let deviceListCallback: ((devices: BluetoothDevice[]) => void) | null = null;
+    let deviceListCallback: ((devices: BluetoothDevice[]) => void) | null =
+      null;
 
-    const mockListener = vi.fn((callback: (devices: BluetoothDevice[]) => void) => {
-      deviceListCallback = callback;
-    });
+    const mockListener = vi.fn(
+      (callback: (devices: BluetoothDevice[]) => void) => {
+        deviceListCallback = callback;
+      },
+    );
 
-    (window as { electronAPI: { onBluetoothDeviceList: typeof mockListener } }).electronAPI = {
+    (
+      window as unknown as {
+        electronAPI: { onBluetoothDeviceList: typeof mockListener };
+      }
+    ).electronAPI = {
       onBluetoothDeviceList: mockListener,
     };
 
     const { result } = renderHook(() => useBluetoothDeviceListener());
 
     // Simulate empty device list (scanning in progress)
-    deviceListCallback?.([]);
+    act(() => {
+      deviceListCallback!([]);
+    });
 
     await waitFor(() => {
       expect(result.current.isScanning).toBe(true);
@@ -95,29 +122,40 @@ describe("useBluetoothDeviceListener", () => {
   });
 
   it("should set isScanning=false when devices are received", async () => {
-    let deviceListCallback: ((devices: BluetoothDevice[]) => void) | null = null;
+    let deviceListCallback: ((devices: BluetoothDevice[]) => void) | null =
+      null;
 
-    const mockListener = vi.fn((callback: (devices: BluetoothDevice[]) => void) => {
-      deviceListCallback = callback;
-    });
+    const mockListener = vi.fn(
+      (callback: (devices: BluetoothDevice[]) => void) => {
+        deviceListCallback = callback;
+      },
+    );
 
-    (window as { electronAPI: { onBluetoothDeviceList: typeof mockListener } }).electronAPI = {
+    (
+      window as unknown as {
+        electronAPI: { onBluetoothDeviceList: typeof mockListener };
+      }
+    ).electronAPI = {
       onBluetoothDeviceList: mockListener,
     };
 
     const { result } = renderHook(() => useBluetoothDeviceListener());
 
     // First update: empty list (scanning)
-    deviceListCallback?.([]);
+    act(() => {
+      deviceListCallback!([]);
+    });
     await waitFor(() => {
       expect(result.current.isScanning).toBe(true);
     });
 
     // Second update: devices found (stop scanning indicator)
     const mockDevices: BluetoothDevice[] = [
-      { id: "device1", name: "Device 1", address: "00:11:22:33:44:55", paired: false },
+      { deviceId: "device1", deviceName: "Device 1" },
     ];
-    deviceListCallback?.(mockDevices);
+    act(() => {
+      deviceListCallback!(mockDevices);
+    });
 
     await waitFor(() => {
       expect(result.current.isScanning).toBe(false);
@@ -125,14 +163,21 @@ describe("useBluetoothDeviceListener", () => {
     expect(result.current.devices).toEqual(mockDevices);
   });
 
-  it("should call optional callback when devices change", () => {
-    let deviceListCallback: ((devices: BluetoothDevice[]) => void) | null = null;
+  it("should call optional callback when devices change", async () => {
+    let deviceListCallback: ((devices: BluetoothDevice[]) => void) | null =
+      null;
 
-    const mockListener = vi.fn((callback: (devices: BluetoothDevice[]) => void) => {
-      deviceListCallback = callback;
-    });
+    const mockListener = vi.fn(
+      (callback: (devices: BluetoothDevice[]) => void) => {
+        deviceListCallback = callback;
+      },
+    );
 
-    (window as { electronAPI: { onBluetoothDeviceList: typeof mockListener } }).electronAPI = {
+    (
+      window as unknown as {
+        electronAPI: { onBluetoothDeviceList: typeof mockListener };
+      }
+    ).electronAPI = {
       onBluetoothDeviceList: mockListener,
     };
 
@@ -140,11 +185,15 @@ describe("useBluetoothDeviceListener", () => {
     renderHook(() => useBluetoothDeviceListener(onDevicesChanged));
 
     const mockDevices: BluetoothDevice[] = [
-      { id: "device1", name: "Device 1", address: "00:11:22:33:44:55", paired: false },
+      { deviceId: "device1", deviceName: "Device 1" },
     ];
 
-    deviceListCallback?.(mockDevices);
+    act(() => {
+      deviceListCallback!(mockDevices);
+    });
 
-    expect(onDevicesChanged).toHaveBeenCalledWith(mockDevices);
+    await waitFor(() => {
+      expect(onDevicesChanged).toHaveBeenCalledWith(mockDevices);
+    });
   });
 });

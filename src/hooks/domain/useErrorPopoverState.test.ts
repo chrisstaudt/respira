@@ -30,13 +30,13 @@ describe("useErrorPopoverState", () => {
           pyodideError: null,
           hasError,
         }),
-      { initialProps: { machineError: undefined } },
+      { initialProps: { machineError: undefined as number | undefined } },
     );
 
     expect(result.current.isOpen).toBe(false);
 
     // Error appears
-    rerender({ machineError: 1 });
+    rerender({ machineError: 1 as number | undefined });
     expect(result.current.isOpen).toBe(true);
   });
 
@@ -49,12 +49,12 @@ describe("useErrorPopoverState", () => {
           pyodideError: null,
           hasError,
         }),
-      { initialProps: { machineErrorMessage: null } },
+      { initialProps: { machineErrorMessage: null as string | null } },
     );
 
     expect(result.current.isOpen).toBe(false);
 
-    rerender({ machineErrorMessage: "Error occurred" });
+    rerender({ machineErrorMessage: "Error occurred" as string | null });
     expect(result.current.isOpen).toBe(true);
   });
 
@@ -67,12 +67,12 @@ describe("useErrorPopoverState", () => {
           pyodideError,
           hasError,
         }),
-      { initialProps: { pyodideError: null } },
+      { initialProps: { pyodideError: null as string | null } },
     );
 
     expect(result.current.isOpen).toBe(false);
 
-    rerender({ pyodideError: "Pyodide error" });
+    rerender({ pyodideError: "Pyodide error" as string | null });
     expect(result.current.isOpen).toBe(true);
   });
 
@@ -98,7 +98,7 @@ describe("useErrorPopoverState", () => {
   });
 
   it("should track manual dismissal", async () => {
-    const { result, rerender } = renderHook(
+    const { result } = renderHook(
       ({ machineError }) =>
         useErrorPopoverState({
           machineError,
@@ -218,7 +218,15 @@ describe("useErrorPopoverState", () => {
 
   it("should handle multiple error sources", () => {
     const { result, rerender } = renderHook(
-      ({ machineError, machineErrorMessage, pyodideError }) =>
+      ({
+        machineError,
+        machineErrorMessage,
+        pyodideError,
+      }: {
+        machineError: number | undefined;
+        machineErrorMessage: string | null;
+        pyodideError: string | null;
+      }) =>
         useErrorPopoverState({
           machineError,
           machineErrorMessage,
@@ -227,9 +235,9 @@ describe("useErrorPopoverState", () => {
         }),
       {
         initialProps: {
-          machineError: undefined,
-          machineErrorMessage: null,
-          pyodideError: null,
+          machineError: undefined as number | undefined,
+          machineErrorMessage: null as string | null,
+          pyodideError: null as string | null,
         },
       },
     );
@@ -238,34 +246,34 @@ describe("useErrorPopoverState", () => {
 
     // Machine error appears
     rerender({
-      machineError: 1,
-      machineErrorMessage: null,
-      pyodideError: null,
+      machineError: 1 as number | undefined,
+      machineErrorMessage: null as string | null,
+      pyodideError: null as string | null,
     });
     expect(result.current.isOpen).toBe(true);
 
     // Additional pyodide error
     rerender({
-      machineError: 1,
-      machineErrorMessage: null,
-      pyodideError: "Pyodide error",
+      machineError: 1 as number | undefined,
+      machineErrorMessage: null as string | null,
+      pyodideError: "Pyodide error" as string | null,
     });
     expect(result.current.isOpen).toBe(true);
 
     // Clear machine error but pyodide error remains
     rerender({
-      machineError: 0,
-      machineErrorMessage: null,
-      pyodideError: "Pyodide error",
+      machineError: 0 as number | undefined,
+      machineErrorMessage: null as string | null,
+      pyodideError: "Pyodide error" as string | null,
     });
     // Should stay open because pyodide error still exists
     expect(result.current.isOpen).toBe(true);
 
     // Clear all errors
     rerender({
-      machineError: 0,
-      machineErrorMessage: null,
-      pyodideError: null,
+      machineError: 0 as number | undefined,
+      machineErrorMessage: null as string | null,
+      pyodideError: null as string | null,
     });
     expect(result.current.isOpen).toBe(false);
   });

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useClickOutside } from "./useClickOutside";
-import { useRef } from "react";
+import { useRef, type RefObject } from "react";
 
 describe("useClickOutside", () => {
   it("should call handler when clicking outside element", () => {
@@ -91,8 +91,10 @@ describe("useClickOutside", () => {
     const handler = vi.fn();
     const { result } = renderHook(() => {
       const ref = useRef<HTMLDivElement>(null);
-      const excludeRef = useRef<HTMLButtonElement>(null);
-      useClickOutside(ref, handler, { excludeRefs: [excludeRef] });
+      const excludeRef = useRef<HTMLElement>(null);
+      useClickOutside(ref, handler, {
+        excludeRefs: [excludeRef as unknown as RefObject<HTMLElement>],
+      });
       return { ref, excludeRef };
     });
 
@@ -102,7 +104,7 @@ describe("useClickOutside", () => {
     document.body.appendChild(excludedElement);
 
     (result.current.ref as { current: HTMLDivElement }).current = element;
-    (result.current.excludeRef as { current: HTMLButtonElement }).current =
+    (result.current.excludeRef as { current: HTMLElement }).current =
       excludedElement;
 
     // Click on excluded element

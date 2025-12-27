@@ -23,12 +23,9 @@ describe("usePrevious", () => {
   });
 
   it("should handle different types of values", () => {
-    const { result, rerender } = renderHook(
-      ({ value }) => usePrevious(value),
-      {
-        initialProps: { value: "hello" as string | number | null },
-      },
-    );
+    const { result, rerender } = renderHook(({ value }) => usePrevious(value), {
+      initialProps: { value: "hello" as string | number | null },
+    });
 
     expect(result.current).toBeUndefined();
 
@@ -43,12 +40,9 @@ describe("usePrevious", () => {
     const obj1 = { name: "first" };
     const obj2 = { name: "second" };
 
-    const { result, rerender } = renderHook(
-      ({ value }) => usePrevious(value),
-      {
-        initialProps: { value: obj1 },
-      },
-    );
+    const { result, rerender } = renderHook(({ value }) => usePrevious(value), {
+      initialProps: { value: obj1 },
+    });
 
     expect(result.current).toBeUndefined();
 

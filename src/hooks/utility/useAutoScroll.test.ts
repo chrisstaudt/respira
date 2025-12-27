@@ -18,10 +18,9 @@ describe("useAutoScroll", () => {
     const scrollIntoViewMock = vi.fn();
     mockElement.scrollIntoView = scrollIntoViewMock;
 
-    const { result, rerender } = renderHook(
-      ({ dep }) => useAutoScroll(dep),
-      { initialProps: { dep: 0 } },
-    );
+    const { result, rerender } = renderHook(({ dep }) => useAutoScroll(dep), {
+      initialProps: { dep: 0 },
+    });
 
     // Attach mock element to ref
     (result.current as { current: HTMLElement }).current = mockElement;

@@ -16,7 +16,7 @@ describe("useMachinePolling", () => {
 
     const { result } = renderHook(() =>
       useMachinePolling({
-        machineStatus: MachineStatus.READY,
+        machineStatus: MachineStatus.IDLE,
         patternInfo: null,
         onStatusRefresh,
         onProgressRefresh,
@@ -45,7 +45,7 @@ describe("useMachinePolling", () => {
 
     const { result } = renderHook(() =>
       useMachinePolling({
-        machineStatus: MachineStatus.READY,
+        machineStatus: MachineStatus.IDLE,
         patternInfo: null,
         onStatusRefresh,
         onProgressRefresh,
@@ -139,7 +139,7 @@ describe("useMachinePolling", () => {
     const mocks2 = createMocks();
     const { result: result2 } = renderHook(() =>
       useMachinePolling({
-        machineStatus: MachineStatus.READY,
+        machineStatus: MachineStatus.IDLE,
         patternInfo: null,
         ...mocks2,
         shouldCheckResumablePattern: () => false,
