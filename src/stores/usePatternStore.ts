@@ -123,7 +123,17 @@ export const useUploadedPatternOffset = () =>
 export const usePatternRotation = () =>
   usePatternStore((state) => state.patternRotation);
 
-// Subscribe to pattern deleted event
+// Subscribe to pattern deleted event.
+// This subscription is intended to persist for the lifetime of the application,
+// so the unsubscribe function returned by `onPatternDeleted` is intentionally
+// not stored or called.
 onPatternDeleted(() => {
-  usePatternStore.getState().clearUploadedPattern();
+  try {
+    usePatternStore.getState().clearUploadedPattern();
+  } catch (error) {
+    console.error(
+      "[PatternStore] Failed to clear uploaded pattern on pattern deleted event:",
+      error,
+    );
+  }
 });

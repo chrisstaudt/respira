@@ -128,7 +128,17 @@ export const useMachineUploadStore = create<MachineUploadState>((set) => ({
   },
 }));
 
-// Subscribe to pattern deleted event
+// Subscribe to pattern deleted event.
+// This subscription is intended to persist for the lifetime of the application,
+// so the unsubscribe function returned by `onPatternDeleted` is intentionally
+// not stored or called.
 onPatternDeleted(() => {
-  useMachineUploadStore.getState().reset();
+  try {
+    useMachineUploadStore.getState().reset();
+  } catch (error) {
+    console.error(
+      "[MachineUploadStore] Failed to reset on pattern deleted event:",
+      error,
+    );
+  }
 });

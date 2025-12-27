@@ -28,9 +28,17 @@ export const useEventStore = create<EventState>((set) => ({
 }));
 
 /**
- * Subscribe to pattern deleted event
- * @param callback - Function to call when event is emitted
- * @returns Unsubscribe function
+ * Subscribe to the pattern deleted event.
+ *
+ * The subscription remains active until the returned unsubscribe function is called.
+ * If the unsubscribe function is not called, the listener will persist for the
+ * lifetime of the event store (typically the lifetime of the application).
+ *
+ * Call the returned unsubscribe function when the listener is no longer needed,
+ * especially for short-lived components or non-module-level subscriptions.
+ *
+ * @param callback - Function to call when the event is emitted.
+ * @returns Unsubscribe function that removes the listener when invoked.
  */
 export const onPatternDeleted = (callback: () => void): (() => void) => {
   let prevCount = useEventStore.getState().patternDeletedCount;
