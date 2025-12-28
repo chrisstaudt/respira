@@ -50,17 +50,6 @@ export interface TransformedBounds {
   center: PatternCenter;
 }
 
-export interface PatternValidationResult {
-  fits: boolean;
-  error: string | null;
-  worldBounds: {
-    minX: number;
-    maxX: number;
-    minY: number;
-    maxY: number;
-  } | null;
-}
-
 export const usePatternStore = create<PatternState>((set) => ({
   // Initial state - original pattern
   pesData: null,
@@ -220,80 +209,6 @@ export const selectRotationCenterShift = (
 };
 
 /**
- * Select pattern validation against machine hoop bounds
- * Returns whether pattern fits and error message if not
- */
-export const selectPatternValidation = (
-  state: PatternState,
-  machineInfo: { maxWidth: number; maxHeight: number } | null,
-): PatternValidationResult => {
-  if (!state.pesData || !machineInfo) {
-    return { fits: true, error: null, worldBounds: null };
-  }
-
-  // Get rotated bounds
-  const transformedBounds = selectRotatedBounds(state);
-  if (!transformedBounds) {
-    return { fits: true, error: null, worldBounds: null };
-  }
-
-  const { bounds, center } = transformedBounds;
-  const { maxWidth, maxHeight } = machineInfo;
-
-  // Calculate actual bounds in world coordinates
-  // The patternOffset represents the pattern's CENTER position (due to offsetX/offsetY in canvas)
-  const patternMinX = state.patternOffset.x - center.x + bounds.minX;
-  const patternMaxX = state.patternOffset.x - center.x + bounds.maxX;
-  const patternMinY = state.patternOffset.y - center.y + bounds.minY;
-  const patternMaxY = state.patternOffset.y - center.y + bounds.maxY;
-
-  const worldBounds = {
-    minX: patternMinX,
-    maxX: patternMaxX,
-    minY: patternMinY,
-    maxY: patternMaxY,
-  };
-
-  // Hoop bounds (centered at origin)
-  const hoopMinX = -maxWidth / 2;
-  const hoopMaxX = maxWidth / 2;
-  const hoopMinY = -maxHeight / 2;
-  const hoopMaxY = maxHeight / 2;
-
-  // Check if pattern exceeds hoop bounds
-  const exceedsLeft = patternMinX < hoopMinX;
-  const exceedsRight = patternMaxX > hoopMaxX;
-  const exceedsTop = patternMinY < hoopMinY;
-  const exceedsBottom = patternMaxY > hoopMaxY;
-
-  if (exceedsLeft || exceedsRight || exceedsTop || exceedsBottom) {
-    const directions = [];
-    if (exceedsLeft)
-      directions.push(
-        `left by ${((hoopMinX - patternMinX) / 10).toFixed(1)}mm`,
-      );
-    if (exceedsRight)
-      directions.push(
-        `right by ${((patternMaxX - hoopMaxX) / 10).toFixed(1)}mm`,
-      );
-    if (exceedsTop)
-      directions.push(`top by ${((hoopMinY - patternMinY) / 10).toFixed(1)}mm`);
-    if (exceedsBottom)
-      directions.push(
-        `bottom by ${((patternMaxY - hoopMaxY) / 10).toFixed(1)}mm`,
-      );
-
-    return {
-      fits: false,
-      error: `Pattern exceeds hoop bounds: ${directions.join(", ")}. Adjust pattern position in preview.`,
-      worldBounds,
-    };
-  }
-
-  return { fits: true, error: null, worldBounds };
-};
-
-/**
  * Hook to get pattern center (memoized with shallow comparison)
  */
 export const usePatternCenter = () =>
@@ -310,17 +225,6 @@ export const useUploadedPatternCenter = () =>
  */
 export const useRotatedBounds = () =>
   usePatternStore(useShallow(selectRotatedBounds));
-
-/**
- * Hook to get pattern validation result (requires machineInfo)
- * Uses shallow comparison to prevent infinite re-renders from new object references
- */
-export const usePatternValidationFromStore = (
-  machineInfo: { maxWidth: number; maxHeight: number } | null,
-) =>
-  usePatternStore(
-    useShallow((state) => selectPatternValidation(state, machineInfo)),
-  );
 
 // Subscribe to pattern deleted event.
 // This subscription is intended to persist for the lifetime of the application,

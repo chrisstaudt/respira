@@ -5,7 +5,6 @@ import {
   selectUploadedPatternCenter,
   selectRotatedBounds,
   selectRotationCenterShift,
-  selectPatternValidation,
 } from "./usePatternStore";
 import type { PesPatternData } from "../formats/import/pesImporter";
 
@@ -196,106 +195,6 @@ describe("usePatternStore selectors", () => {
       // due to the asymmetric bounds
       expect(shift!.x).toBeCloseTo(0, 0);
       expect(shift!.y).toBeCloseTo(0, 0);
-    });
-  });
-
-  describe("selectPatternValidation", () => {
-    const machineInfo = { maxWidth: 1000, maxHeight: 800 };
-
-    it("should return fits=true when no pattern", () => {
-      usePatternStore.setState({ pesData: null });
-      const state = usePatternStore.getState();
-      const result = selectPatternValidation(state, machineInfo);
-
-      expect(result.fits).toBe(true);
-      expect(result.error).toBeNull();
-    });
-
-    it("should return fits=true when no machine info", () => {
-      const state = usePatternStore.getState();
-      const result = selectPatternValidation(state, null);
-
-      expect(result.fits).toBe(true);
-      expect(result.error).toBeNull();
-    });
-
-    it("should return fits=true when pattern fits in hoop", () => {
-      // Pattern bounds: -100 to 100 (200 wide), -50 to 50 (100 high)
-      // Hoop: 1000 wide, 800 high (centered at origin)
-      const state = usePatternStore.getState();
-      const result = selectPatternValidation(state, machineInfo);
-
-      expect(result.fits).toBe(true);
-      expect(result.error).toBeNull();
-    });
-
-    it("should detect when pattern exceeds hoop bounds", () => {
-      // Create a pattern that's too large
-      const pesData = createMockPesData({
-        minX: -600,
-        maxX: 600,
-        minY: -500,
-        maxY: 500,
-      });
-      usePatternStore.setState({ pesData });
-
-      const state = usePatternStore.getState();
-      const result = selectPatternValidation(state, machineInfo);
-
-      expect(result.fits).toBe(false);
-      expect(result.error).not.toBeNull();
-      expect(result.error).toContain("exceeds hoop bounds");
-    });
-
-    it("should account for pattern offset when validating", () => {
-      // Pattern bounds: -100 to 100 (200 wide), -50 to 50 (100 high)
-      // Hoop: 1000 wide (-500 to 500), 800 high (-400 to 400)
-      // Pattern fits, but when offset by 450, max edge is at 550 (exceeds 500)
-      usePatternStore.getState().setPatternOffset(450, 0);
-
-      const state = usePatternStore.getState();
-      const result = selectPatternValidation(state, machineInfo);
-
-      expect(result.fits).toBe(false);
-      expect(result.error).toContain("right");
-    });
-
-    it("should account for rotation when validating", () => {
-      // Pattern that fits normally but exceeds when rotated 45°
-      const pesData = createMockPesData({
-        minX: -450,
-        maxX: 450,
-        minY: -50,
-        maxY: 50,
-      });
-      usePatternStore.setState({ pesData });
-      usePatternStore.getState().setPatternRotation(45);
-
-      const state = usePatternStore.getState();
-      const result = selectPatternValidation(state, machineInfo);
-
-      // After 45° rotation, the bounds expand and may exceed
-      expect(result).toBeDefined();
-    });
-
-    it("should provide detailed error messages with directions", () => {
-      // Pattern that definitely exceeds on the left side
-      // Hoop: -500 to 500 (X), -400 to 400 (Y)
-      // Pattern with minX at -600 and maxX at 600 will exceed both bounds
-      const pesData = createMockPesData({
-        minX: -600,
-        maxX: 600,
-        minY: -50,
-        maxY: 50,
-      });
-      usePatternStore.setState({ pesData });
-
-      const state = usePatternStore.getState();
-      const result = selectPatternValidation(state, machineInfo);
-
-      expect(result.fits).toBe(false);
-      expect(result.error).toContain("left");
-      expect(result.error).toContain("mm");
     });
   });
 });
