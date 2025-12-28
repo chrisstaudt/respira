@@ -46,7 +46,7 @@ export const Grid = memo(({ gridSize, bounds, machineInfo }: GridProps) => {
   const gridColor = canvasColors.grid();
 
   return (
-    <Group name="grid">
+    <Group name="grid" listening={false}>
       {lines.verticalLines.map((points, i) => (
         <Line
           key={`v-${i}`}
@@ -73,7 +73,7 @@ export const Origin = memo(() => {
   const originColor = canvasColors.origin();
 
   return (
-    <Group name="origin">
+    <Group name="origin" listening={false}>
       <Line points={[-10, 0, 10, 0]} stroke={originColor} strokeWidth={2} />
       <Line points={[0, -10, 0, 10]} stroke={originColor} strokeWidth={2} />
     </Group>
@@ -93,7 +93,7 @@ export const Hoop = memo(({ machineInfo }: HoopProps) => {
   const hoopColor = canvasColors.hoop();
 
   return (
-    <Group name="hoop">
+    <Group name="hoop" listening={false}>
       <Rect
         x={hoopLeft}
         y={hoopTop}

@@ -2,10 +2,16 @@
  * useCanvasViewport Hook
  *
  * Manages canvas viewport state including zoom, pan, and container size
- * Handles wheel zoom and button zoom operations
+ * Handles wheel zoom, button zoom operations, and stage drag cursor updates
  */
 
-import { useState, useEffect, useCallback, type RefObject } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type RefObject,
+} from "react";
 import type Konva from "konva";
 import type { PesPatternData } from "../../formats/import/pesImporter";
 import type { MachineInfo } from "../../types/machine";
@@ -87,7 +93,12 @@ export function useCanvasViewport({
     setStagePos({ x: containerSize.width / 2, y: containerSize.height / 2 });
   }
 
-  // Wheel zoom handler
+  // Wheel zoom handler with RAF throttling and delta accumulation
+  const wheelThrottleRef = useRef<number | null>(null);
+  const accumulatedDeltaRef = useRef<number>(0);
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const lastStageRef = useRef<Konva.Stage | null>(null);
+
   const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
 
@@ -97,22 +108,58 @@ export function useCanvasViewport({
     const pointer = stage.getPointerPosition();
     if (!pointer) return;
 
-    const scaleBy = 1.1;
-    const direction = e.evt.deltaY > 0 ? -1 : 1;
+    // Accumulate deltaY from all events during throttle period
+    accumulatedDeltaRef.current += e.evt.deltaY;
+    lastPointerRef.current = pointer;
+    lastStageRef.current = stage;
 
-    setStageScale((oldScale) => {
-      const newScale = Math.max(
-        0.1,
-        Math.min(direction > 0 ? oldScale * scaleBy : oldScale / scaleBy, 2),
-      );
+    // Skip if throttle already in progress
+    if (wheelThrottleRef.current !== null) {
+      return;
+    }
 
-      // Zoom towards pointer
-      setStagePos((prevPos) =>
-        calculateZoomToPoint(oldScale, newScale, pointer, prevPos),
-      );
+    // Schedule update on next animation frame (~16ms)
+    wheelThrottleRef.current = requestAnimationFrame(() => {
+      const accumulatedDelta = accumulatedDeltaRef.current;
+      const pointer = lastPointerRef.current;
+      const stage = lastStageRef.current;
 
-      return newScale;
+      if (!pointer || !stage || accumulatedDelta === 0) {
+        wheelThrottleRef.current = null;
+        accumulatedDeltaRef.current = 0;
+        return;
+      }
+
+      const scaleBy = 1.1;
+      const direction = accumulatedDelta > 0 ? -1 : 1;
+
+      setStageScale((oldScale) => {
+        const newScale = Math.max(
+          0.1,
+          Math.min(direction > 0 ? oldScale * scaleBy : oldScale / scaleBy, 2),
+        );
+
+        // Zoom towards pointer
+        setStagePos((prevPos) =>
+          calculateZoomToPoint(oldScale, newScale, pointer, prevPos),
+        );
+
+        return newScale;
+      });
+
+      // Reset accumulator and throttle
+      wheelThrottleRef.current = null;
+      accumulatedDeltaRef.current = 0;
     });
+  }, []);
+
+  // Cleanup wheel throttle on unmount
+  useEffect(() => {
+    return () => {
+      if (wheelThrottleRef.current !== null) {
+        cancelAnimationFrame(wheelThrottleRef.current);
+      }
+    };
   }, []);
 
   // Zoom control handlers
@@ -155,6 +202,27 @@ export function useCanvasViewport({
     setStagePos({ x: containerSize.width / 2, y: containerSize.height / 2 });
   }, [initialScale, containerSize]);
 
+  // Stage drag handlers - cursor updates immediately for better UX
+  const handleStageDragStart = useCallback(
+    (e: Konva.KonvaEventObject<DragEvent>) => {
+      const stage = e.target.getStage();
+      if (stage) {
+        stage.container().style.cursor = "grabbing";
+      }
+    },
+    [],
+  );
+
+  const handleStageDragEnd = useCallback(
+    (e: Konva.KonvaEventObject<DragEvent>) => {
+      const stage = e.target.getStage();
+      if (stage) {
+        stage.container().style.cursor = "grab";
+      }
+    },
+    [],
+  );
+
   return {
     // State
     stagePos,
@@ -166,5 +234,7 @@ export function useCanvasViewport({
     handleZoomIn,
     handleZoomOut,
     handleZoomReset,
+    handleStageDragStart,
+    handleStageDragEnd,
   };
 }
