@@ -2,6 +2,7 @@ module.exports = {
   packagerConfig: {
     asar: true,
     executableName: 'respira',
+    osxSign: { identity: '-' },
     icon: './public/icons/icon'
   },
   rebuildConfig: {},
